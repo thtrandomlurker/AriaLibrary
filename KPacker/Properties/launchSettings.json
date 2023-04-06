@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "KPacker": {
+      "commandName": "Project",
+      "commandLineArgs": "COS_000.mdl"
+    }
+  }
+}

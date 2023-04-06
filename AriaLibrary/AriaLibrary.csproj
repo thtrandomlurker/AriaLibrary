@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Objects\GraphicsProgram\Nodes\HEAP.cs~RF3033c4d5.TMP" />
+    <None Remove="Objects\GraphicsProgram\Nodes\Node.cs~RF26f9ff01.TMP" />
+    <None Remove="Objects\GraphicsProgram\Nodes\Node.cs~RF26ffcbce.TMP" />
+  </ItemGroup>
+
+</Project>
