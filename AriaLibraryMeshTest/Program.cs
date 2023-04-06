@@ -14,10 +14,7 @@ namespace AriaLibraryTest
             {
                 Mesh mesh = new Mesh();
                 mesh.Load(args[0]);
-                foreach (var block in mesh.MeshBlocks)
-                {
-                    Console.WriteLine(block.Type);
-                }
+                mesh.Save("test.MESH");
             }
         }
     }

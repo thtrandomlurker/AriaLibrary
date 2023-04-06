@@ -14,6 +14,16 @@ namespace AriaLibrary.Objects.Mesh
     {
         public override string Type => "STRL";
         public List<string> Strings;
+        public int GetSize()
+        {
+            int s = 0;
+            foreach (var str in Strings)
+            {
+                s += str.ToCharArray().Length;
+            }
+            s += Strings.Count;
+            return PositionHelper.PadValue(s, 4);
+        }
 
         public override void Read(BinaryReader reader)
         {
@@ -28,15 +38,12 @@ namespace AriaLibrary.Objects.Mesh
         public override void Write(BinaryWriter writer)
         {
             writer.Write(new char[4] { 'S', 'T', 'R', 'L' });
-            char[] buf = new char[0];
+            writer.Write(GetSize());
             foreach (var str in Strings)
             {
-                buf.Concat(str.ToCharArray());
-                buf.Append('\0');
+                writer.Write(str.ToCharArray());
+                writer.Write((byte)0);
             }
-            int size = PositionHelper.PadValue(buf.Length, 4);
-            writer.Write(size);
-            writer.Write(buf);
             PositionHelper.AlignWriter(writer, 4);
         }
 

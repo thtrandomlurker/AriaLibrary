@@ -43,11 +43,13 @@ namespace AriaLibrary.Objects.Mesh
 
         public override void Write(BinaryWriter writer)
         {
-            writer.Write(new char[4] { 'C', 'S', 'T', 'S' });
+            writer.Write(new char[4] { 'B', 'O', 'N', 'E' });
             writer.Write(0x04 + (0x10 * BoneInformation.Count()) + (0x38 * InverseMatrices.Count()));
             writer.Write(Name);
             foreach (BOIF boif in BoneInformation)
                 boif.Write(writer);
+            foreach (IMTX imtx in InverseMatrices)
+                imtx.Write(writer);
         }
 
         public BONE()

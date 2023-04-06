@@ -28,14 +28,9 @@ namespace AriaLibrary.Objects.Mesh
         public override void Write(BinaryWriter writer)
         {
             writer.Write(new char[4] { 'S', 'T', 'R', 'B' });
-            long strbSizePos = writer.BaseStream.Position;
+            writer.Write(12 + StringList.GetSize());
             writer.Write(StringCount);
             StringList.Write(writer);
-            int strbSize = (int)(writer.BaseStream.Position - strbSizePos);
-            long cur = writer.BaseStream.Position;
-            writer.Seek((int)strbSizePos, SeekOrigin.Begin);
-            writer.Write(strbSize);
-            writer.Seek((int)cur, SeekOrigin.Begin);
         }
 
        public STRB()

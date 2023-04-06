@@ -36,9 +36,12 @@ namespace AriaLibrary.Objects.Mesh
 
         public override void Write(BinaryWriter writer)
         {
-            writer.Write(new char[4] { 'C', 'S', 'T', 'S' });
+            writer.Write(new char[4] { 'V', 'A', 'R', 'I' });
             writer.Write(0x10 + (0x24 * PRIMs.Count()));
             writer.Write(VARIId);
+            writer.Write(U04);
+            writer.Write(U08);
+            writer.Write(U0C);
             foreach (PRIM prim in PRIMs)
                 prim.Write(writer);
         }

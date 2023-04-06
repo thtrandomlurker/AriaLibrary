@@ -82,19 +82,47 @@ namespace AriaLibrary.Objects.Mesh
             }
         }
 
+        public void Write(BinaryWriter writer)
+        {
+            writer.Write(new char[4] { 'M', 'E', 'S', 'H' });
+            // temp until we know the size
+            writer.Write(0);
+            Remark.Write(writer);
+            StringBlock.Write(writer);
+            foreach (var block in MeshBlocks)
+            {
+                Console.WriteLine(block.Type);
+                Console.WriteLine(writer.BaseStream.Position);
+                block.Write(writer);
+            }
+            writer.BaseStream.Seek(4, SeekOrigin.Begin);
+            writer.Write((int)(writer.BaseStream.Length - 8));
+        }
+
         public void Load(string filePath)
         {
             Stream file = File.OpenRead(filePath);
-            using (BinaryReader reader = new BinaryReader(file))
-            {
-                Read(reader);
-            }
+            Load(file);
         }
         public void Load(Stream file)
         {
             using (BinaryReader reader = new BinaryReader(file))
             {
                 Read(reader);
+            }
+        }
+
+        public void Save(string filePath)
+        {
+            Stream file = File.Create(filePath);
+            Save(file);
+        }
+
+        public void Save(Stream file)
+        {
+            using (BinaryWriter writer = new BinaryWriter(file))
+            {
+                Write(writer);
             }
         }
 
