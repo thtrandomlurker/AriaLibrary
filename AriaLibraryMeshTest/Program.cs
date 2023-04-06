@@ -14,25 +14,10 @@ namespace AriaLibraryTest
             {
                 Mesh mesh = new Mesh();
                 mesh.Load(args[0]);
-                /*foreach (var block in mesh.MeshBlocks)
+                foreach (var block in mesh.MeshBlocks)
                 {
-                    if (args.Any(x => x == block.Type))
-                    {
-                        if (block is EFFE effe)
-                        {
-                            Console.WriteLine(mesh.StringBlock.StringList.Strings[effe.EffectName]);
-                            Console.WriteLine(mesh.StringBlock.StringList.Strings[effe.EffectFileName]);
-                            Console.WriteLine(mesh.StringBlock.StringList.Strings[effe.EffectType]);
-                        }
-                        if (block is EFFE effe)
-                        {
-                            Console.WriteLine(mesh.StringBlock.StringList.Strings[effe.EffectName]);
-                            Console.WriteLine(mesh.StringBlock.StringList.Strings[effe.EffectFileName]);
-                            Console.WriteLine(mesh.StringBlock.StringList.Strings[effe.EffectType]);
-                        }
-                    }
-                }*/
-
+                    Console.WriteLine(block.Type);
+                }
             }
         }
     }

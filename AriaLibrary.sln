@@ -9,7 +9,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KPacker", "KPacker\KPacker.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AriaLibraryTest", "AriaLibraryTest\AriaLibraryTest.csproj", "{F43162D5-6EC5-406F-BC83-29EE8978471A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AriaLibraryMeshTest", "AriaLibraryMeshTest\AriaLibraryMeshTest.csproj", "{BEFCAC6A-1D7D-4F94-B61E-D7A5E7288E25}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AriaLibraryMeshTest", "AriaLibraryMeshTest\AriaLibraryMeshTest.csproj", "{BEFCAC6A-1D7D-4F94-B61E-D7A5E7288E25}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4E3C2249-7047-40A5-8062-4BD6037FE895}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
