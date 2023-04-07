@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AriaLibrary.Helpers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -27,13 +28,12 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             reader.BaseStream.Seek(cur, SeekOrigin.Begin);
         }
 
-        public void Write(BinaryWriter writer, int allocatedDataPosition)
+        public void Write(BinaryWriter dataWriter)
         {
-            writer.Seek(allocatedDataPosition, SeekOrigin.Begin);
-            writer.Write(U00);
-            writer.Write(U04);
-            writer.Write(U08);
-            writer.Write(U0C);
+            dataWriter.Write(U00);
+            dataWriter.Write(U04);
+            dataWriter.Write(U08);
+            dataWriter.Write(U0C);
         }
     }
     public class IXBF : GPRSection
@@ -76,32 +76,33 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             reader.BaseStream.Seek(cur, SeekOrigin.Begin);
         }
 
-        public override void Write(BinaryWriter writer, int allocatedHeapStringOffset, int allocatedHeapDataOffset, int allocatedHeapBufferOffset)
+        public override void Write(BinaryWriter heapWriter, BinaryWriter stringWriter, BinaryWriter dataWriter, BinaryWriter bufferWriter, ref Dictionary<string, int> stringPosMap)
         {
-            writer.Write(new char[4] { 'I', 'X', 'B', 'F' });
-            writer.Write(allocatedHeapStringOffset);
-            writer.Write(ReservedNameHash);
-            // write name string to table
-            long cur = writer.BaseStream.Position;
-            writer.Seek(allocatedHeapStringOffset, SeekOrigin.Begin);
-            writer.Write(Name.ToCharArray());
-            writer.Seek((int)cur, SeekOrigin.Begin);
+            heapWriter.Write(new char[4] { 'I', 'X', 'B', 'F' });
+            // deal with the name now
+            if (stringPosMap.TryGetValue(Name, out int value))
+                heapWriter.Write(value);
+            else
+            {
+                heapWriter.Write((int)stringWriter.BaseStream.Position);
+                stringPosMap.Add(Name, (int)stringWriter.BaseStream.Position);
+                stringWriter.Write(Name.ToCharArray());
+                stringWriter.Write('\0');
+
+            }
+            heapWriter.Write(ReservedNameHash);
             // heap data
-            writer.Write(allocatedHeapDataOffset);
-            writer.Write(0x10);
-            writer.Write(allocatedHeapBufferOffset);
-            writer.Write(BufferData.Length);
-            writer.Write((int)Buffer);
+            heapWriter.Write((int)dataWriter.BaseStream.Position);
+            heapWriter.Write(0x10);
+            heapWriter.Write((int)bufferWriter.BaseStream.Position);
+            heapWriter.Write(BufferData.Length);
+            heapWriter.Write((int)Buffer);
             // write Data
-            cur = writer.BaseStream.Position;
-            writer.Seek(allocatedHeapDataOffset, SeekOrigin.Begin);
-            Data.Write(writer, allocatedHeapDataOffset);
-            writer.Seek((int)cur, SeekOrigin.Begin);
+            Data.Write(dataWriter);
+            PositionHelper.AlignWriter(dataWriter, 0x10);
             // write Buffer
-            cur = writer.BaseStream.Position;
-            writer.Seek(allocatedHeapBufferOffset, SeekOrigin.Begin);
-            writer.Write(BufferData);
-            writer.Seek((int)cur, SeekOrigin.Begin);
+            bufferWriter.Write(BufferData);
+            PositionHelper.AlignWriter(bufferWriter, 0x10);
         }
 
         public IXBF() : base()

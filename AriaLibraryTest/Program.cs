@@ -14,17 +14,8 @@ namespace AriaLibraryTest
                 GraphicsProgram gpr = new GraphicsProgram();
                 gpr.Load(args[0]);
                 Console.WriteLine(gpr.Heap.Name);
-
-                foreach (var s in gpr.Heap.Sections)
-                {
-                    if (s is VXST vertexState)
-                    {
-                        foreach (var attr in vertexState.Data.VertexArrayReference.VertexAttributes)
-                        {
-                            Console.WriteLine($"Offset: {attr.Offset}, BufferIndex: {attr.VertexBufferIndex}, Count: {attr.Count}, DataType: {Enum.GetName(attr.DataType)}");
-                        }
-                    }
-                }
+                Console.WriteLine("Attempting save that should break everything and crash harder than a car going 500mph into a wall");
+                gpr.Save("test.gpr");
             }
         }
     }

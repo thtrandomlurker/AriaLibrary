@@ -20,7 +20,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
         public BufferName Buffer;
         public byte[] BufferData;
         public abstract void Read(BinaryReader reader, int heapStringOffset, int heapDataOffset, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset);
-        public abstract void Write(BinaryWriter writer, int allocatedHeapStringOffset, int allocatedHeapDataOffset, int allocatedHeapBufferOffset);
+        public abstract void Write(BinaryWriter heapWriter, BinaryWriter stringWriter, BinaryWriter dataWriter, BinaryWriter bufferWriter, ref Dictionary<string, int> stringPosMap);
 
         public GPRSection()
         {

@@ -47,24 +47,24 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             reader.BaseStream.Seek(cur, SeekOrigin.Begin);
         }
 
-        public void Write(BinaryWriter writer, int allocatedDataPosition)
+        public void Write(BinaryWriter dataWriter)
         {
-            writer.Seek(allocatedDataPosition, SeekOrigin.Begin);
-            writer.Write(U00);
-            writer.Write(allocatedDataPosition + 0x20);
-            writer.Write(U08);
-            writer.Write(FaceIndexCount);
-            writer.Write(allocatedDataPosition + 0x20 + 0x70);
-            writer.Write(VXBFCount);
-            writer.Write(allocatedDataPosition + 0x20 + 0x70 + (0x10 * VXBFCount));
-            writer.Write(allocatedDataPosition + 0x20 + 0x70 + (0x10 * VXBFCount) + PositionHelper.PadValue((VertexArrayReference.VertexAttributes.Count + 4), 16));
-            VertexBindingObjectReference.Write(writer, allocatedDataPosition + 0x20);
-            for (int i = 0; i < VXBFCount; i++)
+            int basePos = (int)dataWriter.BaseStream.Position;
+            dataWriter.Write(U00);
+            dataWriter.Write(basePos + 0x20);
+            dataWriter.Write(U08);
+            dataWriter.Write(FaceIndexCount);
+            dataWriter.Write(basePos + 0x20 + 0x70);
+            dataWriter.Write(VXBFCount);
+            dataWriter.Write(basePos + 0x20 + 0x70 + (0x10 * VXBFCount));
+            dataWriter.Write(basePos + 0x20 + 0x70 + (0x10 * VXBFCount) + PositionHelper.PadValue((VertexArrayReference.VertexAttributes.Count + 4), 16));
+            VertexBindingObjectReference.Write(dataWriter);
+            foreach (var vxbf in VertexBufferReferences)
             {
-                VertexBufferReferences[i].Write(writer, allocatedDataPosition + 0x20 + 0x70 + (0x10 * i));
+                vxbf.Write(dataWriter);
             }
-            VertexArrayReference.Write(writer, allocatedDataPosition + 0x20 + 0x70 + (0x10 * VXBFCount));
-            IndexBufferReference.Write(writer, allocatedDataPosition + 0x20 + 0x70 + (0x10 * VXBFCount) + PositionHelper.PadValue((VertexArrayReference.VertexAttributes.Count + 4), 16));
+            VertexArrayReference.Write(dataWriter);
+            IndexBufferReference.Write(dataWriter);
 
 
         }
@@ -97,27 +97,29 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             Data.Read(reader, heapDataOffset + dataOffset, heapDataOffset);
         }
 
-        public override void Write(BinaryWriter writer, int allocatedHeapStringOffset, int allocatedHeapDataOffset, int allocatedHeapBufferOffset)
+        public override void Write(BinaryWriter heapWriter, BinaryWriter stringWriter, BinaryWriter dataWriter, BinaryWriter bufferWriter, ref Dictionary<string, int> stringPosMap)
         {
-            writer.Write(new char[4] { 'V', 'X', 'S', 'T' });
-            writer.Write(allocatedHeapStringOffset);
-            writer.Write(ReservedNameHash);
-            // write name string to table
-            long cur = writer.BaseStream.Position;
-            writer.Seek(allocatedHeapStringOffset, SeekOrigin.Begin);
-            writer.Write(Name.ToCharArray());
-            writer.Seek((int)cur, SeekOrigin.Begin);
+            heapWriter.Write(new char[4] { 'V', 'X', 'S', 'T' });
+            // deal with the name now
+            if (stringPosMap.TryGetValue(Name, out int value))
+                heapWriter.Write(value);
+            else
+            {
+                heapWriter.Write((int)stringWriter.BaseStream.Position);
+                stringPosMap.Add(Name, (int)stringWriter.BaseStream.Position);
+                stringWriter.Write(Name.ToCharArray());
+                stringWriter.Write('\0');
+
+            }
+            heapWriter.Write(ReservedNameHash);
             // heap data
-            writer.Write(allocatedHeapDataOffset);
-            writer.Write(0x20);
-            writer.Write(-1);
-            writer.Write(0);
-            writer.Write(0);
+            heapWriter.Write((int)dataWriter.BaseStream.Position);
+            heapWriter.Write(0x20);
+            heapWriter.Write(-1);
+            heapWriter.Write(0);
+            heapWriter.Write(0);
             // write Data
-            cur = writer.BaseStream.Position;
-            writer.Seek(allocatedHeapDataOffset, SeekOrigin.Begin);
-            Data.Write(writer, allocatedHeapDataOffset);
-            writer.Seek((int)cur, SeekOrigin.Begin);
+            Data.Write(dataWriter);
         }
 
         public VXST() : base()

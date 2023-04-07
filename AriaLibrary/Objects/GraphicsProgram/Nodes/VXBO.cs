@@ -23,12 +23,11 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             reader.BaseStream.Seek(cur, SeekOrigin.Begin);
         }
 
-        public void Write(BinaryWriter writer, int allocatedHeapDataOffset)
+        public void Write(BinaryWriter dataWriter)
         {
-            writer.Seek(allocatedHeapDataOffset, SeekOrigin.Begin);
             foreach (float val in Floats)
             {
-                writer.Write(val);
+                dataWriter.Write(val);
             }
         }
 
@@ -59,27 +58,29 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             Data.Read(reader, heapDataOffset + dataOffset);
         }
 
-        public override void Write(BinaryWriter writer, int allocatedHeapStringOffset, int allocatedHeapDataOffset, int allocatedHeapBufferOffset)
+        public override void Write(BinaryWriter heapWriter, BinaryWriter stringWriter, BinaryWriter dataWriter, BinaryWriter bufferWriter, ref Dictionary<string, int> stringPosMap)
         {
-            writer.Write(new char[4] { 'V', 'X', 'B', 'O' });
-            writer.Write(allocatedHeapStringOffset);
-            writer.Write(ReservedNameHash);
-            // write name string to table
-            long cur = writer.BaseStream.Position;
-            writer.Seek(allocatedHeapStringOffset, SeekOrigin.Begin);
-            writer.Write(Name.ToCharArray());
-            writer.Seek((int)cur, SeekOrigin.Begin);
+            heapWriter.Write(new char[4] { 'V', 'X', 'B', 'O' });
+            // deal with the name now
+            if (stringPosMap.TryGetValue(Name, out int value))
+                heapWriter.Write(value);
+            else
+            {
+                heapWriter.Write((int)stringWriter.BaseStream.Position);
+                stringPosMap.Add(Name, (int)stringWriter.BaseStream.Position);
+                stringWriter.Write(Name.ToCharArray());
+                stringWriter.Write('\0');
+
+            }
+            heapWriter.Write(ReservedNameHash);
             // heap data
-            writer.Write(allocatedHeapDataOffset);
-            writer.Write(0x70);
-            writer.Write(-1);
-            writer.Write(0);
-            writer.Write(0);
+            heapWriter.Write((int)dataWriter.BaseStream.Position);
+            heapWriter.Write(0x70);
+            heapWriter.Write(-1);
+            heapWriter.Write(0);
+            heapWriter.Write(0);
             // write Data
-            cur = writer.BaseStream.Position;
-            writer.Seek(allocatedHeapDataOffset, SeekOrigin.Begin);
-            Data.Write(writer, allocatedHeapDataOffset);
-            writer.Seek((int)cur, SeekOrigin.Begin);
+            Data.Write(dataWriter);
         }
 
         public VXBO() : base()
