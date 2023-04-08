@@ -49,7 +49,6 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             int dataSize = reader.ReadInt32();
             int bufferOffset = reader.ReadInt32();
             int bufferSize = reader.ReadInt32();
-
             Buffer = (BufferName)reader.ReadInt32();
             int cur = (int)reader.BaseStream.Position;
             // Data

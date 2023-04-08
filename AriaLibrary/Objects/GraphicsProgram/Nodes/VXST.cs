@@ -65,7 +65,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             }
             VertexArrayReference.Write(dataWriter);
             IndexBufferReference.Write(dataWriter);
-
+            PositionHelper.AlignWriter(dataWriter, 0x10);
 
         }
 
@@ -88,7 +88,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             ReservedNameHash = reader.ReadInt32();
             int dataOffset = reader.ReadInt32();
             int dataSize = reader.ReadInt32();
-            // Unused in VXAR
+            // Unused in VXST
             int bufferOffset = reader.ReadInt32();
             int bufferSize = reader.ReadInt32();
 

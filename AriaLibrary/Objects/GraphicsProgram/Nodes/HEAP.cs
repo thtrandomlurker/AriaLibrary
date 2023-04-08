@@ -11,7 +11,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
 {
     public class HEAP
     {
-        public string? Name;
+        public string Name;
         public int ReservedNameHash;
         public List<GPRSection> Sections;
 
@@ -31,7 +31,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             int heapSectionCount = reader.ReadInt32();
             Sections.Capacity = heapSectionCount;
             // test read first 55
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < heapSectionCount; i++)
             {
                 string sectionType = new string(reader.ReadChars(4));
 
@@ -61,6 +61,46 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
                         VXST vxst = new VXST();
                         vxst.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset);
                         Sections.Add(vxst);
+                        break;
+                    case "SHMI":
+                        SHMI shmi = new SHMI();
+                        shmi.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset);
+                        Sections.Add(shmi);
+                        break;
+                    case "VXSH":
+                        VXSH vxsh = new VXSH();
+                        vxsh.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset);
+                        Sections.Add(vxsh);
+                        break;
+                    case "SHBI":
+                        SHBI shbi = new SHBI();
+                        shbi.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset);
+                        Sections.Add(shbi);
+                        break;
+                    case "PXSH":
+                        PXSH pxsh = new PXSH();
+                        pxsh.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset);
+                        Sections.Add(pxsh);
+                        break;
+                    case "SHCO":
+                        SHCO shco = new SHCO();
+                        shco.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset);
+                        Sections.Add(shco);
+                        break;
+                    case "SMST":
+                        SMST smst = new SMST();
+                        smst.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset);
+                        Sections.Add(smst);
+                        break;
+                    case "VXSB":
+                        VXSB vxsb = new VXSB();
+                        vxsb.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset);
+                        Sections.Add(vxsb);
+                        break;
+                    case "PXSB":
+                        PXSB pxsb = new PXSB();
+                        pxsb.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset);
+                        Sections.Add(pxsb);
                         break;
                     default:
                         throw new InvalidDataException($"Unknown section type {sectionType}");
@@ -102,11 +142,8 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
                 // sections written.
                 heapWriter.Seek(0x14, SeekOrigin.Begin);
                 heapWriter.Write((int)stringWriter.BaseStream.Position);
-                if (Name != null)
-                {
-                    stringWriter.Write(Name.ToCharArray());
-                    stringWriter.Write('\0');
-                }
+                stringWriter.Write(Name.ToCharArray());
+                stringWriter.Write('\0');
                 // return to the end of the heap
                 heapWriter.Seek(0, SeekOrigin.End);
                 // align everything
@@ -125,8 +162,9 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             }
         }
 
-        public HEAP()
+        public HEAP(string name="")
         {
+            Name = name;
             Sections = new List<GPRSection>();
         }
     }
