@@ -33,7 +33,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             if (shaderBind1Offset != -1)
             {
                 ShaderBind1 = new SHBIData();
-                ShaderBind1.Read(reader, heapDataOffset + shaderBind0Offset, heapStringOffset);
+                ShaderBind1.Read(reader, heapDataOffset + shaderBind1Offset, heapStringOffset);
             }
 
             reader.BaseStream.Seek(cur, SeekOrigin.Begin);

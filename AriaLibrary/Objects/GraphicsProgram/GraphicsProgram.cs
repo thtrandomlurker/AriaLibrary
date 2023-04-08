@@ -69,9 +69,9 @@ namespace AriaLibrary.Objects.GraphicsProgram
                 PositionHelper.AlignWriter(writer, 0x10);
                 Heap.Write(heapWriter, vsWriter, meshWriter);
                 // align everything for safety
-                PositionHelper.AlignWriter(heapWriter, 0x10);
-                PositionHelper.AlignWriter(vsWriter, 0x10);
-                PositionHelper.AlignWriter(meshWriter, 0x10);
+                PositionHelper.AlignWriter(heapWriter, 0x40);
+                PositionHelper.AlignWriter(vsWriter, 0x40);
+                PositionHelper.AlignWriter(meshWriter, 0x40);
                 // copy the heap
                 heapWriter.Seek(0, SeekOrigin.Begin);
                 heapWriter.BaseStream.CopyTo(writer.BaseStream);

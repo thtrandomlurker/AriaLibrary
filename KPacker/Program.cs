@@ -1,4 +1,5 @@
 ﻿using AriaLibrary.Archives;
+using AriaLibrary.Helpers;
 using System.Text;
 
 namespace KPacker
@@ -40,15 +41,18 @@ namespace KPacker
                 foreach(var file in package.Files)
                 {
                     file.Open();
-                    Stream outfile = File.OpenWrite($"{odir}{s}{cfile}.{GetExtFromMagic(file.Stream)}");
-                    using (BinaryReader reader = new BinaryReader(file.Stream, Encoding.UTF8, true))
+                    if (file.Stream != null)
                     {
-                        using (BinaryWriter writer = new BinaryWriter(outfile))
+                        Stream outfile = File.OpenWrite($"{odir}{s}{cfile}.{GetExtFromMagic(file.Stream)}");
+                        using (BinaryReader reader = new BinaryReader(file.Stream, Encoding.UTF8, true))
                         {
-                            writer.Write(reader.ReadBytes(file.Size));
+                            using (BinaryWriter writer = new BinaryWriter(outfile))
+                            {
+                                writer.Write(reader.ReadBytes(file.Size));
+                            }
                         }
+                        file.Close();
                     }
-                    file.Close();
                     cfile++;
                 }
                 // eofunc
@@ -57,7 +61,25 @@ namespace KPacker
 
             if (Directory.Exists(args[0]))
             {
+                if (args.Length < 2)
+                {
+                    Console.WriteLine("Usage: \"folder_to_pack\" \"output_archive.ext\"");
+                }
                 Console.WriteLine("Input is Directory: %s", args[0]);
+                string[] fList = Directory.GetFiles(args[0]);
+                int archiveFileBase = PositionHelper.PadValue(12 + (8 * fList.Length), 0x40);
+                KPack package = new KPack();
+                // for each file, add it
+                foreach (var file in fList)
+                {
+                    Stream fileStream = File.OpenRead(file);
+                    KPackFile kFile = new KPackFile(archiveFileBase, (int)fileStream.Length, fileStream, fileStream);
+
+                    package.Files.Add(kFile);
+
+                    archiveFileBase = PositionHelper.PadValue(archiveFileBase + (int)fileStream.Length, 0x40);
+                }
+                package.Save(args[1]);
                 return;
             }
         }
