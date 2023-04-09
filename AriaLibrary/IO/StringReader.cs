@@ -24,10 +24,10 @@ namespace AriaLibrary.IO
                 }
             }
         }
-        public static string ReadNullTerminatedStringAtOffset(BinaryReader reader, int offset)
+        public static string ReadNullTerminatedStringAtOffset(BinaryReader reader, int offset, SeekOrigin origin = SeekOrigin.Begin)
         {
             long cur = reader.BaseStream.Position;
-            reader.BaseStream.Seek(offset, SeekOrigin.Begin);
+            reader.BaseStream.Seek(offset, origin);
             string ret = "";
             while (true)
             {

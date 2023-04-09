@@ -14,10 +14,10 @@ namespace AriaLibrary.Objects.Nodes
         public int Name1;
         public int Name2;
         public int EffectID;
-        public int VertexConstantId;
+        public int VertexConstantID;
         public int Neg1;
-        public int FragmentConstantId;
-        public int SamplerId;
+        public int PixelConstantID;
+        public int SamplerID;
 
         public override void Read(BinaryReader reader)
         {
@@ -26,10 +26,10 @@ namespace AriaLibrary.Objects.Nodes
             Name1 = reader.ReadInt32();
             Name2 = reader.ReadInt32();
             EffectID = reader.ReadInt32();
-            VertexConstantId = reader.ReadInt32();
+            VertexConstantID = reader.ReadInt32();
             Neg1 = reader.ReadInt32();
-            FragmentConstantId = reader.ReadInt32();
-            SamplerId = reader.ReadInt32();
+            PixelConstantID = reader.ReadInt32();
+            SamplerID = reader.ReadInt32();
         }
 
         public override void Write(BinaryWriter writer)
@@ -40,10 +40,10 @@ namespace AriaLibrary.Objects.Nodes
             writer.Write(Name1);
             writer.Write(Name2);
             writer.Write(EffectID);
-            writer.Write(VertexConstantId);
+            writer.Write(VertexConstantID);
             writer.Write(Neg1);
-            writer.Write(FragmentConstantId);
-            writer.Write(SamplerId);
+            writer.Write(PixelConstantID);
+            writer.Write(SamplerID);
         }
 
         public MATE()

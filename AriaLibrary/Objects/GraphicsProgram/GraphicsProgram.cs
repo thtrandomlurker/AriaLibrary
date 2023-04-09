@@ -128,6 +128,13 @@ namespace AriaLibrary.Objects.GraphicsProgram
                 Write(writer);
             }
         }
+        public void Save(Stream file, bool leaveOpen)
+        {
+            using (BinaryWriter writer = new BinaryWriter(file, Encoding.UTF8, leaveOpen))
+            {
+                Write(writer);
+            }
+        }
 
         public GraphicsProgram()
         {

@@ -10,24 +10,33 @@ namespace AriaLibrary.Archives
     {
         public Stream? Stream;
         public Stream? BaseStream;
+        private bool mIsOpen = false;
         public int Offset;
         public int Size;
 
         public void Open()
         {
-            if (BaseStream != null)
+            if (!mIsOpen)
             {
-                using (BinaryReader reader = new BinaryReader(BaseStream, Encoding.UTF8, true))
+                if (BaseStream != null)
                 {
-                    reader.BaseStream.Seek(Offset, SeekOrigin.Begin);
-                    Stream = new MemoryStream(reader.ReadBytes(Size));
+                    using (BinaryReader reader = new BinaryReader(BaseStream, Encoding.UTF8, true))
+                    {
+                        reader.BaseStream.Seek(Offset, SeekOrigin.Begin);
+                        Stream = new MemoryStream(reader.ReadBytes(Size));
+                        mIsOpen = true;
+                    }
                 }
             }
         }
 
         public void Close()
         {
-            Stream?.Close();
+            if (mIsOpen)
+            {
+                Stream?.Close();
+                mIsOpen = false;
+            }
         }
 
         public KPackFile(int offset, int size, Stream baseStream)
@@ -117,10 +126,11 @@ namespace AriaLibrary.Archives
                         Console.WriteLine(writer.BaseStream.Position);
                         file.Stream?.CopyTo(writer.BaseStream);
                     }
-                    else if (file.BaseStream != null)
+                    else
                     {
-                        // memory stream based file
-                        file.Open();
+                        if (file.BaseStream != null)
+                            // memory stream based file with a base stream
+                            file.Open();
                         file.Stream?.Seek(0, SeekOrigin.Begin);
                         file.Stream?.CopyTo(writer.BaseStream);
                     }

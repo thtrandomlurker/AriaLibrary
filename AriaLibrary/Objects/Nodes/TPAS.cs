@@ -12,9 +12,9 @@ namespace AriaLibrary.Objects.Nodes
         public override string Type => "TPAS";
         public int U00;
         public int U04;
-        public int U08;
-        public int U0C;
-        public int U10;
+        public int TPASId;
+        public int VertexShaderName;
+        public int PixelShaderName;
         public int U14;
 
         public override void Read(BinaryReader reader)
@@ -22,9 +22,9 @@ namespace AriaLibrary.Objects.Nodes
             int dataSize = reader.ReadInt32();
             U00 = reader.ReadInt32();
             U04 = reader.ReadInt32();
-            U08 = reader.ReadInt32();
-            U0C = reader.ReadInt32();
-            U10 = reader.ReadInt32();
+            TPASId = reader.ReadInt32();
+            VertexShaderName = reader.ReadInt32();
+            PixelShaderName = reader.ReadInt32();
             U14 = reader.ReadInt32();
         }
 
@@ -34,9 +34,9 @@ namespace AriaLibrary.Objects.Nodes
             writer.Write(0x18);
             writer.Write(U00);
             writer.Write(U04);
-            writer.Write(U08);
-            writer.Write(U0C);
-            writer.Write(U10);
+            writer.Write(TPASId);
+            writer.Write(VertexShaderName);
+            writer.Write(PixelShaderName);
             writer.Write(U14);
         }
 

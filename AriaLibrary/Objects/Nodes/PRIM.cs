@@ -11,22 +11,22 @@ namespace AriaLibrary.Objects.Nodes
     {
         public override string Type => "PRIM";
         public int PrimitiveID;
-        public int U04;
-        public int U08;
-        public int U0C;
-        public int U10;
-        public int MaterialId;
+        public int MeshName;
+        public int SetPolygonName;
+        public int ObjectName;
+        public int MeshNameDupe;
+        public int MaterialID;
         public int U18;
 
         public override void Read(BinaryReader reader)
         {
             int dataSize = reader.ReadInt32();
             PrimitiveID = reader.ReadInt32();
-            U04 = reader.ReadInt32();
-            U08 = reader.ReadInt32();
-            U0C = reader.ReadInt32();
-            U10 = reader.ReadInt32();
-            MaterialId = reader.ReadInt32();
+            MeshName = reader.ReadInt32();
+            SetPolygonName = reader.ReadInt32();
+            ObjectName = reader.ReadInt32();
+            MeshNameDupe = reader.ReadInt32();
+            MaterialID = reader.ReadInt32();
             U18 = reader.ReadInt32();
         }
 
@@ -35,11 +35,11 @@ namespace AriaLibrary.Objects.Nodes
             writer.Write(new char[4] { 'P', 'R', 'I', 'M' });
             writer.Write(0x1C);
             writer.Write(PrimitiveID);
-            writer.Write(U04);
-            writer.Write(U08);
-            writer.Write(U0C);
-            writer.Write(U10);
-            writer.Write(MaterialId);
+            writer.Write(MeshName);
+            writer.Write(SetPolygonName);
+            writer.Write(ObjectName);
+            writer.Write(MeshNameDupe);
+            writer.Write(MaterialID);
             writer.Write(U18);
         }
 
