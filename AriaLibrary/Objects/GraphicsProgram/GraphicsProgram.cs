@@ -69,23 +69,25 @@ namespace AriaLibrary.Objects.GraphicsProgram
                 PositionHelper.AlignWriter(writer, 0x10);
                 Heap.Write(heapWriter, vsWriter, meshWriter);
                 // align everything for safety
-                PositionHelper.AlignWriter(heapWriter, 0x40);
-                PositionHelper.AlignWriter(vsWriter, 0x40);
-                PositionHelper.AlignWriter(meshWriter, 0x40);
+                PositionHelper.AlignWriter(heapWriter, 0x10);
+                PositionHelper.AlignWriter(vsWriter, 0x10);
+                PositionHelper.AlignWriter(meshWriter, 0x10);
                 // copy the heap
                 heapWriter.Seek(0, SeekOrigin.Begin);
                 heapWriter.BaseStream.CopyTo(writer.BaseStream);
+                PositionHelper.AlignWriter(writer, 0x800);  // data after the heap seems to always be aligned to 0x800
                 // and the vs
                 int vsPos = vsWriter.BaseStream.Length == 0 ? -1 : (int)writer.BaseStream.Position - 0x10;
                 vsWriter.Seek(0, SeekOrigin.Begin);
                 vsWriter.BaseStream.CopyTo(writer.BaseStream);
+                PositionHelper.AlignWriter(writer, 0x80);  // data after the vs buffer seems to always be aligned to 0x80
                 // and the mesh
                 int meshPos = (int)writer.BaseStream.Position - 0x10;
                 meshWriter.Seek(0, SeekOrigin.Begin);
                 meshWriter.BaseStream.CopyTo(writer.BaseStream);
                 // set the output values
                 writer.Seek(0xC, SeekOrigin.Begin);
-                writer.Write((int)(heapWriter.BaseStream.Length + vsWriter.BaseStream.Length + meshWriter.BaseStream.Length));
+                writer.Write(0x30 + (int)(heapWriter.BaseStream.Length + vsWriter.BaseStream.Length + meshWriter.BaseStream.Length));
                 writer.Seek(0x1C, SeekOrigin.Begin);
                 writer.Write((int)heapWriter.BaseStream.Length);
                 writer.Write(vsPos);

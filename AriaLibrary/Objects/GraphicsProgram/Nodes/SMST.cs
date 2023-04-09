@@ -68,7 +68,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             Data.Read(reader, heapDataOffset + dataOffset);
         }
 
-        public override void Write(BinaryWriter heapWriter, BinaryWriter stringWriter, BinaryWriter dataWriter, BinaryWriter bufferWriter, ref Dictionary<string, int> stringPosMap)
+        public override void Write(BinaryWriter heapWriter, BinaryWriter stringWriter, BinaryWriter dataWriter, BinaryWriter bufferWriter, ref Dictionary<string, int> stringPosMap, ref List<int> sectionDataPositions, ref int curDataPositionIdx)
         {
             heapWriter.Write(new char[4] { 'S', 'M', 'S', 'T' });
             // deal with the name now

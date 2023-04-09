@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AriaLibrary.Helpers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,37 +9,20 @@ using StringReader = AriaLibrary.IO.StringReader;
 
 namespace AriaLibrary.Objects.GraphicsProgram.Nodes
 {
-    public class SHBIData
+    public class SHBIInput
     {
-        public int U00;
-        public int U04;
-        public int NumInputs;
         public string InputName;
-        public int U10;
-        public int U14;
-        public int U18;
-        public int U1C;
-
-        public void Read(BinaryReader reader, int heapDataOffset, int heapStringOffset)
+        public int U04;
+        public int U08;
+        public void Read(BinaryReader reader, int heapStringOffset)
         {
-            long cur = reader.BaseStream.Position;
-            reader.BaseStream.Seek(heapDataOffset, SeekOrigin.Begin);
-            U00 = reader.ReadInt32();
+            InputName = StringReader.ReadNullTerminatedStringAtOffset(reader, heapStringOffset + reader.ReadInt32());
             U04 = reader.ReadInt32();
-            NumInputs = reader.ReadInt32();
-            InputName = StringReader.ReadNullTerminatedStringAtOffset(reader, reader.ReadInt32() + heapStringOffset);
-            U10 = reader.ReadInt32();
-            U14 = reader.ReadInt32();
-            U18 = reader.ReadInt32();
-            U1C = reader.ReadInt32();
-            reader.BaseStream.Seek(cur, SeekOrigin.Begin);
+            U08 = reader.ReadInt32();
         }
-
         public void Write(BinaryWriter dataWriter, BinaryWriter stringWriter, ref Dictionary<string, int> stringPosMap)
         {
-            dataWriter.Write(U00);
-            dataWriter.Write(U04);
-            dataWriter.Write(NumInputs);
+            // deal with the name now
             if (stringPosMap.TryGetValue(InputName, out int value))
                 dataWriter.Write(value);
             else
@@ -47,17 +31,55 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
                 stringPosMap.Add(InputName, (int)stringWriter.BaseStream.Position);
                 stringWriter.Write(InputName.ToCharArray());
                 stringWriter.Write('\0');
-
             }
-            dataWriter.Write(U10);
-            dataWriter.Write(U14);
-            dataWriter.Write(U18);
-            dataWriter.Write(U1C);
+            dataWriter.Write(U04);
+            dataWriter.Write(U08);
+        }
+
+        public SHBIInput()
+        {
+            InputName = "";
+        }
+    }
+    public class SHBIData
+    {
+        public int U00;
+        public int U04;
+        public List<SHBIInput> Inputs;
+
+        public void Read(BinaryReader reader, int heapDataOffset, int heapStringOffset)
+        {
+            long cur = reader.BaseStream.Position;
+            reader.BaseStream.Seek(heapDataOffset, SeekOrigin.Begin);
+            U00 = reader.ReadInt32();
+            U04 = reader.ReadInt32();
+            int inputCount = reader.ReadInt32();
+
+            for (int i = 0; i < inputCount; i++)
+            {
+                SHBIInput input = new SHBIInput();
+                input.Read(reader, heapStringOffset);
+                Inputs.Add(input);
+            }
+
+            reader.BaseStream.Seek(cur, SeekOrigin.Begin);
+        }
+
+        public void Write(BinaryWriter dataWriter, BinaryWriter stringWriter, ref Dictionary<string, int> stringPosMap)
+        {
+            dataWriter.Write(U00);
+            dataWriter.Write(U04);
+            dataWriter.Write(Inputs.Count);
+            foreach (var input in Inputs)
+            {
+                input.Write(dataWriter, stringWriter, ref stringPosMap);
+            }
+            PositionHelper.AlignWriter(dataWriter, 0x10);
         }
 
         public SHBIData(string inputName = "")
         {
-            InputName = inputName;
+            Inputs = new List<SHBIInput>();
         }
     }
     public class SHBI : GPRSection
@@ -82,7 +104,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             Data.Read(reader, heapDataOffset + dataOffset, heapStringOffset);
         }
 
-        public override void Write(BinaryWriter heapWriter, BinaryWriter stringWriter, BinaryWriter dataWriter, BinaryWriter bufferWriter, ref Dictionary<string, int> stringPosMap)
+        public override void Write(BinaryWriter heapWriter, BinaryWriter stringWriter, BinaryWriter dataWriter, BinaryWriter bufferWriter, ref Dictionary<string, int> stringPosMap, ref List<int> sectionDataPositions, ref int curDataPositionIdx)
         {
             heapWriter.Write(new char[4] { 'S', 'H', 'B', 'I' });
             // deal with the name now
@@ -99,10 +121,11 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             heapWriter.Write(ReservedNameHash);
             // heap data
             heapWriter.Write((int)dataWriter.BaseStream.Position);
-            heapWriter.Write(0x20);
+            heapWriter.Write(PositionHelper.PadValue(0x0C + (Data.Inputs.Count * 0x0C), 0x10));
             heapWriter.Write(-1);
             heapWriter.Write(0);
             heapWriter.Write(0);
+            sectionDataPositions.Add((int)dataWriter.BaseStream.Position);
             // write Data
             Data.Write(dataWriter, stringWriter, ref stringPosMap);
         }

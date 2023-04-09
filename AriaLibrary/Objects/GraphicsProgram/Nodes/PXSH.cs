@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.ConstrainedExecution;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -127,7 +128,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             reader.BaseStream.Seek(cur, SeekOrigin.Begin);
         }
 
-        public override void Write(BinaryWriter heapWriter, BinaryWriter stringWriter, BinaryWriter dataWriter, BinaryWriter bufferWriter, ref Dictionary<string, int> stringPosMap)
+        public override void Write(BinaryWriter heapWriter, BinaryWriter stringWriter, BinaryWriter dataWriter, BinaryWriter bufferWriter, ref Dictionary<string, int> stringPosMap, ref List<int> sectionDataPositions, ref int curDataPositionIdx)
         {
             heapWriter.Write(new char[4] { 'P', 'X', 'S', 'H' });
             // deal with the name now
@@ -148,6 +149,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             heapWriter.Write((int)bufferWriter.BaseStream.Position);
             heapWriter.Write(BufferData.Length);
             heapWriter.Write((int)Buffer);
+            sectionDataPositions.Add((int)dataWriter.BaseStream.Position);
             // write Data
             Data.Write(dataWriter, stringWriter, ref stringPosMap);
             PositionHelper.AlignWriter(dataWriter, 0x10);

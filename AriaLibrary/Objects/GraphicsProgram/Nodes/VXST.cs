@@ -28,10 +28,10 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             int vxboDataOffset = reader.ReadInt32();
             U08 = reader.ReadInt32();
             FaceIndexCount = reader.ReadInt32();
-            int vxbfDataOffset = reader.ReadInt32();
+            int ixbfDataOffset = reader.ReadInt32();
             VXBFCount = reader.ReadInt32();
             int vxarDataOffset = reader.ReadInt32();
-            int ixbfDataOffset = reader.ReadInt32();
+            int vxbfDataOffset = reader.ReadInt32();
 
             VertexBindingObjectReference.Read(reader, heapDataPosition + vxboDataOffset);
             for (int i = 0; i < VXBFCount; i++)
@@ -47,26 +47,22 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             reader.BaseStream.Seek(cur, SeekOrigin.Begin);
         }
 
-        public void Write(BinaryWriter dataWriter)
+        public void Write(BinaryWriter dataWriter, List<int> sectionDataPositions, ref int curDataPositionIdx)
         {
             int basePos = (int)dataWriter.BaseStream.Position;
             dataWriter.Write(U00);
-            dataWriter.Write(basePos + 0x20);
+            // VXBO
+            dataWriter.Write(sectionDataPositions[curDataPositionIdx]);
             dataWriter.Write(U08);
             dataWriter.Write(FaceIndexCount);
-            dataWriter.Write(basePos + 0x20 + 0x70);
+            // IXBF
+            dataWriter.Write(sectionDataPositions[curDataPositionIdx+2]);
             dataWriter.Write(VXBFCount);
-            dataWriter.Write(basePos + 0x20 + 0x70 + (0x10 * VXBFCount));
-            dataWriter.Write(basePos + 0x20 + 0x70 + (0x10 * VXBFCount) + PositionHelper.PadValue((VertexArrayReference.VertexAttributes.Count + 4), 16));
-            VertexBindingObjectReference.Write(dataWriter);
-            foreach (var vxbf in VertexBufferReferences)
-            {
-                vxbf.Write(dataWriter);
-            }
-            VertexArrayReference.Write(dataWriter);
-            IndexBufferReference.Write(dataWriter);
-            PositionHelper.AlignWriter(dataWriter, 0x10);
-
+            // VXAR
+            dataWriter.Write(sectionDataPositions[curDataPositionIdx+1]);
+            // VXBF
+            dataWriter.Write(sectionDataPositions[curDataPositionIdx+2+VertexBufferReferences.Count]);
+            curDataPositionIdx += 3 + VertexBufferReferences.Count;
         }
 
         public VXSTData()
@@ -97,7 +93,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             Data.Read(reader, heapDataOffset + dataOffset, heapDataOffset);
         }
 
-        public override void Write(BinaryWriter heapWriter, BinaryWriter stringWriter, BinaryWriter dataWriter, BinaryWriter bufferWriter, ref Dictionary<string, int> stringPosMap)
+        public override void Write(BinaryWriter heapWriter, BinaryWriter stringWriter, BinaryWriter dataWriter, BinaryWriter bufferWriter, ref Dictionary<string, int> stringPosMap, ref List<int> sectionDataPositions, ref int curDataPositionIdx)
         {
             heapWriter.Write(new char[4] { 'V', 'X', 'S', 'T' });
             // deal with the name now
@@ -119,7 +115,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             heapWriter.Write(0);
             heapWriter.Write(0);
             // write Data
-            Data.Write(dataWriter);
+            Data.Write(dataWriter, sectionDataPositions, ref curDataPositionIdx);
         }
 
         public VXST() : base()

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using AriaLibrary.Helpers;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 using StringReader = AriaLibrary.IO.StringReader;
 
 namespace AriaLibrary.Objects.GraphicsProgram.Nodes
@@ -39,27 +40,29 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             reader.BaseStream.Seek(cur, SeekOrigin.Begin);
         }
 
-        public void Write(BinaryWriter dataWriter, BinaryWriter stringWriter, ref Dictionary<string, int> stringPosMap)
+        public void Write(BinaryWriter dataWriter, BinaryWriter stringWriter, ref Dictionary<string, int> stringPosMap, ref List<int> sectionDataPositions, ref int curDataPositionIdx)
         {
-            int basePos = (int)dataWriter.BaseStream.Position;
             dataWriter.Write(U00);
-            dataWriter.Write(basePos + 0x10);
-            dataWriter.Write(basePos + 0x20 + (0x10 * VertexShaderData.Uniforms.Count()));
-            dataWriter.Write(basePos + 0x20 + (0x10 * VertexShaderData.Uniforms.Count()) + 0x20);
-            VertexShaderData.Write(dataWriter, stringWriter, ref stringPosMap);
+            dataWriter.Write(sectionDataPositions[curDataPositionIdx]);
+            curDataPositionIdx++;
             if (ShaderBind0 != null)
             {
-                ShaderBind0.Write(dataWriter, stringWriter, ref stringPosMap);
+                dataWriter.Write(sectionDataPositions[curDataPositionIdx]);
+                curDataPositionIdx++;
             }
             else
+            {
                 dataWriter.Write(-1);
+            }
             if (ShaderBind1 != null)
             {
-                ShaderBind1.Write(dataWriter, stringWriter, ref stringPosMap);
+                dataWriter.Write(sectionDataPositions[curDataPositionIdx]);
+                curDataPositionIdx++;
             }
             else
+            {
                 dataWriter.Write(-1);
-            PositionHelper.AlignWriter(dataWriter, 0x10);
+            }
         }
         public VXSBData()
         {
@@ -86,7 +89,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             Data.Read(reader, heapDataOffset + dataOffset, heapDataOffset, heapStringOffset);
         }
 
-        public override void Write(BinaryWriter heapWriter, BinaryWriter stringWriter, BinaryWriter dataWriter, BinaryWriter bufferWriter, ref Dictionary<string, int> stringPosMap)
+        public override void Write(BinaryWriter heapWriter, BinaryWriter stringWriter, BinaryWriter dataWriter, BinaryWriter bufferWriter, ref Dictionary<string, int> stringPosMap, ref List<int> sectionDataPositions, ref int curDataPositionIdx)
         {
             heapWriter.Write(new char[4] { 'V', 'X', 'S', 'B' });
             // deal with the name now
@@ -108,7 +111,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             heapWriter.Write(0);
             heapWriter.Write(0);
             // write Data
-            Data.Write(dataWriter, stringWriter, ref stringPosMap);
+            Data.Write(dataWriter, stringWriter, ref stringPosMap, ref sectionDataPositions, ref curDataPositionIdx);
         }
 
         public VXSB() : base()

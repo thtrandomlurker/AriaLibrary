@@ -115,6 +115,8 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
                 using (BinaryWriter dataWriter = new BinaryWriter(new MemoryStream()))
             {
                 Dictionary<string, int> stringPosMap = new Dictionary<string, int>();
+                List<int> sectionDataPositions = new List<int>();
+                int curDataPositionIdx = 0;
                 heapWriter.Write(new char[4] { 'H', 'E', 'A', 'P' });
                 heapWriter.Write(0);
                 // Sections offset should always be 0x20
@@ -132,11 +134,11 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
                 {
                     if (section.Buffer == BufferName.VertexShader)
                     {
-                        section.Write(heapWriter, stringWriter, dataWriter, vsWriter, ref stringPosMap);
+                        section.Write(heapWriter, stringWriter, dataWriter, vsWriter, ref stringPosMap, ref sectionDataPositions, ref curDataPositionIdx);
                     }
                     else if (section.Buffer == BufferName.Mesh)
                     {
-                        section.Write(heapWriter, stringWriter, dataWriter, meshWriter, ref stringPosMap);
+                        section.Write(heapWriter, stringWriter, dataWriter, meshWriter, ref stringPosMap, ref sectionDataPositions, ref curDataPositionIdx);
                     }
                 }
                 // sections written.
