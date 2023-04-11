@@ -13,6 +13,7 @@ using System.Net.Security;
 using System.Reflection.Metadata;
 using Assimp;
 using Assimp.Unmanaged;
+using System.IO.Compression;
 
 namespace AriaLibrary.Objects
 {
@@ -31,25 +32,413 @@ namespace AriaLibrary.Objects
 
             Scene scene = new Scene();
             scene.RootNode = new Node(GPR.Heap.Name);
-            scene.RootNode.Transform = Matrix4x4.Identity;
-            foreach (var bone in BRNT.Bones)
-            {
-                Node boneToNode = new Node(bone.BoneName);
 
-                Matrix4x4 trsMatrix = Matrix4x4.FromTranslation(new Vector3D(bone.Translation.X, bone.Translation.Y, bone.Translation.Z));
-                Matrix4x4 rotMatrix = Matrix4x4.FromEulerAnglesXYZ(bone.Rotation.X * (float)Math.PI / 180, bone.Rotation.Y * (float)Math.PI / 180, bone.Rotation.Z * (float)Math.PI / 180);
-                Matrix4x4 sclMatrix = Matrix4x4.FromScaling(new Vector3D(bone.Scale.X, bone.Scale.Y, bone.Scale.Z));
-                boneToNode.Transform = sclMatrix * rotMatrix * trsMatrix;
-                Node parentNode = null;
-                if (bone.BoneParent != -1)
-                    parentNode = scene.RootNode.FindNode(BRNT.Bones[bone.BoneParent].BoneName);
-                if (parentNode != null)
+            // skeleton if applicable
+
+            if (BRNT != null)
+            {
+                foreach (var bone in BRNT.Bones)
                 {
-                    scene.RootNode.FindNode(BRNT.Bones[bone.BoneParent].BoneName).Children.Add(boneToNode);
+                    Console.WriteLine(bone.BoneName);
+                    Console.WriteLine(bone.Translation);
+                    Console.WriteLine(bone.Rotation);
+                    Console.WriteLine(bone.Scale);
+                    Node boneToNode = new Node(bone.BoneName);
+
+                    Matrix4x4 trsMatrix = Matrix4x4.FromTranslation(new Vector3D(bone.Translation.X, bone.Translation.Y, bone.Translation.Z));
+                    Matrix4x4 rotMatrix = Matrix4x4.FromEulerAnglesXYZ(bone.Rotation.X * (float)Math.PI / 180, bone.Rotation.Y * (float)Math.PI / 180, bone.Rotation.Z * (float)Math.PI / 180);
+                    Matrix4x4 sclMatrix = Matrix4x4.FromScaling(new Vector3D(bone.Scale.X, bone.Scale.Y, bone.Scale.Z));
+                    Matrix4x4 outMatrix = Matrix4x4.Identity;
+                    outMatrix *= trsMatrix;
+                    outMatrix *= rotMatrix;
+                    outMatrix *= sclMatrix;
+                    outMatrix.Inverse();
+                    boneToNode.Transform = outMatrix;
+                    Node parentNode = null;
+                    if (bone.BoneParent != -1)
+                        parentNode = scene.RootNode.FindNode(BRNT.Bones[bone.BoneParent].BoneName);
+                    if (parentNode != null)
+                    {
+                        scene.RootNode.FindNode(BRNT.Bones[bone.BoneParent].BoneName).Children.Add(boneToNode);
+                    }
+                    else
+                        scene.RootNode.Children.Add(boneToNode);
                 }
-                else
-                    scene.RootNode.Children.Add(boneToNode);
             }
+
+            // meshes
+
+            VARI vari = (VARI)MESH.ChildNodes.First(x => x.Type == "VARI");
+
+            foreach (PRIM prim in vari.PRIMs)
+            {
+                Node meshNode = new Node(MESH.StringBuffer.StringList.Strings[prim.MeshName]);
+
+                Mesh mesh = new Mesh();
+                mesh.Name = MESH.StringBuffer.StringList.Strings[prim.MeshName];
+                mesh.PrimitiveType = PrimitiveType.Triangle;
+
+                VXST vxst = (VXST)GPR.Heap.Sections.Where(x => x.Type == "VXST").ToList()[prim.PrimitiveID];
+
+                VXAR vxar = (VXAR)GPR.Heap.Sections.Where(x => x.Type == "VXAR").ToList()[prim.PrimitiveID];
+
+                IXBF ixbf = (IXBF)GPR.Heap.Sections.Where(x => x.Type == "IXBF").ToList()[prim.PrimitiveID];
+
+                VXBF vxbf = (VXBF)GPR.Heap.Sections.Where(x => x.Type == "VXBF").ToList()[prim.PrimitiveID];
+
+                // diry code
+                MATE mate = (MATE)MESH.ChildNodes.Where(x => x.Type == "MATE").ToList()[prim.MaterialID];
+                SAMP samp = (SAMP)MESH.ChildNodes.Where(x => x.Type == "SAMP").ToList()[mate.SamplerID];  // samplers should always be linear
+
+                EFFE effe = (EFFE)MESH.ChildNodes.Where(x => x.Type == "EFFE").ToList()[mate.EffectID];
+
+                VXSH vs = (VXSH)GPR.Heap.Sections.Where(x => x.Name == MESH.StringBuffer.StringList.Strings[effe.TPAS.VertexShaderName] && x.Type == "VXSH").ToList()[0];
+
+                List<string> attributeNames = ShaderHelper.GetInputNames(new MemoryStream(vs.BufferData));
+
+                Material material = new Material();
+                material.Name = MESH.StringBuffer.StringList.Strings[mate.Name1];
+
+                foreach (var sstv in samp.SSTVs)
+                {
+                    switch (MESH.StringBuffer.StringList.Strings[sstv.TextureSlot])
+                    {
+                        case "Albedo0":
+                            TextureSlot diffSlot = new TextureSlot();
+                            diffSlot.TextureType = TextureType.Diffuse;
+                            diffSlot.FilePath = Path.GetFileName(MESH.StringBuffer.StringList.Strings[sstv.TextureSourcePath]);
+                            material.AddMaterialTexture(diffSlot);
+                            break;
+                        case "envTexture":
+                            TextureSlot envSlot = new TextureSlot();
+                            envSlot.TextureType = TextureType.Reflection;
+                            envSlot.FilePath = Path.GetFileName(MESH.StringBuffer.StringList.Strings[sstv.TextureSourcePath]);
+                            material.AddMaterialTexture(envSlot);
+                            break;
+                    }
+                }
+
+                scene.Materials.Add(material);
+                mesh.MaterialIndex = prim.MaterialID;
+
+                int vertexCount = vxst.Data.VertexBufferReferences[0].VertexCount;
+                for (int i = 0; i < vertexCount; i++)
+                {
+                    for (int a = 0; a < vxar.Data.VertexAttributes.Count; a++)
+                    {
+                        if (vxar.Data.VertexAttributes[a].VertexBufferIndex == 0)
+                        {
+                            switch (attributeNames[a])
+                            {
+                                case "in_Pos0":
+                                    Vector3D vert = new Vector3D();
+                                    if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedByte)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            vert[v] = vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))];
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedByte)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            vert[v] = (sbyte)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))];
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedShort)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            vert[v] = BitConverter.ToUInt16(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedShort)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            vert[v] = BitConverter.ToInt16(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedByteNormalized)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            vert[v] = (float)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))] / 255;
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedByteNormalized)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            vert[v] = (float)(sbyte)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))] / 127;
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.HalfFloat)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            vert[v] = (float)BitConverter.ToHalf(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.Float)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            vert[v] = (float)BitConverter.ToSingle(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 4) + (i * (vxbf.Data.VertexStride)));
+                                        }
+                                    }
+                                    mesh.Vertices.Add(vert);
+                                    break;
+                                case "in_vN0":
+                                    Vector3D normal = new Vector3D();
+                                    if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedByte)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            normal[v] = vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))];
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedByte)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            normal[v] = (sbyte)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))];
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedShort)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            normal[v] = BitConverter.ToUInt16(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedShort)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            normal[v] = BitConverter.ToInt16(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedByteNormalized)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            normal[v] = (float)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))] / 255;
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedByteNormalized)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            normal[v] = (float)(sbyte)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))] / 127;
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.HalfFloat)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            normal[v] = (float)BitConverter.ToHalf(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.Float)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            normal[v] = (float)BitConverter.ToSingle(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 4) + (i * (vxbf.Data.VertexStride)));
+                                        }
+                                    }
+                                    mesh.Normals.Add(normal);
+                                    break;
+                                case "in_Uv0":
+                                    Vector3D uv = new Vector3D();
+                                    if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedByte)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            uv[v] = vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))];
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedByte)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            uv[v] = (sbyte)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))];
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedShort)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            uv[v] = BitConverter.ToUInt16(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedShort)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            uv[v] = BitConverter.ToInt16(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedByteNormalized)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            uv[v] = (float)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))] / 255;
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedByteNormalized)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            uv[v] = (float)(sbyte)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))] / 127;
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.HalfFloat)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            uv[v] = (float)BitConverter.ToHalf(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.Float)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            uv[v] = (float)BitConverter.ToSingle(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 4) + (i * (vxbf.Data.VertexStride)));
+                                        }
+                                    }
+                                    mesh.TextureCoordinateChannels[0].Add(uv);
+                                    break;
+                                /*case "in_BlendIndex":
+                                    mesh.Skin
+                                    Vector3D uv = new Vector3D();
+                                    if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedByte)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            uv[v] = vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride)];
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedByte)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            uv[v] = (sbyte)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))];
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedShort)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            uv[v] = BitConverter.ToUInt16(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedShort)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            uv[v] = BitConverter.ToInt16(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedByteNormalized)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            uv[v] = (float)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride)] / 255;
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedByteNormalized)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            uv[v] = (float)(sbyte)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride)] / 127;
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.HalfFloat)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            uv[v] = (float)BitConverter.ToHalf(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.Float)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            uv[v] = (float)BitConverter.ToSingle(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 4) + (i * (vxbf.Data.VertexStride)));
+                                        }
+                                    }
+                                    mesh.TextureCoordinateChannels[0].Add(uv);
+                                    break;
+                                case "in_BlendWeight":
+                                    grpStream.Write($"bw");
+                                    if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedByte)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            grpStream.Write($" {vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex].BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * ((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).Data.VertexStride)]}");
+                                        }
+                                        grpStream.Write("\n");
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedByte)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            grpStream.Write($" {(sbyte)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex].BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * ((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).Data.VertexStride)]}");
+                                        }
+                                        grpStream.Write("\n");
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedByteNormalized)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            grpStream.Write($" {(float)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex].BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * ((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).Data.VertexStride)] / 255}");
+                                        }
+                                        grpStream.Write("\n");
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedByteNormalized)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            grpStream.Write($" {(float)(sbyte)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex].BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * ((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).Data.VertexStride)] / 127}");
+                                        }
+                                        grpStream.Write("\n");
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.HalfFloat)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            grpStream.Write($" {BitConverter.ToHalf(vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex].BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * ((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).Data.VertexStride))}");
+                                        }
+                                        grpStream.Write("\n");
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.Float)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            grpStream.Write($" {BitConverter.ToSingle(vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex].BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 4) + (i * ((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).Data.VertexStride))}");
+                                        }
+                                        grpStream.Write("\n");
+                                    }
+                                    break;*/
+                                default:
+                                    break;
+                            }
+                        }
+                    }
+                }
+                for (int i = 0; i < vxst.Data.FaceIndexCount; i += 3)
+                {
+                    mesh.Faces.Add(new Face(new int[3] { BitConverter.ToInt16(ixbf.BufferData, (i * 2)), BitConverter.ToInt16(ixbf.BufferData, (i * 2) + 2), BitConverter.ToInt16(ixbf.BufferData, (i * 2) + 4) }));
+                }
+
+                scene.Meshes.Add(mesh);
+                meshNode.MeshIndices.Add(prim.PrimitiveID);
+                scene.RootNode.Children.Add(meshNode);
+                
+            }
+
             context.ExportFile(scene, filePath, "collada", Assimp.PostProcessSteps.None);
         }
 
