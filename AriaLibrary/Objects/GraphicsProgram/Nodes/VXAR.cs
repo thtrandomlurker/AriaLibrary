@@ -10,10 +10,14 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
 {
     public enum VertexAttributeDataType : int
     {
-        UnsignedByteIndex = 0,
-        SignedByteIndex = 1,
+        UnsignedByte = 0,
+        SignedByte = 1,
+        UnsignedShort = 2,
+        SignedShort = 3,
         UnsignedByteNormalized = 4,
         SignedByteNormalized = 5,
+        UnsignedShortNormalized = 6,
+        SignedShortNormalized = 7,
         HalfFloat = 8,
         Float = 9
     }

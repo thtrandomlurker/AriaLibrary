@@ -1,12 +1,19 @@
 using AriaLibrary.Objects;
+using AriaLibrary.Objects.Nodes;
 using Ookii.Dialogs.WinForms;
+using System.ComponentModel;
+using System.ComponentModel.Design;
+using System.Drawing.Design;
+using System.Windows.Forms.Design;
+using System.Windows.Forms;
+
 namespace IAModelEditor.GUI.Forms
 {
-    public partial class ModelEditorForm : Form
+    public partial class MainForm : Form
     {
         public ObjectGroup? ObjectGroup;
         public string? SourceFilePath;
-        public ModelEditorForm()
+        public MainForm()
         {
             InitializeComponent();
         }
@@ -18,6 +25,7 @@ namespace IAModelEditor.GUI.Forms
                 ObjectGroup = new ObjectGroup();
                 ObjectGroup.LoadPackage(MenuStripOpenFileDialog.FileName);
                 SourceFilePath = MenuStripOpenFileDialog.FileName;
+                CurrentlyLoadedLabel.Text = $"Currently Loaded: {ObjectGroup.GPR.Heap.Name}";
             }
         }
 
@@ -68,6 +76,27 @@ namespace IAModelEditor.GUI.Forms
                     {
                         ObjectGroup.ExportModelAsModifiedOBJ(folderBrowser.SelectedPath);
                     }
+                }
+            }
+        }
+
+        private void MenuStripEditMESHVariEditor_OnClick(object sender, EventArgs e)
+        {
+            if (ObjectGroup != null)
+            {
+                VARIEditorForm variEditor = new VARIEditorForm();
+                variEditor.ObjectGroup = ObjectGroup;
+                variEditor.Show();
+            }
+        }
+
+        private void MenuStripExportDAE_OnClick(object sender, EventArgs e)
+        {
+            if (ObjectGroup != null)
+            {
+                if (MenuStripExportDAEFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    ObjectGroup.ExportModelToCollada(MenuStripExportDAEFileDialog.FileName);
                 }
             }
         }

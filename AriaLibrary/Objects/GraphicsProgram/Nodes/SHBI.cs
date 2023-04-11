@@ -9,43 +9,43 @@ using StringReader = AriaLibrary.IO.StringReader;
 
 namespace AriaLibrary.Objects.GraphicsProgram.Nodes
 {
-    public class SHBIInput
+    public class ParameterCount
     {
-        public string InputName;
-        public int U04;
-        public int U08;
+        public string ParameterName;
+        public int ParameterResourceIndex;
+        public int ParameterArraySize;
         public void Read(BinaryReader reader, int heapStringOffset)
         {
-            InputName = StringReader.ReadNullTerminatedStringAtOffset(reader, heapStringOffset + reader.ReadInt32());
-            U04 = reader.ReadInt32();
-            U08 = reader.ReadInt32();
+            ParameterName = StringReader.ReadNullTerminatedStringAtOffset(reader, heapStringOffset + reader.ReadInt32());
+            ParameterResourceIndex = reader.ReadInt32();
+            ParameterArraySize = reader.ReadInt32();
         }
         public void Write(BinaryWriter dataWriter, BinaryWriter stringWriter, ref Dictionary<string, int> stringPosMap)
         {
             // deal with the name now
-            if (stringPosMap.TryGetValue(InputName, out int value))
+            if (stringPosMap.TryGetValue(ParameterName, out int value))
                 dataWriter.Write(value);
             else
             {
                 dataWriter.Write((int)stringWriter.BaseStream.Position);
-                stringPosMap.Add(InputName, (int)stringWriter.BaseStream.Position);
-                stringWriter.Write(InputName.ToCharArray());
+                stringPosMap.Add(ParameterName, (int)stringWriter.BaseStream.Position);
+                stringWriter.Write(ParameterName.ToCharArray());
                 stringWriter.Write('\0');
             }
-            dataWriter.Write(U04);
-            dataWriter.Write(U08);
+            dataWriter.Write(ParameterResourceIndex);
+            dataWriter.Write(ParameterArraySize);
         }
 
-        public SHBIInput()
+        public ParameterCount()
         {
-            InputName = "";
+            ParameterName = "";
         }
     }
     public class SHBIData
     {
         public int U00;
         public int U04;
-        public List<SHBIInput> Inputs;
+        public List<ParameterCount> Parameters;
 
         public void Read(BinaryReader reader, int heapDataOffset, int heapStringOffset)
         {
@@ -53,13 +53,13 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             reader.BaseStream.Seek(heapDataOffset, SeekOrigin.Begin);
             U00 = reader.ReadInt32();
             U04 = reader.ReadInt32();
-            int inputCount = reader.ReadInt32();
+            int parameterCount = reader.ReadInt32();
 
-            for (int i = 0; i < inputCount; i++)
+            for (int i = 0; i < parameterCount; i++)
             {
-                SHBIInput input = new SHBIInput();
+                ParameterCount input = new ParameterCount();
                 input.Read(reader, heapStringOffset);
-                Inputs.Add(input);
+                Parameters.Add(input);
             }
 
             reader.BaseStream.Seek(cur, SeekOrigin.Begin);
@@ -69,8 +69,8 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
         {
             dataWriter.Write(U00);
             dataWriter.Write(U04);
-            dataWriter.Write(Inputs.Count);
-            foreach (var input in Inputs)
+            dataWriter.Write(Parameters.Count);
+            foreach (var input in Parameters)
             {
                 input.Write(dataWriter, stringWriter, ref stringPosMap);
             }
@@ -79,7 +79,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
 
         public SHBIData(string inputName = "")
         {
-            Inputs = new List<SHBIInput>();
+            Parameters = new List<ParameterCount>();
         }
     }
     public class SHBI : GPRSection
@@ -121,7 +121,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             heapWriter.Write(ReservedNameHash);
             // heap data
             heapWriter.Write((int)dataWriter.BaseStream.Position);
-            heapWriter.Write(PositionHelper.PadValue(0x0C + (Data.Inputs.Count * 0x0C), 0x10));
+            heapWriter.Write(PositionHelper.PadValue(0x0C + (Data.Parameters.Count * 0x0C), 0x10));
             heapWriter.Write(-1);
             heapWriter.Write(0);
             heapWriter.Write(0);

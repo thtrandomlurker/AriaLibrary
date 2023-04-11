@@ -1,6 +1,6 @@
 ﻿namespace IAModelEditor.GUI.Forms
 {
-    partial class ModelEditorForm
+    partial class MainForm
     {
         /// <summary>
         ///  Required designer variable.
@@ -36,18 +36,28 @@
             this.MenuStripExport = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuStripExportGPR = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuStripExportOBJ = new System.Windows.Forms.ToolStripMenuItem();
+            this.MenuStripExportDAE = new System.Windows.Forms.ToolStripMenuItem();
+            this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.MenuStripEditMESH = new System.Windows.Forms.ToolStripMenuItem();
+            this.MenuStripEditMESHVariEditor = new System.Windows.Forms.ToolStripMenuItem();
+            this.MenuStripEditGPR = new System.Windows.Forms.ToolStripMenuItem();
+            this.MenuStripEditNODT = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuStripOpenFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.MenuStripSaveAsFileDialog = new System.Windows.Forms.SaveFileDialog();
+            this.CurrentlyLoadedLabel = new System.Windows.Forms.Label();
+            this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.MenuStripExportDAEFileDialog = new System.Windows.Forms.SaveFileDialog();
             this.MenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // MenuStrip
             // 
             this.MenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.fileToolStripMenuItem});
+            this.fileToolStripMenuItem,
+            this.editToolStripMenuItem});
             this.MenuStrip.Location = new System.Drawing.Point(0, 0);
             this.MenuStrip.Name = "MenuStrip";
-            this.MenuStrip.Size = new System.Drawing.Size(800, 24);
+            this.MenuStrip.Size = new System.Drawing.Size(402, 24);
             this.MenuStrip.TabIndex = 0;
             this.MenuStrip.Text = "menuStrip1";
             // 
@@ -91,7 +101,8 @@
             // 
             this.MenuStripExport.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.MenuStripExportGPR,
-            this.MenuStripExportOBJ});
+            this.MenuStripExportOBJ,
+            this.MenuStripExportDAE});
             this.MenuStripExport.Name = "MenuStripExport";
             this.MenuStripExport.Size = new System.Drawing.Size(186, 22);
             this.MenuStripExport.Text = "Export";
@@ -99,16 +110,60 @@
             // MenuStripExportGPR
             // 
             this.MenuStripExportGPR.Name = "MenuStripExportGPR";
-            this.MenuStripExportGPR.Size = new System.Drawing.Size(180, 22);
+            this.MenuStripExportGPR.Size = new System.Drawing.Size(149, 22);
             this.MenuStripExportGPR.Text = "GPR";
             this.MenuStripExportGPR.Click += new System.EventHandler(this.MenuStripExportGPR_OnClick);
             // 
             // MenuStripExportOBJ
             // 
             this.MenuStripExportOBJ.Name = "MenuStripExportOBJ";
-            this.MenuStripExportOBJ.Size = new System.Drawing.Size(180, 22);
+            this.MenuStripExportOBJ.Size = new System.Drawing.Size(149, 22);
             this.MenuStripExportOBJ.Text = "OBJ/MTL/GRP";
             this.MenuStripExportOBJ.Click += new System.EventHandler(this.MenuStripExportOBJ_OnClick);
+            // 
+            // MenuStripExportDAE
+            // 
+            this.MenuStripExportDAE.Name = "MenuStripExportDAE";
+            this.MenuStripExportDAE.Size = new System.Drawing.Size(149, 22);
+            this.MenuStripExportDAE.Text = "DAE";
+            this.MenuStripExportDAE.Click += new System.EventHandler(this.MenuStripExportDAE_OnClick);
+            // 
+            // editToolStripMenuItem
+            // 
+            this.editToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.MenuStripEditMESH,
+            this.MenuStripEditGPR,
+            this.MenuStripEditNODT});
+            this.editToolStripMenuItem.Name = "editToolStripMenuItem";
+            this.editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
+            this.editToolStripMenuItem.Text = "Edit";
+            // 
+            // MenuStripEditMESH
+            // 
+            this.MenuStripEditMESH.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.MenuStripEditMESHVariEditor});
+            this.MenuStripEditMESH.Name = "MenuStripEditMESH";
+            this.MenuStripEditMESH.Size = new System.Drawing.Size(210, 22);
+            this.MenuStripEditMESH.Text = "MESH";
+            // 
+            // MenuStripEditMESHVariEditor
+            // 
+            this.MenuStripEditMESHVariEditor.Name = "MenuStripEditMESHVariEditor";
+            this.MenuStripEditMESHVariEditor.Size = new System.Drawing.Size(98, 22);
+            this.MenuStripEditMESHVariEditor.Text = "VARI";
+            this.MenuStripEditMESHVariEditor.Click += new System.EventHandler(this.MenuStripEditMESHVariEditor_OnClick);
+            // 
+            // MenuStripEditGPR
+            // 
+            this.MenuStripEditGPR.Name = "MenuStripEditGPR";
+            this.MenuStripEditGPR.Size = new System.Drawing.Size(210, 22);
+            this.MenuStripEditGPR.Text = "GPR (Not Implemented)";
+            // 
+            // MenuStripEditNODT
+            // 
+            this.MenuStripEditNODT.Name = "MenuStripEditNODT";
+            this.MenuStripEditNODT.Size = new System.Drawing.Size(210, 22);
+            this.MenuStripEditNODT.Text = "NODT (Not Implemented)";
             // 
             // MenuStripOpenFileDialog
             // 
@@ -118,14 +173,33 @@
             // 
             this.MenuStripSaveAsFileDialog.Filter = "IA/VT Model File|*.mdl";
             // 
-            // ModelEditorForm
+            // CurrentlyLoadedLabel
+            // 
+            this.CurrentlyLoadedLabel.AutoSize = true;
+            this.CurrentlyLoadedLabel.Location = new System.Drawing.Point(12, 24);
+            this.CurrentlyLoadedLabel.Name = "CurrentlyLoadedLabel";
+            this.CurrentlyLoadedLabel.Size = new System.Drawing.Size(133, 15);
+            this.CurrentlyLoadedLabel.TabIndex = 1;
+            this.CurrentlyLoadedLabel.Text = "Currently Loaded: None";
+            // 
+            // openFileDialog1
+            // 
+            this.openFileDialog1.Filter = "IA/VT Model File|*.mdl";
+            // 
+            // MenuStripExportDAEFileDialog
+            // 
+            this.MenuStripExportDAEFileDialog.Filter = "Collada (DAE)|*.dae";
+            this.MenuStripExportDAEFileDialog.Title = "Select a destitination file";
+            // 
+            // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(402, 52);
+            this.Controls.Add(this.CurrentlyLoadedLabel);
             this.Controls.Add(this.MenuStrip);
             this.MainMenuStrip = this.MenuStrip;
-            this.Name = "ModelEditorForm";
+            this.Name = "MainForm";
             this.Text = "IA/VT Colorful Model Editor 0.01";
             this.MenuStrip.ResumeLayout(false);
             this.MenuStrip.PerformLayout();
@@ -146,5 +220,14 @@
         private ToolStripMenuItem MenuStripExport;
         private ToolStripMenuItem MenuStripExportGPR;
         private ToolStripMenuItem MenuStripExportOBJ;
+        private ToolStripMenuItem editToolStripMenuItem;
+        private ToolStripMenuItem MenuStripEditMESH;
+        private ToolStripMenuItem MenuStripEditGPR;
+        private ToolStripMenuItem MenuStripEditNODT;
+        private Label CurrentlyLoadedLabel;
+        private ToolStripMenuItem MenuStripEditMESHVariEditor;
+        private ToolStripMenuItem MenuStripExportDAE;
+        private OpenFileDialog openFileDialog1;
+        private SaveFileDialog MenuStripExportDAEFileDialog;
     }
 }

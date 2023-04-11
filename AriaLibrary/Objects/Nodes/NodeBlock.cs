@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace AriaLibrary.Objects.Nodes
 {
-    public abstract class NodeBlock : INode
+    public abstract class NodeBlock : INodeBlock
     {
         public abstract string Type { get; }
 

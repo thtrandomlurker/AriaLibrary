@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace AriaLibrary.Objects.Nodes
 {
-    public interface INode
+    public interface INodeBlock
     {
         string Type { get; }
 
