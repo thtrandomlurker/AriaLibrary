@@ -90,13 +90,13 @@ namespace IAModelEditor.GUI.Forms
             }
         }
 
-        private void MenuStripExportDAE_OnClick(object sender, EventArgs e)
+        private void MenuStripExportFBX_OnClick(object sender, EventArgs e)
         {
             if (ObjectGroup != null)
             {
-                if (MenuStripExportDAEFileDialog.ShowDialog() == DialogResult.OK)
+                if (MenuStripExportFBXFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    ObjectGroup.ExportModelToCollada(MenuStripExportDAEFileDialog.FileName);
+                    ObjectGroup.ExportModelToFBX(MenuStripExportFBXFileDialog.FileName);
                 }
             }
         }

@@ -27,7 +27,7 @@ namespace AriaLibrary.Objects
         public NODT NODT;
         public BRNT? BRNT;
 
-        public void ExportModelToCollada(string filePath)
+        public void ExportModelToFBX(string filePath)
         {
             AssimpContext context = new AssimpContext();
 
@@ -57,13 +57,11 @@ namespace AriaLibrary.Objects
                     boneToNode.Transform = outMatrix;
                     Node parentNode = null;
                     if (bone.BoneParent != -1)
-                        parentNode = scene.RootNode.FindNode(BRNT.Bones[bone.BoneParent].BoneName);
-                    if (parentNode != null)
-                    {
                         scene.RootNode.FindNode(BRNT.Bones[bone.BoneParent].BoneName).Children.Add(boneToNode);
-                    }
                     else
+                    {
                         scene.RootNode.Children.Add(boneToNode);
+                    }
                 }
             }
 
@@ -333,6 +331,66 @@ namespace AriaLibrary.Objects
                                     }
                                     mesh.TextureCoordinateChannels[0].Add(uv);
                                     break;
+                                case "in_Col00":
+                                    Color4D col = new Color4D();
+                                    if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedByte)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            col[v] = vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))];
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedByte)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            col[v] = (sbyte)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))];
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedShort)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            col[v] = BitConverter.ToUInt16(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedShort)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            col[v] = BitConverter.ToInt16(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedByteNormalized)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            col[v] = (float)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))] / 255;
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedByteNormalized)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            col[v] = (float)(sbyte)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))] / 127;
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.HalfFloat)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            col[v] = (float)BitConverter.ToHalf(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
+                                        }
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.Float)
+                                    {
+                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                        {
+                                            col[v] = (float)BitConverter.ToSingle(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 4) + (i * (vxbf.Data.VertexStride)));
+                                        }
+                                    }
+                                    mesh.VertexColorChannels[0].Add(col);
+                                    break;
                                 case "in_BlendIndex":
                                     int[] indices = new int[4];
                                     if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedByte)
@@ -439,7 +497,6 @@ namespace AriaLibrary.Objects
                 {
                     mesh.Faces.Add(new Face(new int[3] { BitConverter.ToInt16(ixbf.BufferData, (i * 2)), BitConverter.ToInt16(ixbf.BufferData, (i * 2) + 2), BitConverter.ToInt16(ixbf.BufferData, (i * 2) + 4) }));
                 }
-
                 for (int v = 0; v < vxbf.Data.VertexCount; v++)
                 {
                     for (int w = 0; w < 4; w++)
@@ -454,8 +511,10 @@ namespace AriaLibrary.Objects
                 scene.RootNode.Children.Add(meshNode);
                 
             }
+            string formatId = new AssimpContext().GetSupportedExportFormats()
+                .First(x => x.FileExtension.Equals("fbx", StringComparison.OrdinalIgnoreCase)).FormatId;
 
-            context.ExportFile(scene, filePath, "collada", Assimp.PostProcessSteps.None);
+            context.ExportFile(scene, filePath, formatId, Assimp.PostProcessSteps.None);
         }
 
         public void ExportMeshToOBJ(string outDir, int meshIndex)
