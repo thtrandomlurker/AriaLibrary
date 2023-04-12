@@ -14,6 +14,7 @@ using System.Reflection.Metadata;
 using Assimp;
 using Assimp.Unmanaged;
 using System.IO.Compression;
+using System.Security.Cryptography.X509Certificates;
 
 namespace AriaLibrary.Objects
 {
@@ -78,6 +79,26 @@ namespace AriaLibrary.Objects
                 mesh.Name = MESH.StringBuffer.StringList.Strings[prim.MeshName];
                 mesh.PrimitiveType = PrimitiveType.Triangle;
 
+                if (BRNT != null)
+                {
+                    foreach (var bone in BRNT.Bones)
+                    {
+                        Matrix4x4 trsMatrix = Matrix4x4.FromTranslation(new Vector3D(bone.Translation.X, bone.Translation.Y, bone.Translation.Z));
+                        Matrix4x4 rotMatrix = Matrix4x4.FromEulerAnglesXYZ(bone.Rotation.X * (float)Math.PI / 180, bone.Rotation.Y * (float)Math.PI / 180, bone.Rotation.Z * (float)Math.PI / 180);
+                        Matrix4x4 sclMatrix = Matrix4x4.FromScaling(new Vector3D(bone.Scale.X, bone.Scale.Y, bone.Scale.Z));
+                        Matrix4x4 outMatrix = Matrix4x4.Identity;
+                        outMatrix *= trsMatrix;
+                        outMatrix *= rotMatrix;
+                        outMatrix *= sclMatrix;
+
+                        Assimp.Bone aiBone = new Assimp.Bone();
+                        aiBone.Name = bone.BoneName;
+                        aiBone.OffsetMatrix = outMatrix;
+                        aiBone.OffsetMatrix.Transpose();
+                        mesh.Bones.Add(aiBone);
+                    }
+                }
+
                 VXST vxst = (VXST)GPR.Heap.Sections.Where(x => x.Type == "VXST").ToList()[prim.PrimitiveID];
 
                 VXAR vxar = (VXAR)GPR.Heap.Sections.Where(x => x.Type == "VXAR").ToList()[prim.PrimitiveID];
@@ -121,6 +142,8 @@ namespace AriaLibrary.Objects
                 scene.Materials.Add(material);
                 mesh.MaterialIndex = prim.MaterialID;
 
+                List<int[]> tWeightIndices = new List<int[]>();
+                List<float[]> tWeights = new List<float[]>();
                 int vertexCount = vxst.Data.VertexBufferReferences[0].VertexCount;
                 for (int i = 0; i < vertexCount; i++)
                 {
@@ -310,118 +333,102 @@ namespace AriaLibrary.Objects
                                     }
                                     mesh.TextureCoordinateChannels[0].Add(uv);
                                     break;
-                                /*case "in_BlendIndex":
-                                    mesh.Skin
-                                    Vector3D uv = new Vector3D();
+                                case "in_BlendIndex":
+                                    int[] indices = new int[4];
                                     if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedByte)
                                     {
                                         for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
                                         {
-                                            uv[v] = vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride)];
+                                            indices[v] = vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))];
                                         }
                                     }
                                     else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedByte)
                                     {
                                         for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
                                         {
-                                            uv[v] = (sbyte)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))];
+                                            indices[v] = (sbyte)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))];
                                         }
                                     }
                                     else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedShort)
                                     {
                                         for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
                                         {
-                                            uv[v] = BitConverter.ToUInt16(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
+                                            indices[v] = BitConverter.ToUInt16(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
                                         }
                                     }
                                     else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedShort)
                                     {
                                         for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
                                         {
-                                            uv[v] = BitConverter.ToInt16(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
+                                            indices[v] = BitConverter.ToInt16(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
                                         }
                                     }
                                     else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedByteNormalized)
                                     {
-                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
-                                        {
-                                            uv[v] = (float)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride)] / 255;
-                                        }
+                                        throw new InvalidDataException("How is there a float type being put into an int array this makes no sense");
                                     }
                                     else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedByteNormalized)
                                     {
-                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
-                                        {
-                                            uv[v] = (float)(sbyte)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride)] / 127;
-                                        }
+                                        throw new InvalidDataException("How is there a float type being put into an int array this makes no sense");
                                     }
                                     else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.HalfFloat)
                                     {
-                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
-                                        {
-                                            uv[v] = (float)BitConverter.ToHalf(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
-                                        }
+                                        throw new InvalidDataException("How is there a float type being put into an int array this makes no sense");
                                     }
                                     else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.Float)
                                     {
-                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
-                                        {
-                                            uv[v] = (float)BitConverter.ToSingle(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 4) + (i * (vxbf.Data.VertexStride)));
-                                        }
+                                        throw new InvalidDataException("How is there a float type being put into an int array this makes no sense");
                                     }
-                                    mesh.TextureCoordinateChannels[0].Add(uv);
+                                    tWeightIndices.Add(indices);
                                     break;
                                 case "in_BlendWeight":
-                                    grpStream.Write($"bw");
+                                    float[] weights = new float[4];
                                     if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedByte)
                                     {
-                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
-                                        {
-                                            grpStream.Write($" {vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex].BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * ((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).Data.VertexStride)]}");
-                                        }
-                                        grpStream.Write("\n");
+                                        throw new InvalidDataException("How is there an integer type being put into a float array this makes no sense");
                                     }
                                     else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedByte)
                                     {
-                                        for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
-                                        {
-                                            grpStream.Write($" {(sbyte)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex].BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * ((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).Data.VertexStride)]}");
-                                        }
-                                        grpStream.Write("\n");
+                                        throw new InvalidDataException("How is there an integer type being put into a float array this makes no sense");
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedShort)
+                                    {
+                                        throw new InvalidDataException("How is there an integer type being put into a float array this makes no sense");
+                                    }
+                                    else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedShort)
+                                    {
+                                        throw new InvalidDataException("How is there an integer type being put into a float array this makes no sense");
                                     }
                                     else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedByteNormalized)
                                     {
                                         for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
                                         {
-                                            grpStream.Write($" {(float)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex].BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * ((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).Data.VertexStride)] / 255}");
+                                            weights[v] = (float)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))] / 255;
                                         }
-                                        grpStream.Write("\n");
                                     }
                                     else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedByteNormalized)
                                     {
                                         for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
                                         {
-                                            grpStream.Write($" {(float)(sbyte)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex].BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * ((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).Data.VertexStride)] / 127}");
+                                            weights[v] = (float)(sbyte)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))] / 127;
                                         }
-                                        grpStream.Write("\n");
                                     }
                                     else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.HalfFloat)
                                     {
                                         for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
                                         {
-                                            grpStream.Write($" {BitConverter.ToHalf(vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex].BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * ((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).Data.VertexStride))}");
+                                            weights[v] = (float)BitConverter.ToHalf(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
                                         }
-                                        grpStream.Write("\n");
                                     }
                                     else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.Float)
                                     {
                                         for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
                                         {
-                                            grpStream.Write($" {BitConverter.ToSingle(vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex].BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 4) + (i * ((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).Data.VertexStride))}");
+                                            weights[v] = (float)BitConverter.ToSingle(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 4) + (i * (vxbf.Data.VertexStride)));
                                         }
-                                        grpStream.Write("\n");
                                     }
-                                    break;*/
+                                    tWeights.Add(weights);
+                                    break;
                                 default:
                                     break;
                             }
@@ -431,6 +438,15 @@ namespace AriaLibrary.Objects
                 for (int i = 0; i < vxst.Data.FaceIndexCount; i += 3)
                 {
                     mesh.Faces.Add(new Face(new int[3] { BitConverter.ToInt16(ixbf.BufferData, (i * 2)), BitConverter.ToInt16(ixbf.BufferData, (i * 2) + 2), BitConverter.ToInt16(ixbf.BufferData, (i * 2) + 4) }));
+                }
+
+                for (int v = 0; v < vxbf.Data.VertexCount; v++)
+                {
+                    for (int w = 0; w < 4; w++)
+                    {
+                        int boneIndex = BRNT.Bones.Find(x => x.SkinID == tWeightIndices[v][w]).BoneID;
+                        mesh.Bones[boneIndex].VertexWeights.Add(new VertexWeight(v, tWeights[v][w]));
+                    }
                 }
 
                 scene.Meshes.Add(mesh);
