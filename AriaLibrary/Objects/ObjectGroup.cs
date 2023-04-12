@@ -46,7 +46,7 @@ namespace AriaLibrary.Objects
                     Console.WriteLine(bone.Scale);
                     Node boneToNode = new Node(bone.BoneName);
 
-                    Matrix4x4 trsMatrix = Matrix4x4.FromTranslation(new Vector3D(bone.Translation.X, bone.Translation.Y, bone.Translation.Z));
+                    Matrix4x4 trsMatrix = Matrix4x4.FromTranslation(new Vector3D(-bone.Translation.X, -bone.Translation.Y, -bone.Translation.Z));
                     Matrix4x4 rotMatrix = Matrix4x4.FromEulerAnglesXYZ(bone.Rotation.X * (float)Math.PI / 180, bone.Rotation.Y * (float)Math.PI / 180, bone.Rotation.Z * (float)Math.PI / 180);
                     Matrix4x4 sclMatrix = Matrix4x4.FromScaling(new Vector3D(bone.Scale.X, bone.Scale.Y, bone.Scale.Z));
                     Matrix4x4 outMatrix = Matrix4x4.Identity;
@@ -54,10 +54,12 @@ namespace AriaLibrary.Objects
                     outMatrix *= rotMatrix;
                     outMatrix *= sclMatrix;
                     outMatrix.Inverse();
+
                     boneToNode.Transform = outMatrix;
-                    Node parentNode = null;
                     if (bone.BoneParent != -1)
+                    {
                         scene.RootNode.FindNode(BRNT.Bones[bone.BoneParent].BoneName).Children.Add(boneToNode);
+                    }
                     else
                     {
                         scene.RootNode.Children.Add(boneToNode);
