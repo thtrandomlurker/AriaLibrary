@@ -28,19 +28,5 @@ namespace IAModelEditor.GUI.Forms
                 VARIEditorPrimitiveList.Items.Add(ObjectGroup.MESH.StringBuffer.StringList.Strings[prim.MeshName]);
             }
         }
-
-        private void VARIEditorExportButton_OnClick(object sender, EventArgs e)
-        {
-            using (VistaFolderBrowserDialog folderBrowser = new VistaFolderBrowserDialog())
-            {
-                if (folderBrowser.ShowDialog() == DialogResult.OK)
-                {
-                    if (ObjectGroup != null)
-                    {
-                        ObjectGroup.ExportMeshToOBJ(folderBrowser.SelectedPath, VARIEditorPrimitiveList.SelectedIndex);
-                    }
-                }
-            }
-        }
     }
 }

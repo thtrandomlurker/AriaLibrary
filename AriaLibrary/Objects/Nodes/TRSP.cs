@@ -7,11 +7,17 @@ using AriaLibrary.Helpers;
 
 namespace AriaLibrary.Objects.Nodes
 {
+    public enum CullMode : int
+    {
+        None,
+        BackFace,
+        FrontFace
+    }
     public class TRSP : NodeBlock
     {
         public override string Type => "TRSP";
         public int TRSPId;
-        public int U04;
+        public CullMode Culling;
         public int U08;
         public int U0C;
         public int U10;
@@ -23,7 +29,7 @@ namespace AriaLibrary.Objects.Nodes
         {
             int dataSize = reader.ReadInt32();
             TRSPId = reader.ReadInt32();
-            U04 = reader.ReadInt32();
+            Culling = (CullMode)reader.ReadInt32();
             U08 = reader.ReadInt32();
             U0C = reader.ReadInt32();
             U10 = reader.ReadInt32();
@@ -37,7 +43,7 @@ namespace AriaLibrary.Objects.Nodes
             writer.Write(new char[4] { 'T', 'R', 'S', 'P' });
             writer.Write(0x20);
             writer.Write(TRSPId);
-            writer.Write(U04);
+            writer.Write((int)Culling);
             writer.Write(U08);
             writer.Write(U0C);
             writer.Write(U10);

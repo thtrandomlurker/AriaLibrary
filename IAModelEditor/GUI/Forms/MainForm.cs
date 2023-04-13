@@ -66,20 +66,6 @@ namespace IAModelEditor.GUI.Forms
             }
         }
 
-        private void MenuStripExportOBJ_OnClick(object sender, EventArgs e)
-        {
-            using (VistaFolderBrowserDialog folderBrowser = new VistaFolderBrowserDialog())
-            {
-                if (folderBrowser.ShowDialog() == DialogResult.OK)
-                {
-                    if (ObjectGroup != null)
-                    {
-                        ObjectGroup.ExportModelAsModifiedOBJ(folderBrowser.SelectedPath);
-                    }
-                }
-            }
-        }
-
         private void MenuStripEditMESHVariEditor_OnClick(object sender, EventArgs e)
         {
             if (ObjectGroup != null)
@@ -97,6 +83,17 @@ namespace IAModelEditor.GUI.Forms
                 if (MenuStripExportFBXFileDialog.ShowDialog() == DialogResult.OK)
                 {
                     ObjectGroup.ExportModelToFBX(MenuStripExportFBXFileDialog.FileName);
+                }
+            }
+        }
+
+        private void MenuStripReplace_OnClick(object sender, EventArgs e)
+        {
+            if (ObjectGroup != null)
+            {
+                if (MenuStripReplaceFileDIalog.ShowDialog() == DialogResult.OK)
+                {
+                    ObjectGroup.ImportModelFromFBX(MenuStripReplaceFileDIalog.FileName);
                 }
             }
         }

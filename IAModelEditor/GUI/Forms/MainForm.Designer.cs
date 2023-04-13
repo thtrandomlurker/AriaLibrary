@@ -35,7 +35,6 @@
             this.MenuStripSaveAs = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuStripExport = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuStripExportGPR = new System.Windows.Forms.ToolStripMenuItem();
-            this.MenuStripExportOBJ = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuStripExportFBX = new System.Windows.Forms.ToolStripMenuItem();
             this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuStripEditMESH = new System.Windows.Forms.ToolStripMenuItem();
@@ -45,8 +44,9 @@
             this.MenuStripOpenFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.MenuStripSaveAsFileDialog = new System.Windows.Forms.SaveFileDialog();
             this.CurrentlyLoadedLabel = new System.Windows.Forms.Label();
-            this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.MenuStripReplaceFileDIalog = new System.Windows.Forms.OpenFileDialog();
             this.MenuStripExportFBXFileDialog = new System.Windows.Forms.SaveFileDialog();
+            this.MenuStripReplace = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -67,7 +67,8 @@
             this.MenuStripOpen,
             this.MenuStripSave,
             this.MenuStripSaveAs,
-            this.MenuStripExport});
+            this.MenuStripExport,
+            this.MenuStripReplace});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             this.fileToolStripMenuItem.Text = "File";
@@ -101,7 +102,6 @@
             // 
             this.MenuStripExport.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.MenuStripExportGPR,
-            this.MenuStripExportOBJ,
             this.MenuStripExportFBX});
             this.MenuStripExport.Name = "MenuStripExport";
             this.MenuStripExport.Size = new System.Drawing.Size(186, 22);
@@ -113,13 +113,6 @@
             this.MenuStripExportGPR.Size = new System.Drawing.Size(180, 22);
             this.MenuStripExportGPR.Text = "GPR";
             this.MenuStripExportGPR.Click += new System.EventHandler(this.MenuStripExportGPR_OnClick);
-            // 
-            // MenuStripExportOBJ
-            // 
-            this.MenuStripExportOBJ.Name = "MenuStripExportOBJ";
-            this.MenuStripExportOBJ.Size = new System.Drawing.Size(180, 22);
-            this.MenuStripExportOBJ.Text = "OBJ/MTL/GRP";
-            this.MenuStripExportOBJ.Click += new System.EventHandler(this.MenuStripExportOBJ_OnClick);
             // 
             // MenuStripExportFBX
             // 
@@ -182,14 +175,21 @@
             this.CurrentlyLoadedLabel.TabIndex = 1;
             this.CurrentlyLoadedLabel.Text = "Currently Loaded: None";
             // 
-            // openFileDialog1
+            // MenuStripReplaceFileDIalog
             // 
-            this.openFileDialog1.Filter = "IA/VT Model File|*.mdl";
+            this.MenuStripReplaceFileDIalog.Filter = "FBX|*.fbx";
             // 
             // MenuStripExportFBXFileDialog
             // 
             this.MenuStripExportFBXFileDialog.Filter = "FBX|*.fbx";
             this.MenuStripExportFBXFileDialog.Title = "Select a destitination file";
+            // 
+            // MenuStripReplace
+            // 
+            this.MenuStripReplace.Name = "MenuStripReplace";
+            this.MenuStripReplace.Size = new System.Drawing.Size(186, 22);
+            this.MenuStripReplace.Text = "Replace";
+            this.MenuStripReplace.Click += new System.EventHandler(this.MenuStripReplace_OnClick);
             // 
             // MainForm
             // 
@@ -219,7 +219,6 @@
         private SaveFileDialog MenuStripSaveAsFileDialog;
         private ToolStripMenuItem MenuStripExport;
         private ToolStripMenuItem MenuStripExportGPR;
-        private ToolStripMenuItem MenuStripExportOBJ;
         private ToolStripMenuItem editToolStripMenuItem;
         private ToolStripMenuItem MenuStripEditMESH;
         private ToolStripMenuItem MenuStripEditGPR;
@@ -227,7 +226,8 @@
         private Label CurrentlyLoadedLabel;
         private ToolStripMenuItem MenuStripEditMESHVariEditor;
         private ToolStripMenuItem MenuStripExportFBX;
-        private OpenFileDialog openFileDialog1;
+        private OpenFileDialog MenuStripReplaceFileDIalog;
         private SaveFileDialog MenuStripExportFBXFileDialog;
+        private ToolStripMenuItem MenuStripReplace;
     }
 }

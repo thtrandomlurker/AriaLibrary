@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using StringReader = AriaLibrary.IO.StringReader;
 
+using AriaLibrary.Objects.GraphicsProgram;
+
 namespace AriaLibrary.Helpers
 {
     public static class ShaderHelper
