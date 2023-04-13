@@ -231,6 +231,7 @@ namespace AriaLibrary.Objects
                 vxbf.Data.VertexStride = 27;
 
                 vxst.Data.FaceIndexCount = mesh.FaceCount * 3;
+                vxst.Data.VXBFCount = 1;
 
                 MemoryStream tIndexStream = new MemoryStream();
 
@@ -246,6 +247,8 @@ namespace AriaLibrary.Objects
 
                 ixbf.BufferData = tIndexStream.ToArray();
                 tIndexStream.Close();
+
+                vxst.Data.VertexBufferReferences.Add(vxbf.Data);
 
                 cleanGPRSections.Insert(gprInsertPosition, vxbo);
                 cleanGPRSections.Insert(gprInsertPosition + 1, vxar);
@@ -563,7 +566,7 @@ namespace AriaLibrary.Objects
                                     uv[1] *= -1;
                                     mesh.TextureCoordinateChannels[0].Add(uv);
                                     break;
-                                case "in_Col00":
+                                case "in_Col0":
                                     Color4D col = new Color4D();
                                     if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedByte)
                                     {
@@ -718,8 +721,6 @@ namespace AriaLibrary.Objects
                                         }
                                     }
                                     tWeights.Add(weights);
-                                    break;
-                                default:
                                     break;
                             }
                         }
