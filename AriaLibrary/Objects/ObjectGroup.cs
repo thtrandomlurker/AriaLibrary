@@ -89,7 +89,11 @@ namespace AriaLibrary.Objects
 
             VARI vari = (VARI)cleanMeshNodes.First(x => x.Type == "VARI");
 
+            NODE meshInstanceNode = (NODE)NODT.ChildNodes.First(x => x.Type == "NODE" && ((NODE)x).InstanceData != null);
+
             vari.PRIMs.Clear();
+
+            meshInstanceNode.InstanceData.MeshCluster.Clusters.Clear();
 
             int meshPartsBaseId = 0;
             foreach (var mesh in scene.Meshes)
@@ -147,7 +151,15 @@ namespace AriaLibrary.Objects
                 prim.MeshNameDupe = MESH.StringBuffer.StringList.Strings.Count;
                 prim.MaterialID = basisMaterial.MaterialID;
                 prim.U18 = -1;
-                MESH.StringBuffer.StringList.Strings.Add(mesh.Name);
+                MESH.StringBuffer.StringList.Strings.Add($"MeshData-geom-P{meshPartsBaseId}");
+
+                CLUS cluster = new CLUS();
+                cluster.ClusterId = meshPartsBaseId;
+                cluster.ClusterName = NODT.StringBuffer.StringList.Strings.Count;
+                cluster.Neg1 = -1;
+                NODT.StringBuffer.StringList.Strings.Add($"MeshData-geom-P{meshPartsBaseId}");
+
+                meshInstanceNode.InstanceData.MeshCluster.Clusters.Add(cluster);
 
                 vari.PRIMs.Add(prim);
 
@@ -157,11 +169,11 @@ namespace AriaLibrary.Objects
                 IXBF ixbf = new IXBF();
                 VXBF vxbf = new VXBF();
                 VXST vxst = new VXST();
-                vxbo.Name = mesh.Name;
-                vxar.Name = mesh.Name;
-                ixbf.Name = mesh.Name;
-                vxbf.Name = mesh.Name;
-                vxst.Name = mesh.Name;
+                vxbo.Name = $"MeshData-geom-P{meshPartsBaseId}";
+                vxar.Name = $"MeshData-geom-P{meshPartsBaseId}";
+                ixbf.Name = $"MeshData-geom-P{meshPartsBaseId}";
+                vxbf.Name = $"MeshData-geom-P{meshPartsBaseId}_vxbf";
+                vxst.Name = $"MeshData-geom-P{meshPartsBaseId}";
 
                 // attribute info should always be the same
                 // pos
@@ -177,19 +189,26 @@ namespace AriaLibrary.Objects
 
                 // now put it into the vxbf
 
-                /*int[][] tIndices = new int[mesh.VertexCount][];
+                int[][] tIndices = new int[mesh.VertexCount][];
                 float[][] tWeights = new float[mesh.VertexCount][];
+                int[] tIndicesCurPos = new int[mesh.VertexCount];
+
+                for (int i = 0; i < mesh.VertexCount; i++)
+                {
+                    tIndices[i] = new int[4];
+                    tWeights[i] = new float[4];
+                }
 
                 foreach (var bone in mesh.Bones)
                 {
                     foreach (var weight in bone.VertexWeights)
                     {
-                        tIndices[weight.VertexID] = new int[0];
-                        tWeights[weight.VertexID] = new float[0];
-                        tIndices[weight.VertexID].Append(BRNT.Bones.First(x => x.BoneName == bone.Name).SkinID);
-                        tWeights[weight.VertexID].Append(weight.Weight);
+                        Console.WriteLine(weight.VertexID);
+                        tIndices[weight.VertexID][tIndicesCurPos[weight.VertexID]] = BRNT.Bones.First(x => x.BoneName == bone.Name).SkinID;
+                        tWeights[weight.VertexID][tIndicesCurPos[weight.VertexID]] = weight.Weight;
+                        tIndicesCurPos[weight.VertexID]++;
                     }
-                }*/
+                }
 
                 MemoryStream tVertexStream = new MemoryStream();
 
@@ -205,22 +224,14 @@ namespace AriaLibrary.Objects
                         vertWriter.Write((byte)(sbyte)(mesh.Normals[i].Z * 127));
                         vertWriter.Write(BitConverter.GetBytes((Half)mesh.TextureCoordinateChannels[0][i].X));
                         vertWriter.Write(BitConverter.GetBytes((Half)mesh.TextureCoordinateChannels[0][i].Y));
-                        /*vxbf.BufferData.Append((byte)tIndices[i][0]);
-                        vxbf.BufferData.Append((byte)tIndices[i][1]);
-                        vxbf.BufferData.Append((byte)tIndices[i][2]);
-                        vxbf.BufferData.Append((byte)tIndices[i][3]);
-                        vxbf.BufferData.Append((byte)(sbyte)(tWeights[i][0] * 255));
-                        vxbf.BufferData.Append((byte)(sbyte)(tWeights[i][1] * 255));
-                        vxbf.BufferData.Append((byte)(sbyte)(tWeights[i][2] * 255));
-                        vxbf.BufferData.Append((byte)(sbyte)(tWeights[i][3] * 255));*/
-                        vertWriter.Write((byte)78);
-                        vertWriter.Write((byte)0);
-                        vertWriter.Write((byte)0);
-                        vertWriter.Write((byte)0);
-                        vertWriter.Write((byte)255);
-                        vertWriter.Write((byte)0);
-                        vertWriter.Write((byte)0);
-                        vertWriter.Write((byte)0);
+                        vertWriter.Write((byte)tIndices[i][0]);
+                        vertWriter.Write((byte)tIndices[i][1]);
+                        vertWriter.Write((byte)tIndices[i][2]);
+                        vertWriter.Write((byte)tIndices[i][3]);
+                        vertWriter.Write((byte)(sbyte)(tWeights[i][0] * 255));
+                        vertWriter.Write((byte)(sbyte)(tWeights[i][1] * 255));
+                        vertWriter.Write((byte)(sbyte)(tWeights[i][2] * 255));
+                        vertWriter.Write((byte)(sbyte)(tWeights[i][3] * 255));
                     }
                 }
 
@@ -262,6 +273,7 @@ namespace AriaLibrary.Objects
             }
             cleanGPRSections.InsertRange(gprInsertPosition, VXSTs);
             MESH.StringBuffer.StringCount = MESH.StringBuffer.StringList.Strings.Count;
+            NODT.StringBuffer.StringCount = NODT.StringBuffer.StringList.Strings.Count;
             GPR.Heap.Sections = cleanGPRSections;
             MESH.ChildNodes = cleanMeshNodes;
         }
