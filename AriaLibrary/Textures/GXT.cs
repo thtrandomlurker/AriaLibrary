@@ -462,9 +462,9 @@ namespace AriaLibrary.Textures
                             {
                                 throw new NotImplementedException("Only supports Block compressed formats.");
                             }
-                            reader.BaseStream.Seek(0x6C, SeekOrigin.Begin);
+                            reader.BaseStream.Seek(0x70, SeekOrigin.Begin);
                             int lytFlags = reader.ReadInt32();
-                            SceGxmTextureType type = (lytFlags & 0x00400000) != 0 ? SceGxmTextureType.Swizzled : SceGxmTextureType.Cube;
+                            SceGxmTextureType type = (lytFlags == (int)0x0000FE00) ? SceGxmTextureType.Cube : SceGxmTextureType.Swizzled;
                             reader.BaseStream.Seek(0x80, SeekOrigin.Begin);
                             int blockSize = GetBlockSize(fmt);
                             int blockWidth = GetBlockWidth(fmt);
@@ -483,7 +483,7 @@ namespace AriaLibrary.Textures
                             writer.Write((pWidth * pHeight * blockSize) * (type == SceGxmTextureType.Cube ? 6 : 1));
                             writer.Write(-1);
                             writer.Write(0);
-                            writer.Write(0);
+                            writer.Write((int)type);
                             writer.Write((uint)fmt);
                             writer.Write((ushort)texWidth);
                             writer.Write((ushort)texHeight);
@@ -505,7 +505,7 @@ namespace AriaLibrary.Textures
                                         {
                                             Console.WriteLine((encPos * blockSize) + p);
                                             Console.WriteLine((((y * pWidth) + x) * blockSize) + p);
-                                            outPixelArray[(encPos * blockSize) + p] = pixelData[(((y * pWidth) + x) * blockSize) + p];
+                                            outPixelArray[(d * (pWidth * pHeight * blockSize)) + (encPos * blockSize) + p] = pixelData[(d * (pWidth * pHeight * blockSize)) + (((y * pWidth) + x) * blockSize) + p];
                                         }
                                     }
                                 }
