@@ -17,6 +17,8 @@ using System.IO.Compression;
 using System.Security.Cryptography.X509Certificates;
 using Assimp.Configs;
 using System.ComponentModel.DataAnnotations;
+using AriaLibrary.Textures;
+using System.Runtime.ConstrainedExecution;
 
 namespace AriaLibrary.Objects
 {
@@ -28,6 +30,7 @@ namespace AriaLibrary.Objects
         public MESH MESH;
         public NODT NODT;
         public BRNT? BRNT;
+        public string SourcePath = "";
 
         public void ImportModelFromFBX(string filePath/*, string baseShaderPackagePath*/)
         {
@@ -381,6 +384,11 @@ namespace AriaLibrary.Objects
                             material.AddMaterialTexture(envSlot);
                             break;
                     }
+                    if (Directory.Exists($"{Path.GetDirectoryName(SourcePath)}\\..\\mdltex"))
+                    {
+                        Console.WriteLine($"{Path.GetDirectoryName(filePath)}\\{Path.GetFileName(MESH.StringBuffer.StringList.Strings[sstv.TextureSourcePath])}");
+                        GXT.MakeDDSFromGXT($"{Path.GetDirectoryName(SourcePath)}\\..\\mdltex\\{Path.GetFileNameWithoutExtension(MESH.StringBuffer.StringList.Strings[sstv.TextureSourcePath])}.mxt", $"{Path.GetDirectoryName(filePath)}\\{Path.GetFileName(MESH.StringBuffer.StringList.Strings[sstv.TextureSourcePath])}");
+                    }
                 }
 
                 scene.Materials.Add(material);
@@ -389,6 +397,14 @@ namespace AriaLibrary.Objects
                 List<int[]> tWeightIndices = new List<int[]>();
                 List<float[]> tWeights = new List<float[]>();
                 int vertexCount = vxst.Data.VertexBufferReferences[0].VertexCount;
+
+                for (int a = 0; a < vxar.Data.VertexAttributes.Count; a++)
+                {
+                    Console.WriteLine($"{attributeNames[a]}, {vxar.Data.VertexAttributes[a].DataType}, {vxar.Data.VertexAttributes[a].Offset}, {vxar.Data.VertexAttributes[a].Count}");
+                }
+
+                mesh.TextureCoordinateChannels[0].Capacity = vertexCount;
+
                 for (int i = 0; i < vertexCount; i++)
                 {
                     for (int a = 0; a < vxar.Data.VertexAttributes.Count; a++)
@@ -518,6 +534,7 @@ namespace AriaLibrary.Objects
                                     mesh.Normals.Add(normal);
                                     break;
                                 case "in_Uv0":
+                                    Console.WriteLine("UV is being WRITE");
                                     Vector3D uv = new Vector3D();
                                     if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedByte)
                                     {
@@ -575,10 +592,11 @@ namespace AriaLibrary.Objects
                                             uv[v] = (float)BitConverter.ToSingle(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 4) + (i * (vxbf.Data.VertexStride)));
                                         }
                                     }
-                                    uv[1] *= -1;
+                                    uv[1] *= -1.0f;
+                                    uv[2] = 0.0f;
                                     mesh.TextureCoordinateChannels[0].Add(uv);
                                     break;
-                                case "in_Col0":
+                                case "in_vCol0":
                                     Color4D col = new Color4D();
                                     if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedByte)
                                     {
@@ -738,16 +756,21 @@ namespace AriaLibrary.Objects
                         }
                     }
                 }
+                Console.WriteLine(mesh.HasTextureCoords(0));
+                Console.WriteLine(mesh.Name);
                 for (int i = 0; i < vxst.Data.FaceIndexCount; i += 3)
                 {
                     mesh.Faces.Add(new Face(new int[3] { BitConverter.ToInt16(ixbf.BufferData, (i * 2)), BitConverter.ToInt16(ixbf.BufferData, (i * 2) + 2), BitConverter.ToInt16(ixbf.BufferData, (i * 2) + 4) }));
                 }
-                for (int v = 0; v < vxbf.Data.VertexCount; v++)
+                if (tWeightIndices.Count != 0 && tWeights.Count != 0)
                 {
-                    for (int w = 0; w < 4; w++)
+                    for (int v = 0; v < vxbf.Data.VertexCount; v++)
                     {
-                        int boneIndex = BRNT.Bones.Find(x => x.SkinID == tWeightIndices[v][w]).BoneID;
-                        mesh.Bones[boneIndex].VertexWeights.Add(new VertexWeight(v, tWeights[v][w]));
+                        for (int w = 0; w < 4; w++)
+                        {
+                            int boneIndex = BRNT.Bones.Find(x => x.SkinID == tWeightIndices[v][w]).BoneID;
+                            mesh.Bones[boneIndex].VertexWeights.Add(new VertexWeight(v, tWeights[v][w]));
+                        }
                     }
                 }
 
@@ -757,7 +780,7 @@ namespace AriaLibrary.Objects
                 
             }
             string formatId = new AssimpContext().GetSupportedExportFormats()
-                .First(x => x.FileExtension.Equals("fbx", StringComparison.OrdinalIgnoreCase)).FormatId;
+                .First(x => x.FileExtension.Equals(Path.GetExtension(filePath).Split('.')[1], StringComparison.OrdinalIgnoreCase)).FormatId;
 
             context.ExportFile(scene, filePath, formatId, Assimp.PostProcessSteps.None);
         }

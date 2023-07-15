@@ -36,17 +36,20 @@
             this.MenuStripExport = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuStripExportGPR = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuStripExportFBX = new System.Windows.Forms.ToolStripMenuItem();
+            this.MenuStripReplace = new System.Windows.Forms.ToolStripMenuItem();
             this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuStripEditMESH = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuStripEditMESHVariEditor = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuStripEditGPR = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuStripEditNODT = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.MenuStripToolsConvertGXT = new System.Windows.Forms.ToolStripMenuItem();
+            this.MenuStripToolsConvertDDS = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuStripOpenFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.MenuStripSaveAsFileDialog = new System.Windows.Forms.SaveFileDialog();
             this.CurrentlyLoadedLabel = new System.Windows.Forms.Label();
-            this.MenuStripReplaceFileDIalog = new System.Windows.Forms.OpenFileDialog();
+            this.MenuStripReplaceFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.MenuStripExportFBXFileDialog = new System.Windows.Forms.SaveFileDialog();
-            this.MenuStripReplace = new System.Windows.Forms.ToolStripMenuItem();
             this.MenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -54,7 +57,8 @@
             // 
             this.MenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
-            this.editToolStripMenuItem});
+            this.editToolStripMenuItem,
+            this.toolsToolStripMenuItem});
             this.MenuStrip.Location = new System.Drawing.Point(0, 0);
             this.MenuStrip.Name = "MenuStrip";
             this.MenuStrip.Size = new System.Drawing.Size(402, 24);
@@ -110,16 +114,23 @@
             // MenuStripExportGPR
             // 
             this.MenuStripExportGPR.Name = "MenuStripExportGPR";
-            this.MenuStripExportGPR.Size = new System.Drawing.Size(180, 22);
+            this.MenuStripExportGPR.Size = new System.Drawing.Size(96, 22);
             this.MenuStripExportGPR.Text = "GPR";
             this.MenuStripExportGPR.Click += new System.EventHandler(this.MenuStripExportGPR_OnClick);
             // 
             // MenuStripExportFBX
             // 
             this.MenuStripExportFBX.Name = "MenuStripExportFBX";
-            this.MenuStripExportFBX.Size = new System.Drawing.Size(180, 22);
+            this.MenuStripExportFBX.Size = new System.Drawing.Size(96, 22);
             this.MenuStripExportFBX.Text = "FBX";
             this.MenuStripExportFBX.Click += new System.EventHandler(this.MenuStripExportFBX_OnClick);
+            // 
+            // MenuStripReplace
+            // 
+            this.MenuStripReplace.Name = "MenuStripReplace";
+            this.MenuStripReplace.Size = new System.Drawing.Size(186, 22);
+            this.MenuStripReplace.Text = "Replace";
+            this.MenuStripReplace.Click += new System.EventHandler(this.MenuStripReplace_OnClick);
             // 
             // editToolStripMenuItem
             // 
@@ -158,6 +169,29 @@
             this.MenuStripEditNODT.Size = new System.Drawing.Size(210, 22);
             this.MenuStripEditNODT.Text = "NODT (Not Implemented)";
             // 
+            // toolsToolStripMenuItem
+            // 
+            this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.MenuStripToolsConvertGXT,
+            this.MenuStripToolsConvertDDS});
+            this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
+            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
+            this.toolsToolStripMenuItem.Text = "Tools";
+            // 
+            // MenuStripToolsConvertGXT
+            // 
+            this.MenuStripToolsConvertGXT.Name = "MenuStripToolsConvertGXT";
+            this.MenuStripToolsConvertGXT.Size = new System.Drawing.Size(192, 22);
+            this.MenuStripToolsConvertGXT.Text = "Convert GXT(s) to DDS";
+            this.MenuStripToolsConvertGXT.Click += new System.EventHandler(this.MenuStripToolsConvertGXT_Click);
+            // 
+            // MenuStripToolsConvertDDS
+            // 
+            this.MenuStripToolsConvertDDS.Name = "MenuStripToolsConvertDDS";
+            this.MenuStripToolsConvertDDS.Size = new System.Drawing.Size(192, 22);
+            this.MenuStripToolsConvertDDS.Text = "Convert DDS(s) to GXT";
+            this.MenuStripToolsConvertDDS.Click += new System.EventHandler(this.MenuStripToolsConvertDDS_Click);
+            // 
             // MenuStripOpenFileDialog
             // 
             this.MenuStripOpenFileDialog.Filter = "IA/VT Model File|*.mdl";
@@ -175,21 +209,14 @@
             this.CurrentlyLoadedLabel.TabIndex = 1;
             this.CurrentlyLoadedLabel.Text = "Currently Loaded: None";
             // 
-            // MenuStripReplaceFileDIalog
+            // MenuStripReplaceFileDialog
             // 
-            this.MenuStripReplaceFileDIalog.Filter = "FBX|*.fbx";
+            this.MenuStripReplaceFileDialog.Filter = "FBX|*.fbx";
             // 
             // MenuStripExportFBXFileDialog
             // 
-            this.MenuStripExportFBXFileDialog.Filter = "FBX|*.fbx";
+            this.MenuStripExportFBXFileDialog.Filter = "FBX|*.fbx|DAE|*.dae";
             this.MenuStripExportFBXFileDialog.Title = "Select a destitination file";
-            // 
-            // MenuStripReplace
-            // 
-            this.MenuStripReplace.Name = "MenuStripReplace";
-            this.MenuStripReplace.Size = new System.Drawing.Size(186, 22);
-            this.MenuStripReplace.Text = "Replace";
-            this.MenuStripReplace.Click += new System.EventHandler(this.MenuStripReplace_OnClick);
             // 
             // MainForm
             // 
@@ -226,8 +253,11 @@
         private Label CurrentlyLoadedLabel;
         private ToolStripMenuItem MenuStripEditMESHVariEditor;
         private ToolStripMenuItem MenuStripExportFBX;
-        private OpenFileDialog MenuStripReplaceFileDIalog;
+        private OpenFileDialog MenuStripReplaceFileDialog;
         private SaveFileDialog MenuStripExportFBXFileDialog;
         private ToolStripMenuItem MenuStripReplace;
+        private ToolStripMenuItem toolsToolStripMenuItem;
+        private ToolStripMenuItem MenuStripToolsConvertGXT;
+        private ToolStripMenuItem MenuStripToolsConvertDDS;
     }
 }

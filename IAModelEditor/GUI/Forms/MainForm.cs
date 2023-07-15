@@ -6,6 +6,8 @@ using System.ComponentModel.Design;
 using System.Drawing.Design;
 using System.Windows.Forms.Design;
 using System.Windows.Forms;
+using IAModelEditor.GUI.Forms.ModelImportWizard;
+using AriaLibrary.Textures;
 
 namespace IAModelEditor.GUI.Forms
 {
@@ -25,6 +27,7 @@ namespace IAModelEditor.GUI.Forms
                 ObjectGroup = new ObjectGroup();
                 ObjectGroup.LoadPackage(MenuStripOpenFileDialog.FileName);
                 SourceFilePath = MenuStripOpenFileDialog.FileName;
+                ObjectGroup.SourcePath = SourceFilePath;
                 CurrentlyLoadedLabel.Text = $"Currently Loaded: {ObjectGroup.GPR.Heap.Name}";
             }
         }
@@ -91,11 +94,56 @@ namespace IAModelEditor.GUI.Forms
         {
             if (ObjectGroup != null)
             {
-                if (MenuStripReplaceFileDIalog.ShowDialog() == DialogResult.OK)
+                if (MenuStripReplaceFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    ObjectGroup.ImportModelFromFBX(MenuStripReplaceFileDIalog.FileName);
+                    using (MIWInit init = new MIWInit(MenuStripReplaceFileDialog.FileName))
+                    {
+                        init.ShowDialog();
+                    }
                 }
             }
+        }
+
+        private void MenuStripToolsConvertGXT_Click(object sender, EventArgs e)
+        {
+            // temporarily alter the behavior of MenuStripOpenFileDialog
+            MenuStripOpenFileDialog.Multiselect = true;
+            MenuStripOpenFileDialog.Filter = "GXT Texture File| *.gxt;*.mxt";
+            MenuStripSaveAsFileDialog.FileName = "Select a Directory and press Save";
+            if (MenuStripOpenFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                if (MenuStripSaveAsFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    foreach (var file in MenuStripOpenFileDialog.FileNames)
+                    {
+                        GXT.MakeDDSFromGXT(file, $"{Path.GetDirectoryName(MenuStripSaveAsFileDialog.FileName)}\\{Path.GetFileNameWithoutExtension(file)}.dds");
+                    }
+                }
+            }
+            MenuStripSaveAsFileDialog.FileName = "";
+            MenuStripOpenFileDialog.Multiselect = false;
+            MenuStripOpenFileDialog.Filter = "IA / VT Model File| *.mdl";
+        }
+
+        private void MenuStripToolsConvertDDS_Click(object sender, EventArgs e)
+        {
+            // temporarily alter the behavior of MenuStripOpenFileDialog
+            MenuStripOpenFileDialog.Multiselect = true;
+            MenuStripOpenFileDialog.Filter = "DDS Texture File| *.dds";
+            MenuStripSaveAsFileDialog.FileName = "Select a Directory and press Save";
+            if (MenuStripOpenFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                if (MenuStripSaveAsFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    foreach (var file in MenuStripOpenFileDialog.FileNames)
+                    {
+                        GXT.MakeGXTFromDDS(file, $"{Path.GetDirectoryName(MenuStripSaveAsFileDialog.FileName)}\\{Path.GetFileNameWithoutExtension(file)}.gxt");
+                    }
+                }
+            }
+            MenuStripSaveAsFileDialog.FileName = "";
+            MenuStripOpenFileDialog.Multiselect = false;
+            MenuStripOpenFileDialog.Filter = "IA / VT Model File| *.mdl";
         }
     }
 }
