@@ -336,47 +336,54 @@ namespace AriaLibrary.Textures
                     for (int d = 0; d < (gxt.TextureData.TextureType == SceGxmTextureType.Cube ? 6 : 1); d++)
                     {
 
-                        // borrowed and slightly modified from https://github.com/xdanieldzd/Scarlet
-
-                        // Copyright(c) 2016 xdaniel(Daniel R.) / DigitalZero Domain
-
-                        // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-                        // associated documentation files (the "Software"), to deal in the Software without restriction, including
-                        // without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-                        // copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-                        //The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-                        // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
-                        // THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
-                        // OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-                        // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-                        for (int i = 0; i < pWidth * pHeight; i++)
+                        for (int m = 0; m < gxt.TextureData.MipCount; m++)
                         {
-                            int dMin = pWidth < pHeight ? pWidth : pHeight;
-                            int k = (int)Math.Log(dMin, 2);
-                            int x = 0;
-                            int y = 0;
-                            if (pWidth < pHeight)
-                            {
-                                int j = ((i >> (2 * k) << (2 * k)) | (DecodeMorton2X(i) & (dMin - 1)) << k | (DecodeMorton2Y(i) & (dMin - 1)) << 0);
-                                x = j % pWidth;
-                                y = j / pWidth;
-                            }
-                            else
-                            {
 
-                                int j = ((i >> (2 * k) << (2 * k)) | (DecodeMorton2Y(i) & (dMin - 1)) << k | (DecodeMorton2X(i) & (dMin - 1)) << 0);
-                                x = j / pHeight;
-                                y = j % pHeight;
-                            }
+                            int mipWidth = pWidth / ((int)Math.Pow(2, m));
+                            int mipHeight = pHeight / ((int)Math.Pow(2, m));
 
-                            if (y >= pHeight || x >= pWidth)
-                                continue;
+                            // borrowed and significantly modified from https://github.com/xdanieldzd/Scarlet
 
-                            for (int p = 0; p < blockSize; p++)
+                            // Copyright(c) 2016 xdaniel(Daniel R.) / DigitalZero Domain
+
+                            // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+                            // associated documentation files (the "Software"), to deal in the Software without restriction, including
+                            // without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+                            // copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+                            //The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+                            // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+                            // THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+                            // OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+                            // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+                            for (int i = 0; i < pWidth * pHeight; i++)
                             {
-                                outPixelArray[((d * (pWidth * pHeight * blockSize)) ) + ((((y * pWidth) + x) * blockSize) + p)] = gxt.TextureData.PixelData[(d * (pWidth * pHeight * blockSize)) + (i * blockSize) + p];
+                                int dMin = pWidth < pHeight ? pWidth : pHeight;
+                                int k = (int)Math.Log(dMin, 2);
+                                int x = 0;
+                                int y = 0;
+                                if (pWidth < pHeight)
+                                {
+                                    int j = ((i >> (2 * k) << (2 * k)) | (DecodeMorton2X(i) & (dMin - 1)) << k | (DecodeMorton2Y(i) & (dMin - 1)) << 0);
+                                    x = j % pWidth;
+                                    y = j / pWidth;
+                                }
+                                else
+                                {
+
+                                    int j = ((i >> (2 * k) << (2 * k)) | (DecodeMorton2Y(i) & (dMin - 1)) << k | (DecodeMorton2X(i) & (dMin - 1)) << 0);
+                                    x = j / pHeight;
+                                    y = j % pHeight;
+                                }
+
+                                if (y >= pHeight || x >= pWidth)
+                                    continue;
+
+                                for (int p = 0; p < blockSize; p++)
+                                {
+                                    outPixelArray[((d * (mipWidth * mipHeight * blockSize))) + ((((y * mipWidth) + x) * blockSize) + p)] = gxt.TextureData.PixelData[(d * (mipWidth * mipHeight * blockSize)) + (i * blockSize) + p];
+                                }
                             }
                         }
                     }
@@ -422,8 +429,8 @@ namespace AriaLibrary.Textures
                         using (BinaryWriter writer = new BinaryWriter(gxtStream))
                         {
                             reader.BaseStream.Seek(0x0C, SeekOrigin.Begin);
-                            int texWidth = reader.ReadInt32();
                             int texHeight = reader.ReadInt32();
+                            int texWidth = reader.ReadInt32();
                             reader.BaseStream.Seek(0x4C, SeekOrigin.Begin);
                             int fmtBlockSize = reader.ReadInt32();
                             int fmtFlags = reader.ReadInt32();
@@ -496,6 +503,8 @@ namespace AriaLibrary.Textures
     
                                         for (int p = 0; p < blockSize; p++)
                                         {
+                                            Console.WriteLine((encPos * blockSize) + p);
+                                            Console.WriteLine((((y * pWidth) + x) * blockSize) + p);
                                             outPixelArray[(encPos * blockSize) + p] = pixelData[(((y * pWidth) + x) * blockSize) + p];
                                         }
                                     }
@@ -597,6 +606,8 @@ namespace AriaLibrary.Textures
         {
             int encX = x;
             int encY = y;
+            encX = encX & 0x0000FFFF;
+            encY = encY & 0x0000FFFF;
 
 
             encX = ((encX | (encX << 8)) & 0x00FF00FF);
