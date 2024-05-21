@@ -16,7 +16,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
         public VXSHData VertexShaderData;
         public SHBIData? ShaderBind0;
         public SHBIData? ShaderBind1;
-        public void Read(BinaryReader reader, int dataOffset, int heapDataOffset, int heapStringOffset)
+        public void Read(BinaryReader reader, int dataOffset, int heapDataOffset, int heapStringOffset, string platform)
         {
             long cur = reader.BaseStream.Position;
             reader.BaseStream.Seek(dataOffset, SeekOrigin.Begin);
@@ -25,7 +25,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             int vertexShaderDataOffset = reader.ReadInt32();
             int shaderBind0Offset = reader.ReadInt32();
             int shaderBind1Offset = reader.ReadInt32();
-            VertexShaderData.Read(reader, heapDataOffset + vertexShaderDataOffset, heapStringOffset);
+            VertexShaderData.Read(reader, heapDataOffset + vertexShaderDataOffset, heapStringOffset, platform);
             if (shaderBind0Offset != -1)
             {
                 ShaderBind0 = new SHBIData();
@@ -73,7 +73,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
     {
         public override string Type => "VXSB";
         public VXSBData Data;
-        public override void Read(BinaryReader reader, int heapStringOffset, int heapDataOffset, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset)
+        public override void Read(BinaryReader reader, int heapStringOffset, int heapDataOffset, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset, string platform)
         {
             int nameOffset = reader.ReadInt32();
             Name = StringReader.ReadNullTerminatedStringAtOffset(reader, heapStringOffset + nameOffset);
@@ -86,7 +86,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
 
             Buffer = (BufferName)reader.ReadInt32();
             // Data
-            Data.Read(reader, heapDataOffset + dataOffset, heapDataOffset, heapStringOffset);
+            Data.Read(reader, heapDataOffset + dataOffset, heapDataOffset, heapStringOffset, platform);
         }
 
         public override void Write(BinaryWriter heapWriter, BinaryWriter stringWriter, BinaryWriter dataWriter, BinaryWriter bufferWriter, ref Dictionary<string, int> stringPosMap, ref List<int> sectionDataPositions, ref int curDataPositionIdx)

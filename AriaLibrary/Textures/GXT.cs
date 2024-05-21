@@ -416,6 +416,204 @@ namespace AriaLibrary.Textures
             }
         }
 
+        /// <summary>
+        /// I swear this is useful
+        /// </summary>
+        /// <param name="ddsPath"></param>
+        public static void UnswizzleFromDDS(string ddsPath, string dswPath)
+        {
+            using (BinaryWriter writer = new BinaryWriter(File.Create(dswPath)))
+            {
+
+                using (BinaryReader reader = new BinaryReader(File.OpenRead(ddsPath)))
+                {
+                    reader.BaseStream.Seek(0x0C, SeekOrigin.Begin);
+                    int texHeight = reader.ReadInt32();
+                    int texWidth = reader.ReadInt32();
+                    reader.BaseStream.Seek(0x4C, SeekOrigin.Begin);
+                    int fmtBlockSize = reader.ReadInt32();
+                    int fmtFlags = reader.ReadInt32();
+                    SceGxmTextureBaseFormat fmt = 0;
+                    if ((fmtFlags & 0x04) != 0)
+                    {
+                        string fourCC = new string(reader.ReadChars(4));
+                        switch (fourCC)
+                        {
+                            case "DXT1":
+                                fmt = SceGxmTextureBaseFormat.UBC1;
+                                break;
+                            case "DXT2":
+                                fmt = SceGxmTextureBaseFormat.UBC2;
+                                break;
+                            case "DXT3":
+                                fmt = SceGxmTextureBaseFormat.UBC2;
+                                break;
+                            case "DXT4":
+                                fmt = SceGxmTextureBaseFormat.UBC3;
+                                break;
+                            case "DXT5":
+                                fmt = SceGxmTextureBaseFormat.UBC3;
+                                break;
+
+                        }
+                    }
+                    else
+                    {
+                        throw new NotImplementedException("Only supports Block compressed formats.");
+                    }
+                    reader.BaseStream.Seek(0x70, SeekOrigin.Begin);
+                    int lytFlags = reader.ReadInt32();
+                    SceGxmTextureType type = (lytFlags == (int)0x0000FE00) ? SceGxmTextureType.Cube : SceGxmTextureType.Swizzled;
+                    reader.BaseStream.Seek(0x80, SeekOrigin.Begin);
+                    int blockSize = GetBlockSize(fmt);
+                    int blockWidth = GetBlockWidth(fmt);
+                    int pWidth = texWidth / blockWidth;
+                    int pHeight = texHeight / blockWidth;
+                    byte[] pixelData = reader.ReadBytes((pWidth * pHeight * blockSize) * (type == SceGxmTextureType.Cube ? 6 : 1));
+                    // magic
+                    writer.Write(0x20534444);
+                    // header size
+                    writer.Write(0x0000007C);
+                    // flags
+                    writer.Write(0x000A1007);
+                    // dimensions
+                    writer.Write(texHeight);
+                    writer.Write(texWidth);
+                    // size of prim mip
+                    writer.Write((pWidth * pHeight * blockSize) * (type == SceGxmTextureType.Cube ? 6 : 1));
+                    writer.Write(1);
+                    writer.Write(1);
+                    // reserved iirc
+                    writer.Write(0);
+                    writer.Write(0);
+                    writer.Write(0);
+                    writer.Write(0);
+                    writer.Write(0);
+                    writer.Write(0);
+                    writer.Write(0);
+                    writer.Write(0);
+                    writer.Write(0);
+                    writer.Write(0);
+                    writer.Write(0);
+                    // pixel format info
+                    writer.Write(0x20);
+                    // for now only handle dxt
+                    switch (fmt)
+                    {
+                        case SceGxmTextureBaseFormat.UBC1:
+                            writer.Write(4);
+                            writer.Write(0x31545844);
+                            writer.Write(0);
+                            writer.Write(0);
+                            writer.Write(0);
+                            writer.Write(0);
+                            writer.Write(0);
+                            writer.Write(type == SceGxmTextureType.Cube ? 0x00001008 : 0x00401008);
+                            writer.Write(type == SceGxmTextureType.Cube ? 0x0000FE00 : 0x00000000);
+                            writer.Write(0);
+                            writer.Write(0);
+                            writer.Write(0);
+                            break;
+                        case SceGxmTextureBaseFormat.UBC2:
+                            writer.Write(4);
+                            writer.Write(0x33545844);
+                            writer.Write(0);
+                            writer.Write(0);
+                            writer.Write(0);
+                            writer.Write(0);
+                            writer.Write(0);
+                            writer.Write(type == SceGxmTextureType.Cube ? 0x00001008 : 0x00401008);
+                            writer.Write(type == SceGxmTextureType.Cube ? 0x0000FE00 : 0x00000000);
+                            writer.Write(0);
+                            writer.Write(0);
+                            writer.Write(0);
+                            break;
+                        case SceGxmTextureBaseFormat.UBC3:
+                            writer.Write(4);
+                            writer.Write(0x35545844);
+                            writer.Write(0);
+                            writer.Write(0);
+                            writer.Write(0);
+                            writer.Write(0);
+                            writer.Write(0);
+                            writer.Write(type == SceGxmTextureType.Cube ? 0x00001008 : 0x00401008);
+                            writer.Write(type == SceGxmTextureType.Cube ? 0x0000FE00 : 0x00000000);
+                            writer.Write(0);
+                            writer.Write(0);
+                            writer.Write(0);
+                            break;
+                        case SceGxmTextureBaseFormat.U8U8U8:
+                            writer.Write(0x41);
+                            writer.Write(0);
+                            writer.Write(32);
+                            writer.Write(0xFF);
+                            writer.Write(0xFF00);
+                            writer.Write(0xFF0000);
+                            writer.Write(0xFF000000);
+                            writer.Write(type == SceGxmTextureType.Cube ? 0x00001008 : 0x00401008);
+                            writer.Write(type == SceGxmTextureType.Cube ? 0x0000FE00 : 0x00000000);
+                            writer.Write(0);
+                            writer.Write(0);
+                            writer.Write(0);
+                            break;
+                        case SceGxmTextureBaseFormat.U8U8U8U8:
+                            writer.Write(0x41);
+                            writer.Write(0);
+                            writer.Write(32);
+                            writer.Write(0xFF);
+                            writer.Write(0xFF00);
+                            writer.Write(0xFF0000);
+                            writer.Write(0xFF000000);
+                            writer.Write(type == SceGxmTextureType.Cube ? 0x00001008 : 0x00401008);
+                            writer.Write(type == SceGxmTextureType.Cube ? 0x0000FE00 : 0x00000000);
+                            writer.Write(0);
+                            writer.Write(0);
+                            writer.Write(0);
+                            break;
+
+                        default:
+                            throw new NotImplementedException("Unsupported.");
+                    }
+
+                    byte[] outPixelArray = new byte[pixelData.Length];
+                    // PPC
+                    for (int d = 0; d < (type == SceGxmTextureType.Cube ? 6 : 1); d++)
+                    {
+
+                        for (int i = 0; i < pWidth * pHeight; i++)
+                        {
+                            int dMin = pWidth < pHeight ? pWidth : pHeight;
+                            int k = (int)Math.Log(dMin, 2);
+                            int x = 0;
+                            int y = 0;
+                            if (pWidth < pHeight)
+                            {
+                                int j = ((i >> (2 * k) << (2 * k)) | (DecodeMorton2X(i) & (dMin - 1)) << k | (DecodeMorton2Y(i) & (dMin - 1)) << 0);
+                                x = j % pWidth;
+                                y = j / pWidth;
+                            }
+                            else
+                            {
+
+                                int j = ((i >> (2 * k) << (2 * k)) | (DecodeMorton2Y(i) & (dMin - 1)) << k | (DecodeMorton2X(i) & (dMin - 1)) << 0);
+                                x = j / pHeight;
+                                y = j % pHeight;
+                            }
+
+                            if (y >= pHeight || x >= pWidth)
+                                continue;
+
+                            for (int p = 0; p < blockSize; p++)
+                            {
+                                outPixelArray[((d * (pWidth * pHeight * blockSize))) + ((((y * pWidth) + x) * blockSize) + p)] = pixelData[(d * (pWidth * pHeight * blockSize)) + (i * blockSize) + p];
+                            }
+                        }
+                    }
+                    writer.Write(outPixelArray);
+                }
+            }
+        }
+
         public static void MakeGXTFromDDS(string ddsPath, string gxtPath)
         {
             // Since supported DDS data will be far more limited, there's not much reason to completely handle a GXT file's data

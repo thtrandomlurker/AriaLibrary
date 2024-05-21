@@ -24,7 +24,7 @@ namespace AriaLibrary.Objects.Nodes
             int len = PositionHelper.PadValue(Encoding.UTF8.GetByteCount(Comment), 4);
             writer.Write(len);
             writer.Write(Encoding.UTF8.GetBytes(Comment));
-            PositionHelper.AlignWriter(writer, 4);
+            PositionHelper.AlignWriter(writer, 4, true);
         }
 
         public REM(string message="")

@@ -15,7 +15,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
         public int ReservedNameHash;
         public List<GPRSection> Sections;
 
-        public void Read(BinaryReader reader, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset)
+        public void Read(BinaryReader reader, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset, string platform)
         {
             int basePos = (int)reader.BaseStream.Position;
             int heapMagic = reader.ReadInt32();
@@ -39,67 +39,67 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
                 {
                     case "VXBO":
                         VXBO vxbo = new VXBO();
-                        vxbo.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset);
+                        vxbo.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset, platform);
                         Sections.Add(vxbo);
                         break;
                     case "VXAR":
                         VXAR vxar = new VXAR();
-                        vxar.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset);
+                        vxar.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset, platform);
                         Sections.Add(vxar);
                         break;
                     case "IXBF":
                         IXBF ixbf = new IXBF();
-                        ixbf.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset);
+                        ixbf.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset, platform);
                         Sections.Add(ixbf);
                         break;
                     case "VXBF":
                         VXBF vxbf = new VXBF();
-                        vxbf.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset);
+                        vxbf.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset, platform);
                         Sections.Add(vxbf);
                         break;
                     case "VXST":
                         VXST vxst = new VXST();
-                        vxst.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset);
+                        vxst.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset, platform);
                         Sections.Add(vxst);
                         break;
                     case "SHMI":
                         SHMI shmi = new SHMI();
-                        shmi.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset);
+                        shmi.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset, platform);
                         Sections.Add(shmi);
                         break;
                     case "VXSH":
                         VXSH vxsh = new VXSH();
-                        vxsh.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset);
+                        vxsh.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset, platform);
                         Sections.Add(vxsh);
                         break;
                     case "SHBI":
                         SHBI shbi = new SHBI();
-                        shbi.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset);
+                        shbi.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset, platform);
                         Sections.Add(shbi);
                         break;
                     case "PXSH":
                         PXSH pxsh = new PXSH();
-                        pxsh.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset);
+                        pxsh.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset, platform);
                         Sections.Add(pxsh);
                         break;
                     case "SHCO":
                         SHCO shco = new SHCO();
-                        shco.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset);
+                        shco.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset, platform);
                         Sections.Add(shco);
                         break;
                     case "SMST":
                         SMST smst = new SMST();
-                        smst.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset);
+                        smst.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset, platform);
                         Sections.Add(smst);
                         break;
                     case "VXSB":
                         VXSB vxsb = new VXSB();
-                        vxsb.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset);
+                        vxsb.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset, platform);
                         Sections.Add(vxsb);
                         break;
                     case "PXSB":
                         PXSB pxsb = new PXSB();
-                        pxsb.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset);
+                        pxsb.Read(reader, basePos + heapStringOffset, basePos + heapDataOffset, heapVSBufferOffset, heapMeshBufferOffset, heapPSBufferOffset, platform);
                         Sections.Add(pxsb);
                         break;
                     default:

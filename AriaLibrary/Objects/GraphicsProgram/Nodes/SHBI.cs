@@ -9,7 +9,7 @@ using StringReader = AriaLibrary.IO.StringReader;
 
 namespace AriaLibrary.Objects.GraphicsProgram.Nodes
 {
-    public class ParameterCount
+    public class ShaderParameter
     {
         public string ParameterName;
         public int ParameterResourceIndex;
@@ -36,7 +36,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             dataWriter.Write(ParameterArraySize);
         }
 
-        public ParameterCount()
+        public ShaderParameter()
         {
             ParameterName = "";
         }
@@ -45,7 +45,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
     {
         public int U00;
         public int U04;
-        public List<ParameterCount> Parameters;
+        public List<ShaderParameter> Parameters;
 
         public void Read(BinaryReader reader, int heapDataOffset, int heapStringOffset)
         {
@@ -57,7 +57,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
 
             for (int i = 0; i < parameterCount; i++)
             {
-                ParameterCount input = new ParameterCount();
+                ShaderParameter input = new ShaderParameter();
                 input.Read(reader, heapStringOffset);
                 Parameters.Add(input);
             }
@@ -79,7 +79,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
 
         public SHBIData(string inputName = "")
         {
-            Parameters = new List<ParameterCount>();
+            Parameters = new List<ShaderParameter>();
         }
     }
     public class SHBI : GPRSection
@@ -87,7 +87,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
         public override string Type => "SHBI";
         public SHBIData Data;
 
-        public override void Read(BinaryReader reader, int heapStringOffset, int heapDataOffset, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset)
+        public override void Read(BinaryReader reader, int heapStringOffset, int heapDataOffset, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset, string platform)
         {
             int nameOffset = reader.ReadInt32();
             Name = StringReader.ReadNullTerminatedStringAtOffset(reader, heapStringOffset + nameOffset);

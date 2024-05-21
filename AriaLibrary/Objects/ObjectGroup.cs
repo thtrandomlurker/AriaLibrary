@@ -34,8 +34,6 @@ namespace AriaLibrary.Objects
 
         public void ImportModelFromFBX(string filePath/*, string baseShaderPackagePath*/)
         {
-
-
             AssimpContext context = new AssimpContext();
 
             // (credits to skyth) borrow this from MikuMikuLibrary https://github.com/blueskythlikesclouds/MikuMikuLibrary/blob/master/MikuMikuLibrary/Objects/Processing/Assimp/AssimpSceneHelper.cs
@@ -80,7 +78,7 @@ namespace AriaLibrary.Objects
 
             List<GPRSection> VXSTs = new List<GPRSection>();
 
-            string[] meshDoNotInclude = new string[] {"TRSP"};
+            string[] meshDoNotInclude = new string[] {"TRSP", "MATE", "SAMP"};
             List<NodeBlock> cleanMeshNodes = MESH.ChildNodes.Where(x => !meshDoNotInclude.Contains(x.Type)).ToList();
 
             //MESH newMeshBlock = new MESH();
@@ -784,9 +782,242 @@ namespace AriaLibrary.Objects
 
             context.ExportFile(scene, filePath, formatId, Assimp.PostProcessSteps.None);
         }
+        public void ExportModelToBasicFBX(string filePath)
+        {
+            AssimpContext context = new AssimpContext();
+
+            Scene scene = new Scene();
+            scene.RootNode = new Node(GPR.Heap.Name);
+
+            // skeleton if applicable
+
+            if (BRNT != null)
+            {
+                foreach (var bone in BRNT.Bones)
+                {
+                    Node boneToNode = new Node(bone.BoneName);
+
+                    Matrix4x4 trsMatrix = Matrix4x4.FromTranslation(new Vector3D(-bone.Translation.X, -bone.Translation.Y, -bone.Translation.Z));
+                    Matrix4x4 rotMatrix = Matrix4x4.FromEulerAnglesXYZ(bone.Rotation.X * (float)Math.PI / 180, bone.Rotation.Y * (float)Math.PI / 180, bone.Rotation.Z * (float)Math.PI / 180);
+                    Matrix4x4 sclMatrix = Matrix4x4.FromScaling(new Vector3D(bone.Scale.X, bone.Scale.Y, bone.Scale.Z));
+                    Matrix4x4 outMatrix = Matrix4x4.Identity;
+                    outMatrix *= trsMatrix;
+                    outMatrix *= rotMatrix;
+                    outMatrix *= sclMatrix;
+                    outMatrix.Inverse();
+
+                    boneToNode.Transform = outMatrix;
+                    if (bone.BoneParent != -1)
+                    {
+                        scene.RootNode.FindNode(BRNT.Bones[bone.BoneParent].BoneName).Children.Add(boneToNode);
+                    }
+                    else
+                    {
+                        scene.RootNode.Children.Add(boneToNode);
+                    }
+                }
+            }
+
+            // meshes
+
+            VARI vari = (VARI)MESH.ChildNodes.First(x => x.Type == "VARI");
+
+            foreach (PRIM prim in vari.PRIMs)
+            {
+                Node meshNode = new Node(MESH.StringBuffer.StringList.Strings[prim.MeshName]);
+
+                Mesh mesh = new Mesh();
+                mesh.Name = MESH.StringBuffer.StringList.Strings[prim.MeshName];
+                mesh.PrimitiveType = PrimitiveType.Triangle;
+
+                if (BRNT != null)
+                {
+                    foreach (var bone in BRNT.Bones)
+                    {
+                        Matrix4x4 offsetMatrix = AssimpHelpers.CalculateNodeMatrixWS(scene.RootNode.FindNode(bone.BoneName));
+                        offsetMatrix.Inverse();
+
+                        Assimp.Bone aiBone = new Assimp.Bone();
+                        aiBone.Name = bone.BoneName;
+                        aiBone.OffsetMatrix = offsetMatrix;
+                        mesh.Bones.Add(aiBone);
+                    }
+                }
+
+                VXST vxst = (VXST)GPR.Heap.Sections.Where(x => x.Type == "VXST").ToList()[prim.PrimitiveID];
+
+                VXAR vxar = (VXAR)GPR.Heap.Sections.Where(x => x.Type == "VXAR").ToList()[prim.PrimitiveID];
+
+                IXBF ixbf = (IXBF)GPR.Heap.Sections.Where(x => x.Type == "IXBF").ToList()[prim.PrimitiveID];
+
+                VXBF vxbf = (VXBF)GPR.Heap.Sections.Where(x => x.Type == "VXBF").ToList()[prim.PrimitiveID];
+
+                // diry code
+                TRSP trsp = (TRSP)MESH.ChildNodes.Where(x => x.Type == "TRSP").ToList()[prim.PrimitiveID];
+
+                MATE mate = (MATE)MESH.ChildNodes.Where(x => x.Type == "MATE").ToList()[prim.MaterialID];
+                SAMP samp = (SAMP)MESH.ChildNodes.Where(x => x.Type == "SAMP").ToList()[mate.SamplerID];  // samplers should always be linear
+
+                EFFE effe = (EFFE)MESH.ChildNodes.Where(x => x.Type == "EFFE").ToList()[mate.EffectID];
+
+                VXSH vs = (VXSH)GPR.Heap.Sections.Where(x => x.Name == MESH.StringBuffer.StringList.Strings[effe.TPAS.VertexShaderName] && x.Type == "VXSH").ToList()[0];
+
+                //List<string> attributeNames = ShaderHelper.GetInputNames(new MemoryStream(vs.BufferData));
+
+                Material material = new Material();
+                material.Name = MESH.StringBuffer.StringList.Strings[mate.Name1];
+                material.IsTwoSided = trsp.Culling == CullMode.None;
+
+                /*foreach (var sstv in samp.SSTVs)
+                {
+                    switch (MESH.StringBuffer.StringList.Strings[sstv.TextureSlot])
+                    {
+                        case "Albedo0":
+                            TextureSlot diffSlot = new TextureSlot();
+                            diffSlot.TextureType = TextureType.Diffuse;
+                            diffSlot.FilePath = Path.GetFileName(MESH.StringBuffer.StringList.Strings[sstv.TextureSourcePath]);
+                            material.AddMaterialTexture(diffSlot);
+                            break;
+                        case "envTexture":
+                            TextureSlot envSlot = new TextureSlot();
+                            envSlot.TextureType = TextureType.Reflection;
+                            envSlot.FilePath = Path.GetFileName(MESH.StringBuffer.StringList.Strings[sstv.TextureSourcePath]);
+                            material.AddMaterialTexture(envSlot);
+                            break;
+                    }
+                    if (Directory.Exists($"{Path.GetDirectoryName(SourcePath)}\\..\\mdltex"))
+                    {
+                        Console.WriteLine($"{Path.GetDirectoryName(filePath)}\\{Path.GetFileName(MESH.StringBuffer.StringList.Strings[sstv.TextureSourcePath])}");
+                        GXT.MakeDDSFromGXT($"{Path.GetDirectoryName(SourcePath)}\\..\\mdltex\\{Path.GetFileNameWithoutExtension(MESH.StringBuffer.StringList.Strings[sstv.TextureSourcePath])}.mxt", $"{Path.GetDirectoryName(filePath)}\\{Path.GetFileName(MESH.StringBuffer.StringList.Strings[sstv.TextureSourcePath])}");
+                    }
+                }*/
+
+                scene.Materials.Add(material);
+                mesh.MaterialIndex = prim.MaterialID;
+
+                int vertexCount = vxst.Data.VertexBufferReferences[0].VertexCount;
+
+                /*for (int a = 0; a < vxar.Data.VertexAttributes.Count; a++)
+                {
+                    Console.WriteLine($"{attributeNames[a]}, {vxar.Data.VertexAttributes[a].DataType}, {vxar.Data.VertexAttributes[a].Offset}, {vxar.Data.VertexAttributes[a].Count}");
+                }*/
+
+                mesh.TextureCoordinateChannels[0].Capacity = vertexCount;
+
+                for (int i = 0; i < vertexCount; i++)
+                {
+                    for (int a = 0; a < vxar.Data.VertexAttributes.Count; a++)
+                    {
+                        if (vxar.Data.VertexAttributes[a].VertexBufferIndex == 0)
+                        {
+                            if (a == 0)
+                            {
+                                Vector3D vert = new Vector3D();
+                                if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedByte)
+                                {
+                                    for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                    {
+                                        vert[v] = vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))];
+                                    }
+                                }
+                                else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedByte)
+                                {
+                                    for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                    {
+                                        vert[v] = (sbyte)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))];
+                                    }
+                                }
+                                else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedShort)
+                                {
+                                    for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                    {
+                                        vert[v] = BitConverter.ToUInt16(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
+                                    }
+                                }
+                                else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedShort)
+                                {
+                                    for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                    {
+                                        vert[v] = BitConverter.ToInt16(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
+                                    }
+                                }
+                                else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.UnsignedByteNormalized)
+                                {
+                                    for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                    {
+                                        vert[v] = (float)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))] / 255;
+                                    }
+                                }
+                                else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.SignedByteNormalized)
+                                {
+                                    for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                    {
+                                        vert[v] = (float)(sbyte)vxbf.BufferData[vxar.Data.VertexAttributes[a].Offset + v + (i * (vxbf.Data.VertexStride))] / 127;
+                                    }
+                                }
+                                else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.HalfFloat)
+                                {
+                                    for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                    {
+                                        vert[v] = (float)BitConverter.ToHalf(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 2) + (i * (vxbf.Data.VertexStride)));
+                                    }
+                                }
+                                else if (vxar.Data.VertexAttributes[a].DataType == VertexAttributeDataType.Float)
+                                {
+                                    for (int v = 0; v < vxar.Data.VertexAttributes[a].Count; v++)
+                                    {
+                                        vert[v] = (float)BitConverter.ToSingle(vxbf.BufferData, vxar.Data.VertexAttributes[a].Offset + (v * 4) + (i * (vxbf.Data.VertexStride)));
+                                    }
+                                }
+                                mesh.Vertices.Add(vert);
+                            }
+                        }
+                    }
+                }
+                Console.WriteLine(mesh.HasTextureCoords(0));
+                Console.WriteLine(mesh.Name);
+                for (int i = 0; i < vxst.Data.FaceIndexCount; i += 3)
+                {
+                    mesh.Faces.Add(new Face(new int[3] { BitConverter.ToInt16(ixbf.BufferData, (i * 2)), BitConverter.ToInt16(ixbf.BufferData, (i * 2) + 2), BitConverter.ToInt16(ixbf.BufferData, (i * 2) + 4) }));
+                }
+
+                scene.Meshes.Add(mesh);
+                meshNode.MeshIndices.Add(prim.PrimitiveID);
+                scene.RootNode.Children.Add(meshNode);
+
+            }
+            string formatId = new AssimpContext().GetSupportedExportFormats()
+                .First(x => x.FileExtension.Equals(Path.GetExtension(filePath).Split('.')[1], StringComparison.OrdinalIgnoreCase)).FormatId;
+
+            context.ExportFile(scene, filePath, formatId, Assimp.PostProcessSteps.None);
+        }
 
         public void Load(KPack package)
         {
+            package.Files[0].Open();
+            package.Files[1].Open();
+            package.Files[2].Open();
+            MESH.Load(package.Files[0].Stream);
+            GPR.Load(package.Files[1].Stream);
+            NODT.Load(package.Files[2].Stream);
+            package.Files[0].Close();
+            package.Files[1].Close();
+            package.Files[2].Close();
+
+            if (package.Files.Count() > 3)
+            {
+                // safe to assume it has a BRNT
+                package.Files[3].Open();
+                BRNT = new BRNT();
+                BRNT.Load(package.Files[3].Stream);
+                package.Files[3].Close();
+            }
+            SourcePackage = package;
+        }
+        public void Load(string filePath)
+        {
+            KPack package = new KPack();
+            package.Load(filePath);
             package.Files[0].Open();
             package.Files[1].Open();
             package.Files[2].Open();

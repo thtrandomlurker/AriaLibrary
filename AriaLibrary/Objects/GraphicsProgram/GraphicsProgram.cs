@@ -12,6 +12,8 @@ namespace AriaLibrary.Objects.GraphicsProgram
     {
         public HEAP Heap;
 
+        public string Platform { get; set; }
+
         public void Read(BinaryReader reader)
         {
             long gprMagic = reader.ReadInt64();
@@ -19,8 +21,8 @@ namespace AriaLibrary.Objects.GraphicsProgram
             {
                 throw new InvalidDataException($"Attempted to read GPR but found {gprMagic} instead.");
             }
-            int gxmMagic = reader.ReadInt32();
-            int gxmCombinedSize = reader.ReadInt32();
+            Platform = new string(reader.ReadChars(4).TakeWhile(x => x != '\0').ToArray());
+            int combinedSize = reader.ReadInt32();
             int flags = reader.ReadInt32();
             int headerSize = reader.ReadInt32();
             int heapOffset = reader.ReadInt32();
@@ -32,7 +34,7 @@ namespace AriaLibrary.Objects.GraphicsProgram
             int heapPSBufferOffset = reader.ReadInt32();
             int heapPSBufferSize = reader.ReadInt32();
             reader.BaseStream.Seek(heapOffset+16, SeekOrigin.Begin);
-            Heap.Read(reader, 16 + heapVSBufferOffset, 16 + heapMeshBufferOffset, 16 + heapPSBufferOffset);
+            Heap.Read(reader, 16 + heapVSBufferOffset, 16 + heapMeshBufferOffset, 16 + heapPSBufferOffset, Platform);
         }
 
         public void Write(BinaryWriter writer)
@@ -42,7 +44,13 @@ namespace AriaLibrary.Objects.GraphicsProgram
                     using (BinaryWriter meshWriter = new BinaryWriter(new MemoryStream()))
             {
                 writer.Write(new char[8] { 'G', 'P', 'R', '\0', '\0', '\0', '\0', '\0' });
-                writer.Write(new char[4] { 'G', 'X', 'M', '\0' });
+                if (Platform.Length > 4)
+                {
+                    throw new InvalidDataException("Platform identifier is too long to fit in 4 bytes");
+                }
+                char[] platform = Platform.ToCharArray();
+                writer.Write(platform);
+                PositionHelper.AlignWriter(writer, 4);
                 // write 0 until we know the data size.
                 // NOTE: GXM data size is the sum of the header size, HEAP size, VSBuffer size, Mesh buffer size, and PS Buffer size (Assumed due to a 3rd possible buffer that's always unused iirc)
                 writer.Write(0);

@@ -65,7 +65,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
     {
         public override string Type => "SHMI";
         public SHMIData Data;
-        public override void Read(BinaryReader reader, int heapStringOffset, int heapDataOffset, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset)
+        public override void Read(BinaryReader reader, int heapStringOffset, int heapDataOffset, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset, string platform)
         {
             int nameOffset = reader.ReadInt32();
             Name = StringReader.ReadNullTerminatedStringAtOffset(reader, heapStringOffset + nameOffset);

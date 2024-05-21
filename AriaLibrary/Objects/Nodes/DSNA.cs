@@ -10,22 +10,22 @@ namespace AriaLibrary.Objects.Nodes
     public class DSNA : NodeBlock
     {
         public override string Type => "DSNA";
-        public int DSNAID;
-        public int U04;
+        public int Object;
+        public int Mode;
 
         public override void Read(BinaryReader reader)
         {
             int dataSize = reader.ReadInt32();
-            DSNAID = reader.ReadInt32();
-            U04 = reader.ReadInt32();
+            Object = reader.ReadInt32();
+            Mode = reader.ReadInt32();
         }
 
         public override void Write(BinaryWriter writer)
         {
             writer.Write(new char[4] { 'D', 'S', 'N', 'A' });
             writer.Write(0x08);
-            writer.Write(DSNAID);
-            writer.Write(U04);
+            writer.Write(Object);
+            writer.Write(Mode);
         }
 
         public DSNA()

@@ -12,10 +12,10 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
     public class PXSBData
     {
         public int U00;
-        public VXSHData VertexShaderData;
-        public SHBIData? ShaderBind0;
-        public SHBIData? ShaderBind1;
-        public void Read(BinaryReader reader, int dataOffset, int heapDataOffset, int heapStringOffset)
+        public PXSHData PixelShaderData;
+        public SHBIData? PixelShaderConstBind;
+        public SHBIData? PixelShaderSamplerBind;
+        public void Read(BinaryReader reader, int dataOffset, int heapDataOffset, int heapStringOffset, string platform)
         {
             long cur = reader.BaseStream.Position;
             reader.BaseStream.Seek(dataOffset, SeekOrigin.Begin);
@@ -24,16 +24,16 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             int vertexShaderDataOffset = reader.ReadInt32();
             int shaderBind0Offset = reader.ReadInt32();
             int shaderBind1Offset = reader.ReadInt32();
-            VertexShaderData.Read(reader, heapDataOffset + vertexShaderDataOffset, heapStringOffset);
+            PixelShaderData.Read(reader, heapDataOffset + vertexShaderDataOffset, heapStringOffset, platform);
             if (shaderBind0Offset != -1)
             {
-                ShaderBind0 = new SHBIData();
-                ShaderBind0.Read(reader, heapDataOffset + shaderBind0Offset, heapStringOffset);
+                PixelShaderConstBind = new SHBIData();
+                PixelShaderConstBind.Read(reader, heapDataOffset + shaderBind0Offset, heapStringOffset);
             }
             if (shaderBind1Offset != -1)
             {
-                ShaderBind1 = new SHBIData();
-                ShaderBind1.Read(reader, heapDataOffset + shaderBind1Offset, heapStringOffset);
+                PixelShaderSamplerBind = new SHBIData();
+                PixelShaderSamplerBind.Read(reader, heapDataOffset + shaderBind1Offset, heapStringOffset);
             }
 
             reader.BaseStream.Seek(cur, SeekOrigin.Begin);
@@ -44,7 +44,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             dataWriter.Write(U00);
             dataWriter.Write(sectionDataPositions[curDataPositionIdx]);
             curDataPositionIdx++;
-            if (ShaderBind0 != null)
+            if (PixelShaderConstBind != null)
             {
                 dataWriter.Write(sectionDataPositions[curDataPositionIdx]);
                 curDataPositionIdx++;
@@ -53,7 +53,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             {
                 dataWriter.Write(-1);
             }
-            if (ShaderBind1 != null)
+            if (PixelShaderSamplerBind != null)
             {
                 dataWriter.Write(sectionDataPositions[curDataPositionIdx]);
                 curDataPositionIdx++;
@@ -65,14 +65,14 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
         }
         public PXSBData()
         {
-            VertexShaderData = new VXSHData();
+            PixelShaderData = new PXSHData();
         }
     }
     public class PXSB : GPRSection
     {
         public override string Type => "PXSB";
         public PXSBData Data;
-        public override void Read(BinaryReader reader, int heapStringOffset, int heapDataOffset, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset)
+        public override void Read(BinaryReader reader, int heapStringOffset, int heapDataOffset, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset, string platform)
         {
             int nameOffset = reader.ReadInt32();
             Name = StringReader.ReadNullTerminatedStringAtOffset(reader, heapStringOffset + nameOffset);
@@ -85,7 +85,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
 
             Buffer = (BufferName)reader.ReadInt32();
             // Data
-            Data.Read(reader, heapDataOffset + dataOffset, heapDataOffset, heapStringOffset);
+            Data.Read(reader, heapDataOffset + dataOffset, heapDataOffset, heapStringOffset, platform);
         }
 
         public override void Write(BinaryWriter heapWriter, BinaryWriter stringWriter, BinaryWriter dataWriter, BinaryWriter bufferWriter, ref Dictionary<string, int> stringPosMap, ref List<int> sectionDataPositions, ref int curDataPositionIdx)
