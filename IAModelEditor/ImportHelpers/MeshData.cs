@@ -1,5 +1,6 @@
 ﻿using AriaLibrary.Objects.GraphicsProgram.Nodes;
 using AriaLibrary.Objects.Nodes;
+using Assimp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,7 @@ namespace IAModelEditor.ImportHelpers
 {
     public class MeshData
     {
+        public Mesh? SourceMesh;
         // MESH data
         public PRIM? PrimitiveData;
         // GPR data

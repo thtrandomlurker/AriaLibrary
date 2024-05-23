@@ -137,6 +137,22 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
 
             List<SceGxmProgramParameter> vertexParameters = ShaderHelper.GetParameters(ShaderPackage.Files[(shaderIndex * 2)].Stream, true);
 
+            // quick interjection to generate the VXAR. We will grab this per mesh from the material data later. it's a bit messy but it's the cleaner solution.
+            ParentForm.WorkingMaterialData[materialIndex].VertexArray = new VXAR();
+            ParentForm.WorkingMaterialData[materialIndex].VertexSemantics = new List<SceGxmParameterSemantic>();
+            ParentForm.WorkingMaterialData[materialIndex].VertexSemanticIndices = new List<int>();
+
+            foreach (var attribute in vertexParameters.Where(x => x.Category == SceGxmParameterCategory.SCE_GXM_PARAMETER_CATEGORY_ATTRIBUTE))
+            {
+                VertexAttribute attr = new VertexAttribute();
+                attr.DataType = VertexAttributeDataType.Float;
+                attr.Offset = attribute.ResourceIndex * 4;
+                attr.Count = 4;
+                attr.VertexBufferIndex = 0;
+                ParentForm.WorkingMaterialData[materialIndex].VertexSemantics.Add(attribute.Semantic);
+                ParentForm.WorkingMaterialData[materialIndex].VertexSemanticIndices.Add(attribute.SemanticIndex);
+            }
+
             foreach (var uniform in vertexParameters.Where(x => x.Category == SceGxmParameterCategory.SCE_GXM_PARAMETER_CATEGORY_UNIFORM)) {
                 VertexShaderUniform vxUniform = new VertexShaderUniform();
                 vxUniform.Name = uniform.ParameterName;

@@ -47,6 +47,10 @@ namespace IAModelEditor.ImportHelpers
         public VXSB? VXSB;
         public PXSB? PXSB;
 
+        public VXAR? VertexArray;
+        public List<SceGxmParameterSemantic>? VertexSemantics;
+        public List<int>? VertexSemanticIndices;
+
 
         public byte[]? VertexProgram;  // Vertex shader program
         public byte[]? FragmentProgram;  // Fragment shader program
