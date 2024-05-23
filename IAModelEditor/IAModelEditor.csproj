@@ -20,4 +20,10 @@
     <ProjectReference Include="..\AriaLibrary\AriaLibrary.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="GUI\Forms\MIWShaderInfo.cs">
+      <SubType>Form</SubType>
+    </Compile>
+  </ItemGroup>
+
 </Project>

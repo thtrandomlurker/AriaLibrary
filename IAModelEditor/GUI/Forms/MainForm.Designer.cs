@@ -39,6 +39,7 @@
             MenuStripExportFBXBasic = new ToolStripMenuItem();
             MenuStripCreate = new ToolStripMenuItem();
             MenuStripReplace = new ToolStripMenuItem();
+            sanityCzechToolStripMenuItem = new ToolStripMenuItem();
             editToolStripMenuItem = new ToolStripMenuItem();
             MenuStripEditMESH = new ToolStripMenuItem();
             MenuStripEditMESHVariEditor = new ToolStripMenuItem();
@@ -55,7 +56,7 @@
             MenuStripReplaceFileDialog = new OpenFileDialog();
             MenuStripExportFBXFileDialog = new SaveFileDialog();
             LoadedPlatformLabel = new Label();
-            sanityCzechToolStripMenuItem = new ToolStripMenuItem();
+            viewShaderPackageInfoToolStripMenuItem = new ToolStripMenuItem();
             MenuStrip.SuspendLayout();
             SuspendLayout();
             // 
@@ -148,6 +149,13 @@
             MenuStripReplace.Size = new Size(186, 22);
             MenuStripReplace.Text = "Replace";
             // 
+            // sanityCzechToolStripMenuItem
+            // 
+            sanityCzechToolStripMenuItem.Name = "sanityCzechToolStripMenuItem";
+            sanityCzechToolStripMenuItem.Size = new Size(186, 22);
+            sanityCzechToolStripMenuItem.Text = "Sanity Czech";
+            sanityCzechToolStripMenuItem.Click += sanityCzechToolStripMenuItem_Click;
+            // 
             // editToolStripMenuItem
             // 
             editToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { MenuStripEditMESH, MenuStripEditGPR, MenuStripEditNODT });
@@ -183,7 +191,7 @@
             // 
             // toolsToolStripMenuItem
             // 
-            toolsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { MenuStripToolsConvertGXT, MenuStripToolsConvertDDS, clearCSTSsForScienceToolStripMenuItem, unswizzleDDSInPlacToolStripMenuItem });
+            toolsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { MenuStripToolsConvertGXT, MenuStripToolsConvertDDS, clearCSTSsForScienceToolStripMenuItem, unswizzleDDSInPlacToolStripMenuItem, viewShaderPackageInfoToolStripMenuItem });
             toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             toolsToolStripMenuItem.Size = new Size(46, 20);
             toolsToolStripMenuItem.Text = "Tools";
@@ -191,28 +199,28 @@
             // MenuStripToolsConvertGXT
             // 
             MenuStripToolsConvertGXT.Name = "MenuStripToolsConvertGXT";
-            MenuStripToolsConvertGXT.Size = new Size(195, 22);
+            MenuStripToolsConvertGXT.Size = new Size(209, 22);
             MenuStripToolsConvertGXT.Text = "Convert GXT(s) to DDS";
             MenuStripToolsConvertGXT.Click += MenuStripToolsConvertGXT_Click;
             // 
             // MenuStripToolsConvertDDS
             // 
             MenuStripToolsConvertDDS.Name = "MenuStripToolsConvertDDS";
-            MenuStripToolsConvertDDS.Size = new Size(195, 22);
+            MenuStripToolsConvertDDS.Size = new Size(209, 22);
             MenuStripToolsConvertDDS.Text = "Convert DDS(s) to GXT";
             MenuStripToolsConvertDDS.Click += MenuStripToolsConvertDDS_Click;
             // 
             // clearCSTSsForScienceToolStripMenuItem
             // 
             clearCSTSsForScienceToolStripMenuItem.Name = "clearCSTSsForScienceToolStripMenuItem";
-            clearCSTSsForScienceToolStripMenuItem.Size = new Size(195, 22);
+            clearCSTSsForScienceToolStripMenuItem.Size = new Size(209, 22);
             clearCSTSsForScienceToolStripMenuItem.Text = "Clear CSTSs for science";
             clearCSTSsForScienceToolStripMenuItem.Click += clearCSTSsForScienceToolStripMenuItem_Click;
             // 
             // unswizzleDDSInPlacToolStripMenuItem
             // 
             unswizzleDDSInPlacToolStripMenuItem.Name = "unswizzleDDSInPlacToolStripMenuItem";
-            unswizzleDDSInPlacToolStripMenuItem.Size = new Size(195, 22);
+            unswizzleDDSInPlacToolStripMenuItem.Size = new Size(209, 22);
             unswizzleDDSInPlacToolStripMenuItem.Text = "Unswizzle DDS In Plac";
             unswizzleDDSInPlacToolStripMenuItem.Click += unswizzleDDSInPlacToolStripMenuItem_Click;
             // 
@@ -251,12 +259,12 @@
             LoadedPlatformLabel.TabIndex = 2;
             LoadedPlatformLabel.Text = "Platform:";
             // 
-            // sanityCzechToolStripMenuItem
+            // viewShaderPackageInfoToolStripMenuItem
             // 
-            sanityCzechToolStripMenuItem.Name = "sanityCzechToolStripMenuItem";
-            sanityCzechToolStripMenuItem.Size = new Size(186, 22);
-            sanityCzechToolStripMenuItem.Text = "Sanity Czech";
-            sanityCzechToolStripMenuItem.Click += sanityCzechToolStripMenuItem_Click;
+            viewShaderPackageInfoToolStripMenuItem.Name = "viewShaderPackageInfoToolStripMenuItem";
+            viewShaderPackageInfoToolStripMenuItem.Size = new Size(209, 22);
+            viewShaderPackageInfoToolStripMenuItem.Text = "View Shader Package Info";
+            viewShaderPackageInfoToolStripMenuItem.Click += viewShaderPackageInfoToolStripMenuItem_Click;
             // 
             // MainForm
             // 
@@ -305,5 +313,6 @@
         private Label LoadedPlatformLabel;
         private ToolStripMenuItem MenuStripExportFBXBasic;
         private ToolStripMenuItem sanityCzechToolStripMenuItem;
+        private ToolStripMenuItem viewShaderPackageInfoToolStripMenuItem;
     }
 }

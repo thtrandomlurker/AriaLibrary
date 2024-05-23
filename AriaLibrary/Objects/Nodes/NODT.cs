@@ -1,4 +1,5 @@
 ﻿using AriaLibrary.Helpers;
+using Assimp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,6 +39,11 @@ namespace AriaLibrary.Objects.Nodes
                         NODE node = new NODE();
                         node.Read(reader);
                         ChildNodes.Add(node);
+                        break;
+                    case "BBOX":
+                        BBOX bbox = new BBOX();
+                        bbox.Read(reader);
+                        ChildNodes.Add(bbox);
                         break;
                     default:
                         throw new InvalidDataException($"Invalid Node Type {new string(nodeType)}");

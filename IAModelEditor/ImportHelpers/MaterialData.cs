@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AriaLibrary.Helpers;
 using AriaLibrary.Objects.GraphicsProgram.Nodes;
 using AriaLibrary.Objects.Nodes;
+using Assimp;
 
 namespace IAModelEditor.ImportHelpers
 {
@@ -20,22 +21,22 @@ namespace IAModelEditor.ImportHelpers
             Message = message;
         }
     }
-    public class MaterialInfo
+    public class MaterialData
     {
-        public byte[]? VertexProgram;  // Vertex shader program
-        public byte[]? FragmentProgram;  // Fragment shader program
-        public string? ShaderName;  // Stores the name of the shader to be used
-        public int ShaderPermutation;  // Stores the permutation index. Useless?
+        public Material SourceMaterial;
         // MESH material related sections
-        public EFFE? MaterialEffect;
-        public SAMP? MaterialSampler;
-        public CSTS? VertexConstants;
-        public CSTS? FragmentConstants;
+        public EFFE? MaterialEffect;  // read shader from GPR or external
+        public SAMP? MaterialSampler;  // read smst from GPR
+        public CSTS? VertexConstants;  // read shco from gpr
+        public CSTS? FragmentConstants;  // read shco from gpr
+        public TRSP? MaterialTransparencySetting;
+        public MATE? Material;
 
         // GPR material related sections
         public List<SHCO> ShaderConstants;
+        public List<SMST> SamplerStates;
 
-        public SHMI? SHMI;
+        public SHMI? ShaderMetadata;  // usually nulled
         public VXSH? VertexShader;
         public SHBI? VertexShaderBinding; // contains per-material parameters, bound to the vertex shader from constants
 
@@ -43,9 +44,16 @@ namespace IAModelEditor.ImportHelpers
         public SHBI? PixelShaderConstantBinding; // contains per-material parameters, bound from constants
         public SHBI? PixelShaderSamplerBinding; // contains per-material parameters, bound from constants
 
-        // finally the glue to hold it togethe
         public VXSB? VXSB;
         public PXSB? PXSB;
+
+
+        public byte[]? VertexProgram;  // Vertex shader program
+        public byte[]? FragmentProgram;  // Fragment shader program
+
+        // internal
+        public string? ShaderName;  // Stores the name of the shader to be used
+        public int ShaderPermutation;  // Stores the permutation index. Useless?
 
         public string? MaterialName;
         public bool Initialized = false;
@@ -200,11 +208,13 @@ namespace IAModelEditor.ImportHelpers
         }
 
 
-        public MaterialInfo()
+        public MaterialData()
         {
             MaterialSampler = new SAMP();
             VertexConstants = new CSTS();
             FragmentConstants = new CSTS();
+            ShaderConstants = new List<SHCO>();
+            SamplerStates = new List<SMST>();
         }
     }
 }

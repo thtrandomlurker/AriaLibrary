@@ -15,24 +15,21 @@ namespace IAModelEditor.GUI.Controls
 {
     public partial class MIWMaterialSetupControl : UserControl
     {
-        new public Form Parent;
-
-        public List<EFFE> MaterialEffects;
+        new public ModelImportWizard Parent;
 
         public MIWMaterialSetupControl(Form parent)
         {
             InitializeComponent();
-            Parent = parent;
-            foreach (var matInfo in ((ModelImportWizard)Parent).MaterialInfos)
+            Parent = (ModelImportWizard)parent;
+            foreach (var matInfo in Parent.WorkingMaterialData)
             {
                 MIWMaterialListbox.Items.Add(matInfo.MaterialName);
             }
-            MaterialEffects = new List<EFFE>();
         }
 
         private void MIWMaterialValidate_Click(object sender, EventArgs e)
         {
-            MaterialValidity validityStatus = ((ModelImportWizard)Parent).MaterialInfos[MIWMaterialListbox.SelectedIndex].IsValid(((ModelImportWizard)Parent).WorkingObject.MESH.StringBuffer.StringList);
+            MaterialValidity validityStatus = Parent.WorkingMaterialData[MIWMaterialListbox.SelectedIndex].IsValid(Parent.WorkingObject.MESH.StringBuffer.StringList);
             MIWMaterialValidationStatus.Text = $"{(validityStatus.Valid ? "Valid. " : "Invalid. ")} {validityStatus.Message}";
         }
 

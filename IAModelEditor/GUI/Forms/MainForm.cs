@@ -227,10 +227,28 @@ namespace IAModelEditor.GUI.Forms
                     Console.WriteLine($"    EFFE: {countEFFE}");
                     Console.WriteLine($"    MATE: {countMATE}");
                     Console.WriteLine($"    PRIM: {countPRIM}");
-
+                    foreach (EFFE effe in obj.MESH.ChildNodes.Where(x => x.Type == "EFFE"))
+                    {
+                        Console.WriteLine($"    Effect[{effe.EffectID}]: {obj.MESH.StringBuffer.StringList.Strings[effe.EffectType]}");
+                        Console.WriteLine($"    {obj.MESH.StringBuffer.StringList.Strings[effe.EffectName]}: {obj.MESH.StringBuffer.StringList.Strings[effe.EffectFileName]}");
+                    }
                 }
             }
             MenuStripOpenFileDialog.Multiselect = false;
+        }
+
+        private void viewShaderPackageInfoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // temporarily alter the behavior of MenuStripOpenFileDialog
+            MenuStripOpenFileDialog.Filter = "Shader Package File|*.csp";
+            if (MenuStripOpenFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                using (MIWShaderInfo shaderInfoForm = new MIWShaderInfo(MenuStripOpenFileDialog.FileName))
+                {
+                    shaderInfoForm.ShowDialog();
+                }
+            }
+            MenuStripOpenFileDialog.Filter = "IA / VT Model File| *.mdl";
         }
     }
 }

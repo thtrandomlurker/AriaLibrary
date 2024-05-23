@@ -14,16 +14,17 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Numerics;
+using IAModelEditor.ImportHelpers;
 
 namespace IAModelEditor.GUI.Forms.ModelImportWizard
 {
     public partial class MIWShaderSelector : Form
     {
         public KPack ShaderPackage;
-        new public Form ParentForm;
-        new public UserControl Parent;
+        new public ModelImportWizard ParentForm;
+        new public MIWMaterialSetupControl Parent;
         public string SourceName;
-        public MIWShaderSelector(string shaderPackagePath, Form parentForm, UserControl parent)
+        public MIWShaderSelector(string shaderPackagePath, ModelImportWizard parentForm, MIWMaterialSetupControl parent)
         {
             InitializeComponent();
             KPack shaderPackage = new KPack();
@@ -80,221 +81,243 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
 
         private void MakeMaterial(int shaderIndex, int materialIndex)
         {
+            int CurrentStringIndex()
+            {
+                return ParentForm.WorkingObject.MESH.StringBuffer.StringList.Strings.Count;
+            }
+
+            void AddString(string s)
+            {
+                ParentForm.WorkingObject.MESH.StringBuffer.StringList.Strings.Add(s);
+            }
+
             ShaderPackage.Files[(shaderIndex * 2)].Open();
             ShaderPackage.Files[(shaderIndex * 2) + 1].Open();
-            ((ModelImportWizard)ParentForm).MaterialInfos[materialIndex].VertexProgram = new byte[ShaderPackage.Files[(shaderIndex * 2)].Size];
-            ((ModelImportWizard)ParentForm).MaterialInfos[materialIndex].FragmentProgram = new byte[ShaderPackage.Files[(shaderIndex * 2)+1].Size];
+            ParentForm.WorkingMaterialData[materialIndex].VertexProgram = new byte[ShaderPackage.Files[(shaderIndex * 2)].Size];
+            ParentForm.WorkingMaterialData[materialIndex].FragmentProgram = new byte[ShaderPackage.Files[(shaderIndex * 2)+1].Size];
+
+            // so we begin with the TRPS
+            ParentForm.WorkingMaterialData[materialIndex].MaterialTransparencySetting = new TRSP() { TRSPId = materialIndex, Culling = CullMode.None, U08 = 1, U0C = 0, U10 = 2, U14 = 0, U18 = 1, U1C = 1 };
+
+            // then the EFFE
+            ParentForm.WorkingMaterialData[materialIndex].MaterialEffect = new EFFE();
+            ParentForm.WorkingMaterialData[materialIndex].MaterialEffect.EffectID = materialIndex;
+            // set effect name index then push string to string list
+            ParentForm.WorkingMaterialData[materialIndex].MaterialEffect.EffectName = CurrentStringIndex();  // current index
+            AddString(ParentForm.WorkingMaterialData[materialIndex].MaterialName + "-fx");
+
+            ParentForm.WorkingMaterialData[materialIndex].MaterialEffect.EffectFileName = CurrentStringIndex();  // current index
+            AddString(SourceName + ".cgfx");
+
+            ParentForm.WorkingMaterialData[materialIndex].MaterialEffect.EffectType = CurrentStringIndex();  // current index
+            AddString("Shader");
+
+            // create TPAS for EFFE
+            ParentForm.WorkingMaterialData[materialIndex].MaterialEffect.TPAS.U00 = -1;
+            ParentForm.WorkingMaterialData[materialIndex].MaterialEffect.TPAS.U04 = -1;
+            ParentForm.WorkingMaterialData[materialIndex].MaterialEffect.TPAS.TPASId = materialIndex;
+            ParentForm.WorkingMaterialData[materialIndex].MaterialEffect.TPAS.VertexShaderName = CurrentStringIndex();
+            ParentForm.WorkingMaterialData[materialIndex].MaterialEffect.TPAS.PixelShaderName = CurrentStringIndex();
+            // Name must match PXSH/VXSH/Related Sections.
+            AddString(ParentForm.WorkingMaterialData[materialIndex].MaterialName + "-fx");
+
+            // to follow suit, create the relevant GPR data
+
+            // SHMI is very simple
+            ParentForm.WorkingMaterialData[materialIndex].ShaderMetadata = new SHMI();
+            ParentForm.WorkingMaterialData[materialIndex].ShaderMetadata.Data.U0C = -1;
+            ParentForm.WorkingMaterialData[materialIndex].ShaderMetadata.Data.U10 = -1;
+            // name must match that of the EFFE.
+            ParentForm.WorkingMaterialData[materialIndex].ShaderMetadata.Name = ParentForm.WorkingMaterialData[materialIndex].MaterialName + "-fx";
+
+            // VXSH is a little more complex. we need to get every input and map it to a uniform entry
+            ParentForm.WorkingMaterialData[materialIndex].VertexShader = new VXSH();
+            // name must match to EFFE declaration
+            ParentForm.WorkingMaterialData[materialIndex].VertexShader.Name = ParentForm.WorkingMaterialData[materialIndex].MaterialName + "-fx";
+
+            List<SceGxmProgramParameter> vertexParameters = ShaderHelper.GetParameters(ShaderPackage.Files[(shaderIndex * 2)].Stream, true);
+
+            foreach (var uniform in vertexParameters.Where(x => x.Category == SceGxmParameterCategory.SCE_GXM_PARAMETER_CATEGORY_UNIFORM)) {
+                VertexShaderUniform vxUniform = new VertexShaderUniform();
+                vxUniform.Name = uniform.ParameterName;
+                vxUniform.ResourceIndex = uniform.ResourceIndex;
+                vxUniform.Size = uniform.ArraySize * 4;
+                ParentForm.WorkingMaterialData[materialIndex].VertexShader.Data.Uniforms.Add(vxUniform);
+            }
+            // then set the shader in binary data
+            ParentForm.WorkingMaterialData[materialIndex].VertexShader.BufferData = new byte[ShaderPackage.Files[(shaderIndex * 2)].Size];
+            ShaderPackage.Files[(shaderIndex * 2)].Stream.Read(ParentForm.WorkingMaterialData[materialIndex].VertexShader.BufferData);
+
+            // vertex shbi. defines constant inputs
+            ParentForm.WorkingMaterialData[materialIndex].VertexShaderBinding = new SHBI();
+            foreach(var input in vertexParameters.Where(x => x.Category == SceGxmParameterCategory.SCE_GXM_PARAMETER_CATEGORY_UNIFORM && !ShaderHelper.RendererParams.Contains(x.ParameterName)))
+            {
+                ShaderParameter shbiParam = new ShaderParameter();
+                shbiParam.ParameterName = input.ParameterName;
+                shbiParam.ParameterResourceIndex = input.ResourceIndex;
+                shbiParam.ParameterArraySize = input.ArraySize * 4;
+
+                ParentForm.WorkingMaterialData[materialIndex].VertexShaderBinding.Data.Parameters.Add(shbiParam);
+            }
+
+            // this also gives us enough information to create the CSTS/CSTV/SHCO
+            ParentForm.WorkingMaterialData[materialIndex].VertexConstants = new CSTS();
+            ParentForm.WorkingMaterialData[materialIndex].VertexConstants.ConstantSetID = (materialIndex * 2);  // 2 per mat. For safety. Surely having this with a shader that doesn't utilize it won't cause issues.
+            foreach (var input in ParentForm.WorkingMaterialData[materialIndex].VertexShaderBinding.Data.Parameters)
+            {
+                CSTV constValue = new CSTV();
+                constValue.ConstantName = CurrentStringIndex();
+                AddString(input.ParameterName);
+                constValue.ConstantDataName = CurrentStringIndex();
+                AddString(input.ParameterName + "-" + ParentForm.WorkingMaterialData[materialIndex].MaterialName);
+                
+                SHCO shaderConst = new SHCO();
+                shaderConst.Name = input.ParameterName + "-" + ParentForm.WorkingMaterialData[materialIndex].MaterialName;
+                shaderConst.Data.Constants.Add(new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+                
+                ParentForm.WorkingMaterialData[materialIndex].VertexConstants.ConstantValues.Add(constValue);
+                
+                // if it doesn't already exist, add. for the sake of PXSH SHCOs
+                if (ParentForm.WorkingMaterialData[materialIndex].ShaderConstants.FindIndex(x => x.Name == shaderConst.Name) == -1)
+                    ParentForm.WorkingMaterialData[materialIndex].ShaderConstants.Add(shaderConst);
+            }
+            ShaderPackage.Files[(shaderIndex * 2)].Close();
+
+            // follow suit for PXSH
+            ParentForm.WorkingMaterialData[materialIndex].PixelShader = new PXSH();
+            // name must match EFFE declaration
+            ParentForm.WorkingMaterialData[materialIndex].PixelShader.Name = ParentForm.WorkingMaterialData[materialIndex].MaterialName + "-fx";
+            
+            List<SceGxmProgramParameter> fragmentParameters = ShaderHelper.GetParameters(ShaderPackage.Files[(shaderIndex * 2) + 1].Stream, true);
+
+            foreach (var uniform in fragmentParameters.Where(x => x.Category == SceGxmParameterCategory.SCE_GXM_PARAMETER_CATEGORY_UNIFORM))
+            {
+                PixelShaderUniform pxUniform = new PixelShaderUniform();
+                pxUniform.Name = uniform.ParameterName;
+                pxUniform.ResourceIndex = uniform.ResourceIndex;
+                pxUniform.Size = uniform.ArraySize * 4;
+                ParentForm.WorkingMaterialData[materialIndex].PixelShader.Data.Uniforms.Add(pxUniform);
+            }
+            // then set the shader in binary data
+            ParentForm.WorkingMaterialData[materialIndex].PixelShader.BufferData = new byte[ShaderPackage.Files[(shaderIndex * 2) + 1].Size];
+            ShaderPackage.Files[(shaderIndex * 2) + 1].Stream.Read(ParentForm.WorkingMaterialData[materialIndex].PixelShader.BufferData);
+
+            // pixel input SHBI
+
+            ParentForm.WorkingMaterialData[materialIndex].PixelShaderConstantBinding = new SHBI();
+            foreach (var input in fragmentParameters.Where(x => x.Category == SceGxmParameterCategory.SCE_GXM_PARAMETER_CATEGORY_UNIFORM && !ShaderHelper.RendererParams.Contains(x.ParameterName)))
+            {
+                ShaderParameter shbiParam = new ShaderParameter();
+                shbiParam.ParameterName = input.ParameterName;
+                shbiParam.ParameterResourceIndex = input.ResourceIndex;
+                shbiParam.ParameterArraySize = input.ArraySize * 4;
+
+                ParentForm.WorkingMaterialData[materialIndex].PixelShaderConstantBinding.Data.Parameters.Add(shbiParam);
+            }
+
+            // this also gives us enough information to create the CSTS/CSTV/SHCO
+            ParentForm.WorkingMaterialData[materialIndex].FragmentConstants = new CSTS();
+            ParentForm.WorkingMaterialData[materialIndex].FragmentConstants.ConstantSetID = (materialIndex * 2);  // 2 per mat. For safety. Surely having this with a shader that doesn't utilize it won't cause issues.
+            foreach (var input in ParentForm.WorkingMaterialData[materialIndex].PixelShaderConstantBinding.Data.Parameters)
+            {
+                CSTV constValue = new CSTV();
+                constValue.ConstantName = CurrentStringIndex();
+                AddString(input.ParameterName);
+                constValue.ConstantDataName = CurrentStringIndex();
+                AddString(input.ParameterName + "-" + ParentForm.WorkingMaterialData[materialIndex].MaterialName);
+
+                SHCO shaderConst = new SHCO();
+                shaderConst.Name = input.ParameterName + "-" + ParentForm.WorkingMaterialData[materialIndex].MaterialName;
+                shaderConst.Data.Constants.Add(new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+
+                ParentForm.WorkingMaterialData[materialIndex].FragmentConstants.ConstantValues.Add(constValue);
+
+                // if it doesn't already exist, add. for the sake of PXSH SHCOs
+                if (ParentForm.WorkingMaterialData[materialIndex].ShaderConstants.FindIndex(x => x.Name == shaderConst.Name) == -1)
+                    ParentForm.WorkingMaterialData[materialIndex].ShaderConstants.Add(shaderConst);
+            }
+
+
+            ParentForm.WorkingMaterialData[materialIndex].PixelShaderSamplerBinding = new SHBI();
+            foreach (var input in fragmentParameters.Where(x => x.Category == SceGxmParameterCategory.SCE_GXM_PARAMETER_CATEGORY_SAMPLER))
+            {
+                ShaderParameter shbiParam = new ShaderParameter();
+                shbiParam.ParameterName = input.ParameterName;
+                shbiParam.ParameterResourceIndex = input.ResourceIndex;
+                shbiParam.ParameterArraySize = input.ArraySize;
+
+                ParentForm.WorkingMaterialData[materialIndex].PixelShaderSamplerBinding.Data.Parameters.Add(shbiParam);
+            }
+
+            // this also also gives us enough information to generate sampler information.
+            ParentForm.WorkingMaterialData[materialIndex].MaterialSampler = new SAMP();
+            foreach (var input in ParentForm.WorkingMaterialData[materialIndex].PixelShaderSamplerBinding.Data.Parameters)
+            {
+                SSTV samplerTextureView = new SSTV();
+                samplerTextureView.TextureSlot = CurrentStringIndex();
+                AddString(input.ParameterName);
+                // prompt user for texture
+                using (OpenFileDialog ofd = new OpenFileDialog() { Title = $"Please select a file for material \"{ParentForm.WorkingMaterialData[materialIndex].MaterialName}\" texture {input.ParameterName}.", Filter = "DDS Files|*.dds|GXT Files|*.gxt, *.mxt"})
+                {
+                    if (ofd.ShowDialog() == DialogResult.OK)
+                    {
+                        string textureFileName = Path.GetFileName(ofd.FileName);
+                        samplerTextureView.TextureSourcePath = CurrentStringIndex();
+                        AddString(textureFileName);
+                    }
+                }
+                samplerTextureView.TextureName = CurrentStringIndex();
+                AddString(input.ParameterName + "-" + ParentForm.WorkingMaterialData[materialIndex].MaterialName);
+
+                SMST samplerState = new SMST();
+                samplerState.Data.U00 = 1;
+                samplerState.Data.U04 = 1;
+                samplerState.Data.U08 = 512;
+                samplerState.Data.U0C = 0;
+                samplerState.Data.U10 = 0;
+                samplerState.Data.U14 = 0;
+                samplerState.Data.U18 = 31;
+                samplerState.Data.U1C = 134217728;
+                samplerState.Name = input.ParameterName + "-" + ParentForm.WorkingMaterialData[materialIndex].MaterialName;
+
+                ParentForm.WorkingMaterialData[materialIndex].MaterialSampler.SSTVs.Add(samplerTextureView);
+                ParentForm.WorkingMaterialData[materialIndex].SamplerStates.Add(samplerState);
+            }
+            ShaderPackage.Files[(shaderIndex * 2) + 1].Close();
+
+            // now we create the PXSB and VXSB
+            ParentForm.WorkingMaterialData[materialIndex].VXSB = new VXSB();
+            ParentForm.WorkingMaterialData[materialIndex].VXSB.Data.VertexShaderData = ParentForm.WorkingMaterialData[materialIndex].VertexShader.Data;
+            ParentForm.WorkingMaterialData[materialIndex].VXSB.Data.ShaderBind0 = ParentForm.WorkingMaterialData[materialIndex].VertexShaderBinding.Data;
+            ParentForm.WorkingMaterialData[materialIndex].VXSB.Name = ParentForm.WorkingMaterialData[materialIndex].VertexShader.Name;
+
+            ParentForm.WorkingMaterialData[materialIndex].PXSB = new PXSB();
+            ParentForm.WorkingMaterialData[materialIndex].PXSB.Data.PixelShaderData = ParentForm.WorkingMaterialData[materialIndex].PixelShader.Data;
+            ParentForm.WorkingMaterialData[materialIndex].PXSB.Data.PixelShaderConstBind = ParentForm.WorkingMaterialData[materialIndex].PixelShaderConstantBinding.Data;
+            ParentForm.WorkingMaterialData[materialIndex].PXSB.Data.PixelShaderSamplerBind = ParentForm.WorkingMaterialData[materialIndex].PixelShaderSamplerBinding.Data;
+            ParentForm.WorkingMaterialData[materialIndex].PXSB.Name = ParentForm.WorkingMaterialData[materialIndex].PixelShader.Name;
+
+            // at this point, the GPR is set for material data.
+
+            ParentForm.WorkingMaterialData[materialIndex].Material = new MATE();
+            ParentForm.WorkingMaterialData[materialIndex].Material.MaterialID = materialIndex;
+            ParentForm.WorkingMaterialData[materialIndex].Material.Name1 = CurrentStringIndex();
+            ParentForm.WorkingMaterialData[materialIndex].Material.Name2 = CurrentStringIndex();
+            AddString(ParentForm.WorkingMaterialData[materialIndex].MaterialName);
+            ParentForm.WorkingMaterialData[materialIndex].Material.VertexConstantID = (materialIndex * 2);
+            ParentForm.WorkingMaterialData[materialIndex].Material.PixelConstantID = (materialIndex * 2) + 1;
+            ParentForm.WorkingMaterialData[materialIndex].Material.EffectID = materialIndex;
+            ParentForm.WorkingMaterialData[materialIndex].Material.SamplerID = materialIndex;
+            ParentForm.WorkingMaterialData[materialIndex].Material.Neg1 = -1;
+
+            // and the MESH is set for material data.
+
+            ParentForm.WorkingMaterialData[materialIndex].Initialized = true;
         }
 
         private void MIWShaderConfirmation_Click(object sender, EventArgs e)
         {
-            MakeMaterial(MIWShaderList.SelectedIndex, ((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex);
-
-            ShaderPackage.Files[(MIWShaderList.SelectedIndex * 2)].Open();
-            ShaderPackage.Files[(MIWShaderList.SelectedIndex * 2) + 1].Open();
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].VertexProgram = new byte[ShaderPackage.Files[(MIWShaderList.SelectedIndex * 2)].Size];
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].FragmentProgram = new byte[ShaderPackage.Files[(MIWShaderList.SelectedIndex * 2) + 1].Size];
-            ShaderPackage.Files[(MIWShaderList.SelectedIndex * 2)].Stream.Read(((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].VertexProgram, 0, ShaderPackage.Files[(MIWShaderList.SelectedIndex * 2)].Size);
-            ShaderPackage.Files[(MIWShaderList.SelectedIndex * 2) + 1].Stream.Read(((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].FragmentProgram, 0, ShaderPackage.Files[(MIWShaderList.SelectedIndex * 2) + 1].Size);
-            ShaderPackage.Files[(MIWShaderList.SelectedIndex * 2)].Close();
-            ShaderPackage.Files[(MIWShaderList.SelectedIndex * 2) + 1].Close();
-
-            EFFE matEffe;
-
-            if (((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialEffect == null)
-            {
-                matEffe = new EFFE();
-            }
-            else
-            {
-                matEffe = ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialEffect;
-            }
-
-            matEffe.EffectID = ((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex;
-            if (!((ModelImportWizard)ParentForm).WorkingObject.MESH.StringBuffer.StringList.Strings.Contains("Shader"))
-            {
-                ((ModelImportWizard)ParentForm).WorkingObject.MESH.StringBuffer.StringList.Strings.Add("Shader");
-            }
-            matEffe.EffectType = ((ModelImportWizard)ParentForm).WorkingObject.MESH.StringBuffer.StringList.Strings.FindIndex(x => x == "Shader");
-            if (!((ModelImportWizard)ParentForm).WorkingObject.MESH.StringBuffer.StringList.Strings.Contains($"{((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialName}-fx"))
-            {
-                ((ModelImportWizard)ParentForm).WorkingObject.MESH.StringBuffer.StringList.Strings.Add($"{((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialName}-fx");
-            }
-            matEffe.EffectName = ((ModelImportWizard)ParentForm).WorkingObject.MESH.StringBuffer.StringList.Strings.FindIndex(x => x == $"{((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialName}-fx");
-            if (!((ModelImportWizard)ParentForm).WorkingObject.MESH.StringBuffer.StringList.Strings.Contains($"{SourceName}.cgfx"))
-            {
-                ((ModelImportWizard)ParentForm).WorkingObject.MESH.StringBuffer.StringList.Strings.Add($"{SourceName}.cgfx");
-            }
-            matEffe.EffectFileName = ((ModelImportWizard)ParentForm).WorkingObject.MESH.StringBuffer.StringList.Strings.FindIndex(x => x == $"{SourceName}.cgfx");
-
-            matEffe.TPAS.U00 = -1;
-            matEffe.TPAS.U04 = -1;
-            matEffe.TPAS.TPASId = ((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex;
-            matEffe.TPAS.VertexShaderName = ((ModelImportWizard)ParentForm).WorkingObject.MESH.StringBuffer.StringList.Strings.FindIndex(x => x == $"{((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialName}-fx");
-            matEffe.TPAS.PixelShaderName = ((ModelImportWizard)ParentForm).WorkingObject.MESH.StringBuffer.StringList.Strings.FindIndex(x => x == $"{((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialName}-fx");
-            matEffe.TPAS.U14 = -1;
-
-            // We need the shader params. not just names, but the full set of params.
-
-            List<SceGxmProgramParameter> vertexParameters = ShaderHelper.GetParameters(new MemoryStream(((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].VertexProgram));
-            List<SceGxmProgramParameter> fragmentParameters = ShaderHelper.GetParameters(new MemoryStream(((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].FragmentProgram));
-
-            // debug
-
-            Console.WriteLine("Vertex Shader: ");
-
-            foreach (var vertParam in vertexParameters)
-            {
-                Console.WriteLine(vertParam.ParameterName);
-                Console.WriteLine(vertParam.DataType);
-                Console.WriteLine(vertParam.Semantic);
-                Console.WriteLine(vertParam.ComponentCount);
-                Console.WriteLine(vertParam.ArraySize);
-            }
-
-            Console.WriteLine("Fragment Shader: ");
-
-            foreach (var fragParam in fragmentParameters)
-            {
-                Console.WriteLine(fragParam.ParameterName);
-                Console.WriteLine(fragParam.DataType);
-                Console.WriteLine(fragParam.Semantic);
-                Console.WriteLine(fragParam.ComponentCount);
-                Console.WriteLine(fragParam.ArraySize);
-            }
-
-            // by this point, the EFFE is fully handled
-            // next would be the GPR
-
-            // the best way to do this would be to make dummy data for now
-
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].VertexShaderBinding = new SHBI();
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].VertexShaderBinding.Name = $"{((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialName}-fx";
-
-            foreach (var uniform in vertexParameters.Where(x => !ShaderHelper.RendererParams.Contains(x.ParameterName) && !x.ParameterName.StartsWith("in_")))
-            {
-                ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].VertexShaderBinding.Data.Parameters.Add(new ShaderParameter() { ParameterName = uniform.ParameterName, ParameterResourceIndex = uniform.ResourceIndex, ParameterArraySize = uniform.ArraySize * uniform.ComponentCount });
-            }
-
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].SHMI = new SHMI();
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].SHMI.Data.U00 = 0;
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].SHMI.Data.U04 = 0;
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].SHMI.Data.U08 = "";
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].SHMI.Data.U0C = -1;
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].SHMI.Data.U10 = -1;
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].SHMI.Data.U14 = 0;
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].SHMI.Data.U18 = 0;
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].SHMI.Data.U1C = 0;
-
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].SHMI.Name = $"{((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialName}-fx";
-
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].VertexShader = new VXSH();
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].VertexShader.Name = $"{((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialName}-fx";
-
-            foreach (var uniform in vertexParameters.Where(x => ShaderHelper.RendererParams.Contains(x.ParameterName)))
-            {
-                ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].VertexShader.Data.Uniforms.Add(new VertexShaderUniform() { Name = uniform.ParameterName, ResourceIndex = uniform.ResourceIndex, Size = uniform.ArraySize * uniform.ComponentCount});
-            }
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].VertexShader.BufferData = ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].VertexProgram;
-
-            // Vertex shader done...? maybe? i have no clue if it'll work or not
-
-            // pxsh just has all?
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].PixelShader = new PXSH();
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].PixelShader.Name = $"{((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialName}-fx";
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].PixelShader.Buffer = BufferName.Mesh;
-            foreach (var uniform in fragmentParameters)
-            {
-                ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].PixelShader.Data.Uniforms.Add(new PixelShaderUniform() { Name = uniform.ParameterName, ResourceIndex = uniform.ResourceIndex, Size = uniform.ComponentCount * uniform.ArraySize });
-            }
-
-            // pixel shbi for consts
-
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].PixelShaderConstantBinding = new SHBI();
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].PixelShaderConstantBinding.Name = $"{((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialName}-fx";
-
-            foreach (var uniform in vertexParameters.Where(x => !ShaderHelper.RendererParams.Contains(x.ParameterName) && x.ParameterName.StartsWith('i')))
-            {
-                ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].VertexShaderBinding.Data.Parameters.Add(new ShaderParameter() { ParameterName = uniform.ParameterName, ParameterResourceIndex = uniform.ResourceIndex, ParameterArraySize = uniform.ArraySize * uniform.ComponentCount });
-            }
-
-            // pixel shbi for samplers *if applicable*
-
-            if (fragmentParameters.Count(x => !ShaderHelper.RendererParams.Contains(x.ParameterName) && !x.ParameterName.StartsWith('i')) != 0)
-            {
-
-                ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].PixelShaderSamplerBinding = new SHBI();
-                ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].PixelShaderSamplerBinding.Name = $"{((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialName}-fx";
-                ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialSampler = new SAMP();
-
-                foreach (var uniform in vertexParameters.Where(x => !ShaderHelper.RendererParams.Contains(x.ParameterName) && !x.ParameterName.StartsWith('i')))
-                {
-                    ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].PixelShaderSamplerBinding.Data.Parameters.Add(new ShaderParameter() { ParameterName = uniform.ParameterName, ParameterResourceIndex = uniform.ResourceIndex, ParameterArraySize = uniform.ArraySize});
-                    // add the sampler uniform name if needed
-                    if (!((ModelImportWizard)ParentForm).WorkingObject.MESH.StringBuffer.StringList.Strings.Contains(uniform.ParameterName))
-                    {
-                        ((ModelImportWizard)ParentForm).WorkingObject.MESH.StringBuffer.StringList.Strings.Add(uniform.ParameterName);
-                    }
-                    // and the sstv name
-                    if (!((ModelImportWizard)ParentForm).WorkingObject.MESH.StringBuffer.StringList.Strings.Contains($"{uniform.ParameterName}-{((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialName}"))
-                    {
-                        ((ModelImportWizard)ParentForm).WorkingObject.MESH.StringBuffer.StringList.Strings.Add($"{uniform.ParameterName}-{((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialName}");
-                    }
-                    // and of course a dummy entry for the texture name, just to reserve it
-                    ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialSampler.SSTVs.Add(new SSTV() { TextureSlot = ((ModelImportWizard)ParentForm).WorkingObject.MESH.StringBuffer.StringList.Strings.FindIndex(x => x == uniform.ParameterName), TextureName = ((ModelImportWizard)ParentForm).WorkingObject.MESH.StringBuffer.StringList.Strings.FindIndex(x => x == $"{uniform.ParameterName}-{((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialName}"), TextureSourcePath = 0 });
-
-                    // and of course a dummy entry for the texture name, just to reserve it
-                    ((ModelImportWizard)ParentForm).WorkingObject.MESH.StringBuffer.StringList.Strings.Add("DummyTex");
-                }
-
-
-            }
-
-            // all that's left is the P/VXSB
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].VXSB = new VXSB();
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].VXSB.Name = $"{((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialName}-fx";
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].VXSB.Data.VertexShaderData = ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].VertexShader.Data;
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].VXSB.Data.ShaderBind0 = ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].VertexShaderBinding.Data;
-
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].PXSB = new PXSB();
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].PXSB.Name = $"{((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialName}-fx";
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].PXSB.Data.PixelShaderData = ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].PixelShader.Data;
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].PXSB.Data.PixelShaderConstBind = ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].PixelShaderConstantBinding.Data;
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].PXSB.Data.PixelShaderSamplerBind = ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].PixelShaderSamplerBinding?.Data;
-
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].ShaderConstants = new List<SHCO>();
-
-
-
-
-            foreach (var param in vertexParameters.Where(x => !ShaderHelper.RendererParams.Contains(x.ParameterName) && x.ParameterName.StartsWith('i') && !x.ParameterName.StartsWith("in_")))
-            {
-                if (!((ModelImportWizard)ParentForm).WorkingObject.MESH.StringBuffer.StringList.Strings.Contains($"{param.ParameterName}-{((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialName}"))
-                {
-                    ((ModelImportWizard)ParentForm).WorkingObject.MESH.StringBuffer.StringList.Strings.Add($"{param.ParameterName}-{((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialName}");
-                }
-
-                int idx = ((ModelImportWizard)ParentForm).WorkingObject.MESH.StringBuffer.StringList.Strings.FindIndex(x => x == $"{param.ParameterName}-{((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialName}");
-
-                ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].VertexConstants.ConstantValues.Add(new CSTV() { ConstantName = idx, ConstantDataName = idx });
-
-                SHCO newSHCO = new SHCO() { Name = $"{param.ParameterName}-{((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialName}" };
-                newSHCO.Data.Constants.Add(new Vector4(1));
-                ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].ShaderConstants.Add(newSHCO);
-
-                ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].VertexShaderBinding.Data.Parameters.Add(new ShaderParameter() { ParameterName = param.ParameterName, ParameterResourceIndex = param.ResourceIndex, ParameterArraySize = param.ComponentCount});
-            }
-
-
-
-
-            if (((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialEffect == null)
-            {
-                ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].MaterialEffect = matEffe;
-            }
-
-
-            ((ModelImportWizard)ParentForm).MaterialInfos[((MIWMaterialSetupControl)Parent).MIWMaterialListbox.SelectedIndex].Initialized = true;
+            MakeMaterial(MIWShaderList.SelectedIndex, Parent.MIWMaterialListbox.SelectedIndex);
 
             this.Close();
         }

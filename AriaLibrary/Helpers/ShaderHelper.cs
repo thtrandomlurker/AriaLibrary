@@ -67,6 +67,50 @@ namespace AriaLibrary.Helpers
         public int ArraySize;
         public int ResourceIndex;
 
+        public static Dictionary<SceGxmParameterSemantic, string> SemanticStringLookup = new Dictionary<SceGxmParameterSemantic, string>()
+        {
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_NONE, "INVALID"},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_ATTR, "ATTR"},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BCOL, "BCOL"},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BINORMAL, "BINORMAL"},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BLENDINDICES, "BLENDINDICES"},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BLENDWEIGHT, "BLENDWEIGHT"},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_COLOR, "COLOR"},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_DIFFUSE, "DIFFUSE"},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_FOGCOORD, "FOGCOORD"},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_NORMAL, "NORMAL"},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_POINTSIZE, "POINTSIZE"},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_POSITION, "POSITION"},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_SPECULAR, "SPECULAR"},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TANGENT, "TANGENT"},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TEXCOORD, "TEXCOORD"},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_INDEX, "INDEX"},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_INSTANCE, "INSTANCE"}
+        };
+
+        public static Dictionary<SceGxmParameterSemantic, bool> SemanticIndexableLookup = new Dictionary<SceGxmParameterSemantic, bool>()
+        {
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_NONE, false},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_ATTR, true},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BCOL, false},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BINORMAL, false},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BLENDINDICES, false},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BLENDWEIGHT, false},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_COLOR, false},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_DIFFUSE, false},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_FOGCOORD, false},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_NORMAL, false},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_POINTSIZE, false},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_POSITION, false},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_SPECULAR, false},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TANGENT, false},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TEXCOORD, true},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_INDEX, false},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_INSTANCE, false}
+        };
+
+        public string SemanticName => $"{SemanticStringLookup[Semantic]}{(SemanticIndexableLookup[Semantic] ? $"{SemanticIndex}" : "")}";
+
         public void Read(BinaryReader reader)
         {
             int nameOffset = reader.ReadInt32();
@@ -162,9 +206,9 @@ namespace AriaLibrary.Helpers
             }
             return parameters;
         }
-        public static int GetResourceIndex(Stream shaderStream, string resourceName)
+        public static SceGxmProgramParameter GetParameter(Stream shaderStream, string resourceName)
         {
-            return GetParameters(shaderStream, true).First(x => x.ParameterName == resourceName).ResourceIndex;
+            return GetParameters(shaderStream, true).First(x => x.ParameterName == resourceName);
         }
     }
 }

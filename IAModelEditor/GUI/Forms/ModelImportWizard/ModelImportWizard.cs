@@ -24,7 +24,8 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
     public partial class ModelImportWizard : Form
     {
         string? mSourceFilePath;
-        public List<MaterialInfo> MaterialInfos;
+        public List<MaterialData> WorkingMaterialData;
+        public List<MeshData> WorkingMeshData;
         public ObjectGroup WorkingObject;
         public ModelImportWizard(string path)
         {
@@ -32,7 +33,8 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
             mSourceFilePath = path;
             // set the title bar
             Text = $"Model Import Wizard: {Path.GetFileName(mSourceFilePath)}";
-            MaterialInfos = new List<MaterialInfo>();
+            WorkingMaterialData = new List<MaterialData>();
+            WorkingMeshData = new List<MeshData>();
         }
 
         private void MIWInitButtonNext_Click(object sender, EventArgs e)
@@ -67,16 +69,23 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
 
                 List<string> skinBoneList = new List<string>();
 
+                // a naive assumption
+
+                List<Node> meshNodes = scene.RootNode.Children.Skip(1).ToList();
+                
                 // check if scene contains bones
                 bool hasBone = false;
-                foreach (var mesh in scene.Meshes)
+                foreach (var mesh in meshNodes)
                 {
-                    if (mesh.BoneCount > 0)
+                    foreach (int meshIndex in mesh.MeshIndices)
                     {
-                        hasBone = true;
-                        foreach (var bone in mesh.Bones)
+                        if (scene.Meshes[meshIndex].BoneCount > 0)
                         {
-                            skinBoneList.Add(bone.Name);
+                            hasBone = true;
+                            foreach (var bone in scene.Meshes[meshIndex].Bones)
+                            {
+                                skinBoneList.Add(bone.Name);
+                            }
                         }
                     }
                 }
@@ -91,14 +100,22 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         Bone bone = new Bone();
                         bone.BoneName = aiNode.Name;
                         Matrix4x4 boneMat = aiNode.Transform.ToNumerics();
-                        Matrix4x4.Decompose(boneMat, out Vector3 scl, out System.Numerics.Quaternion rot, out Vector3 loc);
-                        bone.Translation = new Vector3(-loc.X, -loc.Y, -loc.Z);
+                        Matrix4x4 transposedMat = Matrix4x4.Transpose(boneMat);
+                        Matrix4x4.Decompose(transposedMat, out Vector3 scl, out System.Numerics.Quaternion rot, out Vector3 loc);
+                        bone.Translation = loc;
                         Vector3 eulerRot = MathHelper.QuaternionToEulerAngles(rot.W, rot.X, rot.Y, rot.Z);
                         eulerRot *= (float)(180 / Math.PI);  // conv all at once
                         bone.Rotation = eulerRot;
                         bone.Scale = scl;
                         bone.BoneID = (short)WorkingObject.BRNT.Bones.Count;
                         bone.SkinID = (short)skinBoneList.FindIndex(x => x == aiNode.Name);
+                        bone.PossibleFlags = -256;
+                        bone.U18 = -1;
+                        bone.U1E = -1;
+                        if (aiNode.ChildCount == 1)
+                        {
+                            bone.BoneID = (short)(WorkingObject.BRNT.Bones.Count + 1);
+                        }
                         WorkingObject.BRNT.Bones.Add(bone);
 
                         if (aiNode.Parent != null)
@@ -111,7 +128,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                             AddBones(child);
                         }
                     }
-                    AddBones(scene.RootNode.Children[0]);
+                    AddBones(scene.RootNode.Children[0].Children[0]);  // start from skeleton root.
                 }
 
                 Console.WriteLine("BRNT PREPASS FINISHED");
@@ -127,9 +144,20 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
 
                 for (int i = 0; i < scene.MaterialCount; i++)
                 {
-                    MaterialInfo info = new MaterialInfo();
+                    MaterialData info = new MaterialData();
                     info.MaterialName = scene.Materials[i].Name;
-                    MaterialInfos.Add(info);
+                    info.SourceMaterial = scene.Materials[i];
+                    WorkingMaterialData.Add(info);
+                }
+
+                foreach (var node in meshNodes)
+                {
+                    foreach (var meshIndex in node.MeshIndices)
+                    {
+                        MeshData mesh = new MeshData();
+                        mesh.MeshName = node.Name;
+                        WorkingMeshData.Add(mesh);
+                    }
                 }
 
                 WorkingObject.GPR = new GraphicsProgram();
@@ -144,10 +172,10 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
 
             else if (MIWActiveStageControl is MIWMaterialSetupControl)
             {
-                int uninitIndex = MaterialInfos.FindIndex(x => !x.Initialized);
+                int uninitIndex = WorkingMaterialData.FindIndex(x => !x.Initialized);
                 if (uninitIndex != -1)
                 {
-                    MessageBox.Show($"Material \"{MaterialInfos[uninitIndex].MaterialName}\" has no shader applied to it.");
+                    MessageBox.Show($"Material \"{WorkingMaterialData[uninitIndex].MaterialName}\" has no shader applied to it.");
                 }
             }
         }
