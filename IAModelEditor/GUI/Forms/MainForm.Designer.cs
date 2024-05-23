@@ -50,13 +50,14 @@
             MenuStripToolsConvertDDS = new ToolStripMenuItem();
             clearCSTSsForScienceToolStripMenuItem = new ToolStripMenuItem();
             unswizzleDDSInPlacToolStripMenuItem = new ToolStripMenuItem();
+            viewShaderPackageInfoToolStripMenuItem = new ToolStripMenuItem();
             MenuStripOpenFileDialog = new OpenFileDialog();
             MenuStripSaveAsFileDialog = new SaveFileDialog();
             CurrentlyLoadedLabel = new Label();
             MenuStripReplaceFileDialog = new OpenFileDialog();
             MenuStripExportFBXFileDialog = new SaveFileDialog();
             LoadedPlatformLabel = new Label();
-            viewShaderPackageInfoToolStripMenuItem = new ToolStripMenuItem();
+            clearNODEInfoToolStripMenuItem = new ToolStripMenuItem();
             MenuStrip.SuspendLayout();
             SuspendLayout();
             // 
@@ -191,7 +192,7 @@
             // 
             // toolsToolStripMenuItem
             // 
-            toolsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { MenuStripToolsConvertGXT, MenuStripToolsConvertDDS, clearCSTSsForScienceToolStripMenuItem, unswizzleDDSInPlacToolStripMenuItem, viewShaderPackageInfoToolStripMenuItem });
+            toolsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { MenuStripToolsConvertGXT, MenuStripToolsConvertDDS, clearCSTSsForScienceToolStripMenuItem, unswizzleDDSInPlacToolStripMenuItem, viewShaderPackageInfoToolStripMenuItem, clearNODEInfoToolStripMenuItem });
             toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             toolsToolStripMenuItem.Size = new Size(46, 20);
             toolsToolStripMenuItem.Text = "Tools";
@@ -223,6 +224,13 @@
             unswizzleDDSInPlacToolStripMenuItem.Size = new Size(209, 22);
             unswizzleDDSInPlacToolStripMenuItem.Text = "Unswizzle DDS In Plac";
             unswizzleDDSInPlacToolStripMenuItem.Click += unswizzleDDSInPlacToolStripMenuItem_Click;
+            // 
+            // viewShaderPackageInfoToolStripMenuItem
+            // 
+            viewShaderPackageInfoToolStripMenuItem.Name = "viewShaderPackageInfoToolStripMenuItem";
+            viewShaderPackageInfoToolStripMenuItem.Size = new Size(209, 22);
+            viewShaderPackageInfoToolStripMenuItem.Text = "View Shader Package Info";
+            viewShaderPackageInfoToolStripMenuItem.Click += viewShaderPackageInfoToolStripMenuItem_Click;
             // 
             // MenuStripOpenFileDialog
             // 
@@ -259,12 +267,12 @@
             LoadedPlatformLabel.TabIndex = 2;
             LoadedPlatformLabel.Text = "Platform:";
             // 
-            // viewShaderPackageInfoToolStripMenuItem
+            // clearNODEInfoToolStripMenuItem
             // 
-            viewShaderPackageInfoToolStripMenuItem.Name = "viewShaderPackageInfoToolStripMenuItem";
-            viewShaderPackageInfoToolStripMenuItem.Size = new Size(209, 22);
-            viewShaderPackageInfoToolStripMenuItem.Text = "View Shader Package Info";
-            viewShaderPackageInfoToolStripMenuItem.Click += viewShaderPackageInfoToolStripMenuItem_Click;
+            clearNODEInfoToolStripMenuItem.Name = "clearNODEInfoToolStripMenuItem";
+            clearNODEInfoToolStripMenuItem.Size = new Size(209, 22);
+            clearNODEInfoToolStripMenuItem.Text = "Clear NODE info";
+            clearNODEInfoToolStripMenuItem.Click += clearNODEInfoToolStripMenuItem_Click;
             // 
             // MainForm
             // 
@@ -314,5 +322,6 @@
         private ToolStripMenuItem MenuStripExportFBXBasic;
         private ToolStripMenuItem sanityCzechToolStripMenuItem;
         private ToolStripMenuItem viewShaderPackageInfoToolStripMenuItem;
+        private ToolStripMenuItem clearNODEInfoToolStripMenuItem;
     }
 }

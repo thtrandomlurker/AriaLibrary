@@ -51,6 +51,8 @@ namespace IAModelEditor.ImportHelpers
         public List<SceGxmParameterSemantic>? VertexSemantics;
         public List<int>? VertexSemanticIndices;
 
+        public int VertexStride;
+
 
         public byte[]? VertexProgram;  // Vertex shader program
         public byte[]? FragmentProgram;  // Fragment shader program

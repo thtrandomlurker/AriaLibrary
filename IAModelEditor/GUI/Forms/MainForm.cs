@@ -250,5 +250,14 @@ namespace IAModelEditor.GUI.Forms
             }
             MenuStripOpenFileDialog.Filter = "IA / VT Model File| *.mdl";
         }
+
+        private void clearNODEInfoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            foreach (NODE node in ObjectGroup.NODT.ChildNodes)
+            {
+                node.NodeParent = -1;
+                node.NodeChild = -1;
+            }
+        }
     }
 }

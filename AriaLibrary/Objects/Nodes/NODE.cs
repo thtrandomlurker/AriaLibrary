@@ -13,8 +13,8 @@ namespace AriaLibrary.Objects.Nodes
     {
         public override string Type => "NODE";
         public int NodeId;
-        public int U04;
-        public int U08;
+        public int NodeParent;
+        public int NodeChild;
         public int NodeName;
 
         public Matrix4x4 NodeMatrix;
@@ -28,8 +28,8 @@ namespace AriaLibrary.Objects.Nodes
             int dataSize = reader.ReadInt32();
             long basePos = reader.BaseStream.Position;
             NodeId = reader.ReadInt32();
-            U04 = reader.ReadInt32();
-            U08 = reader.ReadInt32();
+            NodeParent = reader.ReadInt32();
+            NodeChild = reader.ReadInt32();
             NodeName = reader.ReadInt32();
             NodeMatrix[0, 0] = reader.ReadSingle();
             NodeMatrix[0, 1] = reader.ReadSingle();
@@ -67,8 +67,8 @@ namespace AriaLibrary.Objects.Nodes
             }
             writer.Write(0x54 + size);
             writer.Write(NodeId);
-            writer.Write(U04);
-            writer.Write(U08);
+            writer.Write(NodeParent);
+            writer.Write(NodeChild);
             writer.Write(NodeName);
             writer.Write(NodeMatrix[0, 0]);
             writer.Write(NodeMatrix[0, 1]);

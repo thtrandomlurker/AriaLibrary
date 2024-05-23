@@ -142,16 +142,67 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
             ParentForm.WorkingMaterialData[materialIndex].VertexSemantics = new List<SceGxmParameterSemantic>();
             ParentForm.WorkingMaterialData[materialIndex].VertexSemanticIndices = new List<int>();
 
+            int curOffset = 0;
+
             foreach (var attribute in vertexParameters.Where(x => x.Category == SceGxmParameterCategory.SCE_GXM_PARAMETER_CATEGORY_ATTRIBUTE))
             {
                 VertexAttribute attr = new VertexAttribute();
-                attr.DataType = VertexAttributeDataType.Float;
-                attr.Offset = attribute.ResourceIndex * 4;
-                attr.Count = 4;
-                attr.VertexBufferIndex = 0;
+                switch (attribute.Semantic)
+                {
+                    case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_POSITION:
+                        attr.DataType = VertexAttributeDataType.Float;
+                        attr.Offset = curOffset;
+                        curOffset += 12;
+                        attr.Count = 3;
+                        attr.VertexBufferIndex = 0;
+                        break;
+                    case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_NORMAL:
+                        attr.DataType = VertexAttributeDataType.SignedByteNormalized;
+                        attr.Offset = curOffset;
+                        curOffset += 3;
+                        attr.Count = 3;
+                        attr.VertexBufferIndex = 0;
+                        break;
+                    case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TANGENT:
+                        attr.DataType = VertexAttributeDataType.SignedByteNormalized;
+                        attr.Offset = curOffset;
+                        curOffset += 3;
+                        attr.Count = 3;
+                        attr.VertexBufferIndex = 0;
+                        break;
+                    case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TEXCOORD:
+                        attr.DataType = VertexAttributeDataType.HalfFloat;
+                        attr.Offset = curOffset;
+                        curOffset += 4;
+                        attr.Count = 2;
+                        attr.VertexBufferIndex = 0;
+                        break;
+                    case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BLENDINDICES:
+                        attr.DataType = VertexAttributeDataType.UnsignedByte;
+                        attr.Offset = curOffset;
+                        curOffset += 4;
+                        attr.Count = 4;
+                        attr.VertexBufferIndex = 0;
+                        break;
+                    case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BLENDWEIGHT:
+                        attr.DataType = VertexAttributeDataType.UnsignedByteNormalized;
+                        attr.Offset = curOffset;
+                        curOffset += 4;
+                        attr.Count = 4;
+                        attr.VertexBufferIndex = 0;
+                        break;
+                    case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_COLOR:
+                        attr.DataType = VertexAttributeDataType.UnsignedByteNormalized;
+                        attr.Offset = curOffset;
+                        curOffset += 4;
+                        attr.Count = 4;
+                        attr.VertexBufferIndex = 0;
+                        break;
+                }
                 ParentForm.WorkingMaterialData[materialIndex].VertexSemantics.Add(attribute.Semantic);
                 ParentForm.WorkingMaterialData[materialIndex].VertexSemanticIndices.Add(attribute.SemanticIndex);
             }
+            ParentForm.WorkingMaterialData[materialIndex].VertexStride = curOffset;
 
             foreach (var uniform in vertexParameters.Where(x => x.Category == SceGxmParameterCategory.SCE_GXM_PARAMETER_CATEGORY_UNIFORM)) {
                 VertexShaderUniform vxUniform = new VertexShaderUniform();
