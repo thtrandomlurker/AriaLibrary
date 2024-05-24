@@ -22,5 +22,6 @@ namespace IAModelEditor.ImportHelpers
         public VXST? VertexState;
 
         public string MeshName = "";
+        public string SetName = "";
     }
 }

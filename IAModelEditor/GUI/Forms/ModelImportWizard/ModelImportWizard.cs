@@ -50,7 +50,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
             while ((aiNode = aiNode.Parent) != null)
                 transform *= aiNode.Transform;
 
-            return Matrix4x4.Transpose(transform.ToNumerics());
+            return transform.ToNumerics();
         }
         private void MIWInitButtonNext_Click(object sender, EventArgs e)
         {
@@ -145,12 +145,14 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                             hasBone = true;
                             foreach (var bone in Scene.Meshes[meshIndex].Bones)
                             {
-                                skinBoneList.Add(bone.Name);
+                                if (!skinBoneList.Contains(bone.Name))
+                                    skinBoneList.Add(bone.Name);
                             }
                         }
 
                         MeshData mesh = new MeshData();
-                        mesh.MeshName = node.Name;
+                        mesh.MeshName = $"{node.Name.Replace('.', '_')}_{cmesh}";
+                        mesh.SetName = $"SET_{node.Name.Replace('.', '_')}_{cmesh}";
                         mesh.SourceMesh = Scene.Meshes[meshIndex];
 
                         // we can create prim data here as it should directly correlate to the materials created later
@@ -166,10 +168,11 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         mesh.PrimitiveData.ObjectName = 0;  // this is hard embedded into the code of this program
                         mesh.PrimitiveData.MeshName = WorkingObject.MESH.StringBuffer.StringList.Strings.Count;
                         mesh.PrimitiveData.MeshNameDupe = WorkingObject.MESH.StringBuffer.StringList.Strings.Count;
-                        WorkingObject.MESH.StringBuffer.StringList.Strings.Add(mesh.MeshName.Replace('.', '_') + $"_{meshIndex}");
+                        WorkingObject.MESH.StringBuffer.StringList.Strings.Add(mesh.MeshName);
                         mesh.PrimitiveData.SetPolygonName = WorkingObject.MESH.StringBuffer.StringList.Strings.Count;
-                        WorkingObject.MESH.StringBuffer.StringList.Strings.Add("Set_" + mesh.MeshName.Replace('.', '_') + $"_{meshIndex}");
+                        WorkingObject.MESH.StringBuffer.StringList.Strings.Add(mesh.SetName);
                         mesh.PrimitiveData.MaterialID = Scene.Meshes[meshIndex].MaterialIndex;
+                        mesh.PrimitiveData.U18 = -1;
                         WorkingMeshData.Add(mesh);
                     }
                 }
@@ -185,13 +188,13 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         Bone bone = new Bone();
                         bone.BoneName = aiNode.Name;
                         Matrix4x4 boneMat = aiNode.Transform.ToNumerics();
-                        Matrix4x4 transposedMat = Matrix4x4.Transpose(boneMat);
-                        Matrix4x4.Decompose(transposedMat, out Vector3 scl, out System.Numerics.Quaternion rot, out Vector3 loc);
-                        bone.Translation = loc;
+                        Matrix4x4.Invert(boneMat, out Matrix4x4 invMat);
+                        Matrix4x4.Decompose(invMat, out Vector3 scl, out System.Numerics.Quaternion rot, out Vector3 loc);
+                        bone.Translation = new Vector3(boneMat[0,3], boneMat[1,3], boneMat[2,3]);
                         Vector3 eulerRot = MathHelper.QuaternionToEulerAngles(rot.W, rot.X, rot.Y, rot.Z);
                         eulerRot *= (float)(180 / Math.PI);  // conv all at once
                         bone.Rotation = eulerRot;
-                        bone.Scale = scl;
+                        bone.Scale = new Vector3(scl.X, scl.Y, scl.Z);
                         bone.BoneID = (short)WorkingObject.BRNT.Bones.Count;
                         bone.SkinID = (short)skinBoneList.FindIndex(x => x == aiNode.Name);
                         bone.PossibleFlags = -256;
@@ -199,14 +202,24 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         bone.U1E = -1;
                         if (aiNode.ChildCount == 1)
                         {
-                            bone.BoneID = (short)(WorkingObject.BRNT.Bones.Count + 1);
+                            bone.ChildID = (short)(WorkingObject.BRNT.Bones.Count + 1);
+                        }
+                        else
+                        {
+                            bone.ChildID = -1;
+                        }
+                        if (WorkingObject.BRNT.Bones.Count != 0)
+                        {
+                            if (aiNode.Parent != null)
+                            {
+                                bone.BoneParent = WorkingObject.BRNT.Bones.First(x => x.BoneName == aiNode.Parent.Name).BoneID;
+                            }
+                        }
+                        else
+                        {
+                            bone.BoneParent = -1;
                         }
                         WorkingObject.BRNT.Bones.Add(bone);
-
-                        if (aiNode.Parent != null)
-                        {
-                            bone.BoneParent = WorkingObject.BRNT.Bones.First(x => x.BoneName == aiNode.Name).BoneID;
-                        }
 
                         BOIF boneInfo = new BOIF();
                         boneInfo.BoneName = WorkingObject.MESH.StringBuffer.StringList.Strings.Count;
@@ -214,7 +227,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         boneInfo.BoneId = bone.BoneID;
 
                         IMTX inverseMatrix = new IMTX();
-                        Matrix4x4 mat = Matrix4x4.Transpose(GetWorldTransform(aiNode));
+                        Matrix4x4 mat = GetWorldTransform(aiNode);
                         inverseMatrix.Matrix[0] = mat.M11;
                         inverseMatrix.Matrix[1] = mat.M12;
                         inverseMatrix.Matrix[2] = mat.M13;
@@ -236,7 +249,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         nodtNode.NodeChild = -1;
                         nodtNode.NodeName = WorkingObject.NODT.StringBuffer.StringList.Strings.Count;
                         WorkingObject.NODT.StringBuffer.StringList.Strings.Add(aiNode.Name);
-                        nodtNode.NodeMatrix = Matrix4x4.Transpose(GetWorldTransform(aiNode));
+                        nodtNode.NodeMatrix = GetWorldTransform(aiNode);
                         WorkingObject.NODT.ChildNodes.Add(nodtNode);
 
                         foreach (var child in aiNode.Children)
@@ -267,6 +280,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                 }
 
                 WorkingObject.GPR = new GraphicsProgram();
+                WorkingObject.GPR.Platform = "GXM";
                 WorkingObject.GPR.Heap.Name = ((MIWInitControl)MIWActiveStageControl).MIWInitModelName.Text;
 
                 Console.WriteLine("Changing control");
@@ -289,18 +303,19 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                     foreach (var mesh in WorkingMeshData)
                     {
                         mesh.VertexBindingObject = new VXBO();
-                        mesh.VertexBindingObject.Name = mesh.MeshName;
+                        mesh.VertexBindingObject.Name = mesh.SetName;
                         mesh.VertexAttributes = new VXAR();
-                        mesh.VertexAttributes.Name = mesh.MeshName;
+                        mesh.VertexAttributes.Name = mesh.SetName;
                         mesh.VertexAttributes.Data = WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexArray.Data;
                         mesh.IndexBuffer = new IXBF();
-                        mesh.IndexBuffer.Name = mesh.MeshName;
+                        mesh.IndexBuffer.Name = mesh.SetName;
                         mesh.IndexBuffer.BufferData = new byte[mesh.SourceMesh.FaceCount * 3 * 2];
+                        mesh.IndexBuffer.Buffer = BufferName.Mesh;
                         int cur = 0;
                         foreach (var index in mesh.SourceMesh.GetShortIndices())
                         {
                             Buffer.BlockCopy(BitConverter.GetBytes(index), 0, mesh.IndexBuffer.BufferData, cur, 2);
-                            cur++;
+                            cur += 2;
                         }
                         mesh.VertexBuffer = new VXBF();
                         mesh.VertexBuffer.Name = mesh.MeshName;
@@ -309,6 +324,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         mesh.VertexBuffer.Data.VertexStride = WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexStride;
                         mesh.VertexBuffer.Data.VertexCount = mesh.SourceMesh.VertexCount;
                         mesh.VertexBuffer.BufferData = new byte[mesh.VertexBuffer.Data.VertexCount * mesh.VertexBuffer.Data.VertexStride];
+                        mesh.VertexBuffer.Buffer = BufferName.Mesh;
 
                         // (credits to skyth) borrowed from https://github.com/blueskythlikesclouds/MikuMikuLibrary
                         Vector4[] blendWeights = new Vector4[mesh.SourceMesh.VertexCount];
@@ -316,13 +332,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
 
                         if (mesh.SourceMesh.HasBones)
                         {
-                            if (blendIndices == null || blendIndices == null)
-                            {
-                                blendWeights = new Vector4[mesh.SourceMesh.VertexCount];
-                                blendIndices = new byte[mesh.SourceMesh.VertexCount][];
-
-                                Array.Fill(blendIndices, new byte[4] {0, 0, 0, 0});
-                            }
+                            Array.Fill(blendIndices, new byte[4] { 0, 0, 0, 0 });
 
                             var boneIndices = new List<ushort>(mesh.SourceMesh.BoneCount);
 
@@ -405,28 +415,52 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                                         cPos += 3;
                                         break;
                                     case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TEXCOORD:
-                                        Buffer.BlockCopy(BitConverter.GetBytes(BitConverter.ToHalf(BitConverter.GetBytes(mesh.SourceMesh.TextureCoordinateChannels[j][i].X))), 0, vertex, cPos, 2);
-                                        Buffer.BlockCopy(BitConverter.GetBytes(BitConverter.ToHalf(BitConverter.GetBytes(mesh.SourceMesh.TextureCoordinateChannels[j][i].Y))), 0, vertex, cPos + 2, 2);
-                                        cPos += 4;
+                                        if (mesh.SourceMesh.TextureCoordinateChannelCount >= WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexSemanticIndices[j])
+                                        {
+                                            Buffer.BlockCopy(BitConverter.GetBytes(BitConverter.ToHalf(BitConverter.GetBytes(mesh.SourceMesh.TextureCoordinateChannels[WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexSemanticIndices[j]][i].X))), 0, vertex, cPos, 2);
+                                            Buffer.BlockCopy(BitConverter.GetBytes(BitConverter.ToHalf(BitConverter.GetBytes(mesh.SourceMesh.TextureCoordinateChannels[WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexSemanticIndices[j]][i].Y))), 0, vertex, cPos + 2, 2);
+                                            cPos += 4;
+                                        }
+                                        else
+                                        {
+                                            Buffer.BlockCopy(BitConverter.GetBytes((int)0), 0, vertex, cPos, 4);
+                                            cPos += 4;
+                                        }
                                         break;
                                     case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BLENDWEIGHT:
                                         vertex[cPos] = (byte)(blendWeights[i].X / 255f);
                                         vertex[cPos + 1] = (byte)(blendWeights[i].Y / 255f);
                                         vertex[cPos + 2] = (byte)(blendWeights[i].Z / 255f);
-                                        vertex[cPos + 2] = (byte)(blendWeights[i].W / 255f);
+                                        vertex[cPos + 3] = (byte)(blendWeights[i].W / 255f);
                                         cPos += 4;
                                         break;
                                     case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BLENDINDICES:
                                         Buffer.BlockCopy(blendIndices[i], 0, vertex, cPos, 4);
                                         cPos += 4;
                                         break;
+                                    case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_COLOR:
+                                        if (mesh.SourceMesh.HasVertexColors(0))
+                                        {
+                                            vertex[cPos] = (byte)(mesh.SourceMesh.VertexColorChannels[0][i].R / 255f);
+                                            vertex[cPos+1] = (byte)(mesh.SourceMesh.VertexColorChannels[0][i].G / 255f);
+                                            vertex[cPos+2] = (byte)(mesh.SourceMesh.VertexColorChannels[0][i].B / 255f);
+                                            vertex[cPos+3] = (byte)(mesh.SourceMesh.VertexColorChannels[0][i].A / 255f);
+                                            cPos += 4;
+                                        }
+                                        else
+                                        {
+                                            Buffer.BlockCopy(BitConverter.GetBytes((int)-1), 0, vertex, cPos, 4);
+                                            cPos += 4;
+                                        }
+                                        break;
                                 }
                             }
                             Buffer.BlockCopy(vertex, 0, mesh.VertexBuffer.BufferData, mesh.VertexBuffer.Data.VertexStride * i, mesh.VertexBuffer.Data.VertexStride);
                         }
                         mesh.VertexState = new VXST();
-                        mesh.VertexState.Name = mesh.MeshName;
+                        mesh.VertexState.Name = mesh.SetName;
                         mesh.VertexState.Data.VXBFCount = 1;
+                        mesh.VertexState.Data.FaceIndexCount = mesh.SourceMesh.FaceCount * 3;
                         mesh.VertexState.Data.VertexBindingObjectReference = mesh.VertexBindingObject.Data;
                         mesh.VertexState.Data.VertexArrayReference = mesh.VertexAttributes.Data;
                         mesh.VertexState.Data.VertexBufferReferences.Add(mesh.VertexBuffer.Data);
@@ -465,6 +499,11 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                     {
                         vari.PRIMs.Add(msh.PrimitiveData);
                     }
+                    vari.U04 = WorkingObject.MESH.StringBuffer.StringList.Strings.Count;
+                    WorkingObject.MESH.StringBuffer.StringList.Strings.Add("Default");
+                    vari.U08 = -1;
+                    vari.U0C = -1;
+                    WorkingObject.MESH.ChildNodes.Add(vari);
                     WorkingObject.MESH.ChildNodes.Add(OutputBoneData);
                     // next GPR
                     // mesh data

@@ -29,7 +29,7 @@ namespace AriaLibrary.Objects.Nodes
         {
             writer.Write(new char[4] { 'S', 'T', 'R', 'B' });
             writer.Write(12 + StringList.GetSize());
-            writer.Write(StringCount);
+            writer.Write(StringList.Strings.Count);
             StringList.Write(writer);
         }
 

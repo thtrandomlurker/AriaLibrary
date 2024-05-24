@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Numerics;
 using IAModelEditor.ImportHelpers;
+using System.Diagnostics.Eventing.Reader;
 
 namespace IAModelEditor.GUI.Forms.ModelImportWizard
 {
@@ -24,7 +25,8 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
         new public ModelImportWizard ParentForm;
         new public MIWMaterialSetupControl Parent;
         public string SourceName;
-        public MIWShaderSelector(string shaderPackagePath, ModelImportWizard parentForm, MIWMaterialSetupControl parent)
+        private bool AllMats;
+        public MIWShaderSelector(string shaderPackagePath, ModelImportWizard parentForm, MIWMaterialSetupControl parent, bool allMats = false)
         {
             InitializeComponent();
             KPack shaderPackage = new KPack();
@@ -38,6 +40,8 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
             {
                 MIWShaderList.Items.Add($"Permutation {i}");
             }
+
+            AllMats = allMats;
 
             // init the info
             ShaderPackage.Files[0].Open();
@@ -199,6 +203,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         attr.VertexBufferIndex = 0;
                         break;
                 }
+                ParentForm.WorkingMaterialData[materialIndex].VertexArray.Data.VertexAttributes.Add(attr);
                 ParentForm.WorkingMaterialData[materialIndex].VertexSemantics.Add(attribute.Semantic);
                 ParentForm.WorkingMaterialData[materialIndex].VertexSemanticIndices.Add(attribute.SemanticIndex);
             }
@@ -213,7 +218,10 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
             }
             // then set the shader in binary data
             ParentForm.WorkingMaterialData[materialIndex].VertexShader.BufferData = new byte[ShaderPackage.Files[(shaderIndex * 2)].Size];
+            ParentForm.WorkingMaterialData[materialIndex].VertexShader.Buffer = BufferName.VertexShader;
+            ShaderPackage.Files[(shaderIndex * 2)].Stream.Seek(0, SeekOrigin.Begin);
             ShaderPackage.Files[(shaderIndex * 2)].Stream.Read(ParentForm.WorkingMaterialData[materialIndex].VertexShader.BufferData);
+
 
             // vertex shbi. defines constant inputs
             ParentForm.WorkingMaterialData[materialIndex].VertexShaderBinding = new SHBI();
@@ -267,6 +275,8 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
             }
             // then set the shader in binary data
             ParentForm.WorkingMaterialData[materialIndex].PixelShader.BufferData = new byte[ShaderPackage.Files[(shaderIndex * 2) + 1].Size];
+            ParentForm.WorkingMaterialData[materialIndex].PixelShader.Buffer = BufferName.Mesh;
+            ShaderPackage.Files[(shaderIndex * 2) + 1].Stream.Seek(0, SeekOrigin.Begin);
             ShaderPackage.Files[(shaderIndex * 2) + 1].Stream.Read(ParentForm.WorkingMaterialData[materialIndex].PixelShader.BufferData);
 
             // pixel input SHBI
@@ -384,7 +394,17 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
 
         private void MIWShaderConfirmation_Click(object sender, EventArgs e)
         {
-            MakeMaterial(MIWShaderList.SelectedIndex, Parent.MIWMaterialListbox.SelectedIndex);
+            if (AllMats)
+            {
+                for (int i = 0; i < Parent.MIWMaterialListbox.Items.Count; i++)
+                {
+                    MakeMaterial(MIWShaderList.SelectedIndex, i);
+                }
+            }
+            else
+            {
+                MakeMaterial(MIWShaderList.SelectedIndex, Parent.MIWMaterialListbox.SelectedIndex);
+            }
 
             this.Close();
         }

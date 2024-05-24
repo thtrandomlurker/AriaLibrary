@@ -21,7 +21,7 @@ namespace AriaLibrary.Objects.Nodes
         public override void Write(BinaryWriter writer)
         {
             writer.Write(new char[4] { 'R', 'E', 'M', '\0' });
-            int len = PositionHelper.PadValue(Encoding.UTF8.GetByteCount(Comment), 4);
+            int len = PositionHelper.PadValue(Encoding.UTF8.GetByteCount(Comment), 4, true);
             writer.Write(len);
             writer.Write(Encoding.UTF8.GetBytes(Comment));
             PositionHelper.AlignWriter(writer, 4, true);

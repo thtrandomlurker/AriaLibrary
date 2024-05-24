@@ -28,80 +28,91 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.MIWMaterialListbox = new System.Windows.Forms.ListBox();
-            this.MIWMaterialValidate = new System.Windows.Forms.Button();
-            this.MIWMaterialValidateStatusLabel = new System.Windows.Forms.Label();
-            this.MIWMaterialValidationStatus = new System.Windows.Forms.Label();
-            this.MIWMaterialSelectShader = new System.Windows.Forms.Button();
-            this.MIWMaterialOpenShaderDialog = new System.Windows.Forms.OpenFileDialog();
-            this.SuspendLayout();
+            MIWMaterialListbox = new ListBox();
+            MIWMaterialValidate = new Button();
+            MIWMaterialValidateStatusLabel = new Label();
+            MIWMaterialValidationStatus = new Label();
+            MIWMaterialSelectShader = new Button();
+            MIWMaterialOpenShaderDialog = new OpenFileDialog();
+            MIWMaterialSelectShaderAll = new Button();
+            SuspendLayout();
             // 
             // MIWMaterialListbox
             // 
-            this.MIWMaterialListbox.FormattingEnabled = true;
-            this.MIWMaterialListbox.ItemHeight = 15;
-            this.MIWMaterialListbox.Location = new System.Drawing.Point(3, 3);
-            this.MIWMaterialListbox.Name = "MIWMaterialListbox";
-            this.MIWMaterialListbox.Size = new System.Drawing.Size(274, 469);
-            this.MIWMaterialListbox.TabIndex = 0;
+            MIWMaterialListbox.FormattingEnabled = true;
+            MIWMaterialListbox.ItemHeight = 15;
+            MIWMaterialListbox.Location = new Point(3, 3);
+            MIWMaterialListbox.Name = "MIWMaterialListbox";
+            MIWMaterialListbox.Size = new Size(274, 469);
+            MIWMaterialListbox.TabIndex = 0;
             // 
             // MIWMaterialValidate
             // 
-            this.MIWMaterialValidate.Location = new System.Drawing.Point(283, 449);
-            this.MIWMaterialValidate.Name = "MIWMaterialValidate";
-            this.MIWMaterialValidate.Size = new System.Drawing.Size(354, 23);
-            this.MIWMaterialValidate.TabIndex = 1;
-            this.MIWMaterialValidate.Text = "Validate Material Data";
-            this.MIWMaterialValidate.UseVisualStyleBackColor = true;
-            this.MIWMaterialValidate.Click += new System.EventHandler(this.MIWMaterialValidate_Click);
+            MIWMaterialValidate.Location = new Point(283, 449);
+            MIWMaterialValidate.Name = "MIWMaterialValidate";
+            MIWMaterialValidate.Size = new Size(354, 23);
+            MIWMaterialValidate.TabIndex = 1;
+            MIWMaterialValidate.Text = "Validate Material Data";
+            MIWMaterialValidate.UseVisualStyleBackColor = true;
+            MIWMaterialValidate.Click += MIWMaterialValidate_Click;
             // 
             // MIWMaterialValidateStatusLabel
             // 
-            this.MIWMaterialValidateStatusLabel.AutoSize = true;
-            this.MIWMaterialValidateStatusLabel.Location = new System.Drawing.Point(283, 3);
-            this.MIWMaterialValidateStatusLabel.Name = "MIWMaterialValidateStatusLabel";
-            this.MIWMaterialValidateStatusLabel.Size = new System.Drawing.Size(143, 15);
-            this.MIWMaterialValidateStatusLabel.TabIndex = 2;
-            this.MIWMaterialValidateStatusLabel.Text = "Material Validation Status:";
+            MIWMaterialValidateStatusLabel.AutoSize = true;
+            MIWMaterialValidateStatusLabel.Location = new Point(283, 3);
+            MIWMaterialValidateStatusLabel.Name = "MIWMaterialValidateStatusLabel";
+            MIWMaterialValidateStatusLabel.Size = new Size(143, 15);
+            MIWMaterialValidateStatusLabel.TabIndex = 2;
+            MIWMaterialValidateStatusLabel.Text = "Material Validation Status:";
             // 
             // MIWMaterialValidationStatus
             // 
-            this.MIWMaterialValidationStatus.AutoSize = true;
-            this.MIWMaterialValidationStatus.Location = new System.Drawing.Point(283, 34);
-            this.MIWMaterialValidationStatus.Name = "MIWMaterialValidationStatus";
-            this.MIWMaterialValidationStatus.Size = new System.Drawing.Size(0, 15);
-            this.MIWMaterialValidationStatus.TabIndex = 2;
+            MIWMaterialValidationStatus.AutoSize = true;
+            MIWMaterialValidationStatus.Location = new Point(283, 34);
+            MIWMaterialValidationStatus.Name = "MIWMaterialValidationStatus";
+            MIWMaterialValidationStatus.Size = new Size(0, 15);
+            MIWMaterialValidationStatus.TabIndex = 2;
             // 
             // MIWMaterialSelectShader
             // 
-            this.MIWMaterialSelectShader.Location = new System.Drawing.Point(283, 420);
-            this.MIWMaterialSelectShader.Name = "MIWMaterialSelectShader";
-            this.MIWMaterialSelectShader.Size = new System.Drawing.Size(354, 23);
-            this.MIWMaterialSelectShader.TabIndex = 1;
-            this.MIWMaterialSelectShader.Text = "Select Shader Package";
-            this.MIWMaterialSelectShader.UseVisualStyleBackColor = true;
-            this.MIWMaterialSelectShader.Click += new System.EventHandler(this.MIWMaterialSelectShader_Click);
+            MIWMaterialSelectShader.Location = new Point(283, 420);
+            MIWMaterialSelectShader.Name = "MIWMaterialSelectShader";
+            MIWMaterialSelectShader.Size = new Size(354, 23);
+            MIWMaterialSelectShader.TabIndex = 1;
+            MIWMaterialSelectShader.Text = "Select Shader Package";
+            MIWMaterialSelectShader.UseVisualStyleBackColor = true;
+            MIWMaterialSelectShader.Click += MIWMaterialSelectShader_Click;
             // 
             // MIWMaterialOpenShaderDialog
             // 
-            this.MIWMaterialOpenShaderDialog.Filter = "Shader Package|*.csp";
-            this.MIWMaterialOpenShaderDialog.Title = "Please select a shader package \"*.csp\"";
+            MIWMaterialOpenShaderDialog.Filter = "Shader Package|*.csp";
+            MIWMaterialOpenShaderDialog.Title = "Please select a shader package \"*.csp\"";
+            // 
+            // MIWMaterialSelectShaderAll
+            // 
+            MIWMaterialSelectShaderAll.Location = new Point(283, 391);
+            MIWMaterialSelectShaderAll.Name = "MIWMaterialSelectShaderAll";
+            MIWMaterialSelectShaderAll.Size = new Size(354, 23);
+            MIWMaterialSelectShaderAll.TabIndex = 1;
+            MIWMaterialSelectShaderAll.Text = "Select Shader Package for All Materials";
+            MIWMaterialSelectShaderAll.UseVisualStyleBackColor = true;
+            MIWMaterialSelectShaderAll.Click += MIWMaterialSelectShaderAll_Click;
             // 
             // MIWMaterialSetupControl
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.MIWMaterialValidationStatus);
-            this.Controls.Add(this.MIWMaterialValidateStatusLabel);
-            this.Controls.Add(this.MIWMaterialSelectShader);
-            this.Controls.Add(this.MIWMaterialValidate);
-            this.Controls.Add(this.MIWMaterialListbox);
-            this.Location = new System.Drawing.Point(72, 12);
-            this.Name = "MIWMaterialSetupControl";
-            this.Size = new System.Drawing.Size(640, 480);
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            Controls.Add(MIWMaterialValidationStatus);
+            Controls.Add(MIWMaterialValidateStatusLabel);
+            Controls.Add(MIWMaterialSelectShaderAll);
+            Controls.Add(MIWMaterialSelectShader);
+            Controls.Add(MIWMaterialValidate);
+            Controls.Add(MIWMaterialListbox);
+            Location = new Point(72, 12);
+            Name = "MIWMaterialSetupControl";
+            Size = new Size(640, 480);
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
@@ -111,5 +122,6 @@
         private Button MIWMaterialSelectShader;
         private OpenFileDialog MIWMaterialOpenShaderDialog;
         public ListBox MIWMaterialListbox;
+        private Button MIWMaterialSelectShaderAll;
     }
 }

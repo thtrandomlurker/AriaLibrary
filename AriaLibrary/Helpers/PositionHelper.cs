@@ -8,9 +8,9 @@ namespace AriaLibrary.Helpers
 {
     public static class PositionHelper
     {
-        public static int PadValue(int val, int alignment)
+        public static int PadValue(int val, int alignment, bool ignoreCurrentAlignment = false)
         {
-            if (val % alignment != 0)
+            if (val % alignment != 0 || ignoreCurrentAlignment)
                 return val + (alignment - (val % alignment));
             return val;
         }

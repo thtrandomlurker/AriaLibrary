@@ -1062,52 +1062,65 @@ namespace AriaLibrary.Objects
 
         public void SavePackage(string filePath)
         {
-            if (SourcePackage != null)
+            if (SourcePackage == null)
             {
-                foreach (var file in SourcePackage.Files)
+                SourcePackage = new KPack();
+
+                for (int i = 0; i < 3; i++)
                 {
-                    file.Open();
+                    KPackFile file = new KPackFile(0, 0, null);
+                    SourcePackage.Files.Add(file);
+
                 }
-                Stream meshStream = new MemoryStream();
-                Stream gprStream = new MemoryStream();
-                Stream nodtStream = new MemoryStream();
-                Stream brntStream = new MemoryStream();
-                MESH.Save(meshStream, true);
-                GPR.Save(gprStream, true);
-                NODT.Save(nodtStream, true);
-                SourcePackage.Files[0].Stream = meshStream;
-                SourcePackage.Files[1].Stream = gprStream;
-                SourcePackage.Files[2].Stream = nodtStream;
-                SourcePackage.Files[0].BaseStream = null;
-                SourcePackage.Files[1].BaseStream = null;
-                SourcePackage.Files[2].BaseStream = null;
-                // regenerate offsets and sizes
-                SourcePackage.Files[0].Size = (int)meshStream.Length;
-                SourcePackage.Files[1].Size = (int)gprStream.Length;
-                SourcePackage.Files[2].Size = (int)nodtStream.Length;
-                SourcePackage.Files[0].Offset = 0x40;
-                SourcePackage.Files[1].Offset = PositionHelper.PadValue(0x40 + (int)meshStream.Length, 0x40);
-                SourcePackage.Files[2].Offset = PositionHelper.PadValue(0x40 + SourcePackage.Files[1].Offset + SourcePackage.Files[1].Size, 0x40);
-                int fileBase = 3;
                 if (BRNT != null)
                 {
-                    BRNT.Save(brntStream, true);
-                    SourcePackage.Files[3].Size = (int)brntStream.Length;
-                    SourcePackage.Files[3].Offset = PositionHelper.PadValue(0x40 + SourcePackage.Files[2].Offset + SourcePackage.Files[2].Size, 0x40);
-                    SourcePackage.Files[3].BaseStream = null;
-                    SourcePackage.Files[3].Stream = brntStream;
-                    fileBase++;
+                    KPackFile file = new KPackFile(0, 0, null);
+                    SourcePackage.Files.Add(file);
                 }
-                for (int i = fileBase; i < SourcePackage.Files.Count; i++)
-                {
-                    SourcePackage.Files[i].Offset = PositionHelper.PadValue(0x40 + SourcePackage.Files[i-1].Offset + SourcePackage.Files[i-1].Size, 0x40);
-                }
-                SourcePackage.Save(filePath);
-                meshStream.Close();
-                gprStream.Close();
-                nodtStream.Close();
-                brntStream.Close();
             }
+            foreach (var file in SourcePackage.Files)
+            {
+                file.Open();
+            }
+            Stream meshStream = new MemoryStream();
+            Stream gprStream = new MemoryStream();
+            Stream nodtStream = new MemoryStream();
+            Stream brntStream = new MemoryStream();
+            MESH.Save(meshStream, true);
+            GPR.Save(gprStream, true);
+            NODT.Save(nodtStream, true);
+            SourcePackage.Files[0].Stream = meshStream;
+            SourcePackage.Files[1].Stream = gprStream;
+            SourcePackage.Files[2].Stream = nodtStream;
+            SourcePackage.Files[0].BaseStream = null;
+            SourcePackage.Files[1].BaseStream = null;
+            SourcePackage.Files[2].BaseStream = null;
+            // regenerate offsets and sizes
+            SourcePackage.Files[0].Size = (int)meshStream.Length;
+            SourcePackage.Files[1].Size = (int)gprStream.Length;
+            SourcePackage.Files[2].Size = (int)nodtStream.Length;
+            SourcePackage.Files[0].Offset = 0x40;
+            SourcePackage.Files[1].Offset = PositionHelper.PadValue(0x40 + (int)meshStream.Length, 0x40);
+            SourcePackage.Files[2].Offset = PositionHelper.PadValue(0x40 + SourcePackage.Files[1].Offset + SourcePackage.Files[1].Size, 0x40);
+            int fileBase = 3;
+            if (BRNT != null)
+            {
+                BRNT.Save(brntStream, true);
+                SourcePackage.Files[3].Size = (int)brntStream.Length;
+                SourcePackage.Files[3].Offset = PositionHelper.PadValue(0x40 + SourcePackage.Files[2].Offset + SourcePackage.Files[2].Size, 0x40);
+                SourcePackage.Files[3].BaseStream = null;
+                SourcePackage.Files[3].Stream = brntStream;
+                fileBase++;
+            }
+            for (int i = fileBase; i < SourcePackage.Files.Count; i++)
+            {
+                SourcePackage.Files[i].Offset = PositionHelper.PadValue(0x40 + SourcePackage.Files[i - 1].Offset + SourcePackage.Files[i - 1].Size, 0x40);
+            }
+            SourcePackage.Save(filePath);
+            meshStream.Close();
+            gprStream.Close();
+            nodtStream.Close();
+            brntStream.Close();
         }
 
         public void Save(Stream gprStream, Stream meshStream, Stream nodtStream)

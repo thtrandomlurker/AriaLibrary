@@ -43,5 +43,16 @@ namespace IAModelEditor.GUI.Controls
                 }
             }
         }
+
+        private void MIWMaterialSelectShaderAll_Click(object sender, EventArgs e)
+        {
+            if (MIWMaterialOpenShaderDialog.ShowDialog() == DialogResult.OK)
+            {
+                using (MIWShaderSelector shaderSelector = new MIWShaderSelector(MIWMaterialOpenShaderDialog.FileName, this.Parent, this, true))
+                {
+                    shaderSelector.ShowDialog();
+                }
+            }
+        }
     }
 }
