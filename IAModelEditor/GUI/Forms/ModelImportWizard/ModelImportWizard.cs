@@ -151,8 +151,9 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         }
 
                         MeshData mesh = new MeshData();
-                        mesh.MeshName = $"{node.Name.Replace('.', '_')}_{cmesh}";
-                        mesh.SetName = $"SET_{node.Name.Replace('.', '_')}_{cmesh}";
+                        mesh.MeshName = $"importMesh{cmesh}-geom-P{cmesh}";
+                        mesh.BufferName = $"importMesh{cmesh}-geom-S{cmesh}";
+                        mesh.SetName = $"SET_{mesh.MeshName}";
                         mesh.SourceMesh = Scene.Meshes[meshIndex];
 
                         // we can create prim data here as it should directly correlate to the materials created later
@@ -303,12 +304,12 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                     foreach (var mesh in WorkingMeshData)
                     {
                         mesh.VertexBindingObject = new VXBO();
-                        mesh.VertexBindingObject.Name = mesh.SetName;
+                        mesh.VertexBindingObject.Name = mesh.MeshName;
                         mesh.VertexAttributes = new VXAR();
-                        mesh.VertexAttributes.Name = mesh.SetName;
+                        mesh.VertexAttributes.Name = mesh.MeshName;
                         mesh.VertexAttributes.Data = WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexArray.Data;
                         mesh.IndexBuffer = new IXBF();
-                        mesh.IndexBuffer.Name = mesh.SetName;
+                        mesh.IndexBuffer.Name = mesh.MeshName;
                         mesh.IndexBuffer.BufferData = new byte[mesh.SourceMesh.FaceCount * 3 * 2];
                         mesh.IndexBuffer.Buffer = BufferName.Mesh;
                         int cur = 0;
@@ -318,7 +319,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                             cur += 2;
                         }
                         mesh.VertexBuffer = new VXBF();
-                        mesh.VertexBuffer.Name = mesh.MeshName;
+                        mesh.VertexBuffer.Name = mesh.BufferName;
                         mesh.VertexBuffer.Data.U00 = 0;
                         mesh.VertexBuffer.Data.U04 = 0;
                         mesh.VertexBuffer.Data.VertexStride = WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexStride;
@@ -458,12 +459,13 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                             Buffer.BlockCopy(vertex, 0, mesh.VertexBuffer.BufferData, mesh.VertexBuffer.Data.VertexStride * i, mesh.VertexBuffer.Data.VertexStride);
                         }
                         mesh.VertexState = new VXST();
-                        mesh.VertexState.Name = mesh.SetName;
+                        mesh.VertexState.Name = mesh.MeshName;
                         mesh.VertexState.Data.VXBFCount = 1;
                         mesh.VertexState.Data.FaceIndexCount = mesh.SourceMesh.FaceCount * 3;
                         mesh.VertexState.Data.VertexBindingObjectReference = mesh.VertexBindingObject.Data;
                         mesh.VertexState.Data.VertexArrayReference = mesh.VertexAttributes.Data;
                         mesh.VertexState.Data.VertexBufferReferences.Add(mesh.VertexBuffer.Data);
+                        mesh.VertexState.Data.IndexBufferReference = mesh.IndexBuffer.Data;
                     }
                     // we *done* in this
                     // now this is going to be a bit scuffed but, we should be able to do this now

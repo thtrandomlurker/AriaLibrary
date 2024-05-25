@@ -234,6 +234,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
 
                 ParentForm.WorkingMaterialData[materialIndex].VertexShaderBinding.Data.Parameters.Add(shbiParam);
             }
+            ParentForm.WorkingMaterialData[materialIndex].VertexShaderBinding.Name = ParentForm.WorkingMaterialData[materialIndex].VertexShader.Name;
 
             // this also gives us enough information to create the CSTS/CSTV/SHCO
             ParentForm.WorkingMaterialData[materialIndex].VertexConstants = new CSTS();
@@ -291,6 +292,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
 
                 ParentForm.WorkingMaterialData[materialIndex].PixelShaderConstantBinding.Data.Parameters.Add(shbiParam);
             }
+            ParentForm.WorkingMaterialData[materialIndex].PixelShaderConstantBinding.Name = ParentForm.WorkingMaterialData[materialIndex].PixelShader.Name;
 
             // this also gives us enough information to create the CSTS/CSTV/SHCO
             ParentForm.WorkingMaterialData[materialIndex].FragmentConstants = new CSTS();
@@ -325,6 +327,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
 
                 ParentForm.WorkingMaterialData[materialIndex].PixelShaderSamplerBinding.Data.Parameters.Add(shbiParam);
             }
+            ParentForm.WorkingMaterialData[materialIndex].PixelShaderSamplerBinding.Name = ParentForm.WorkingMaterialData[materialIndex].PixelShader.Name;
 
             // this also also gives us enough information to generate sampler information.
             ParentForm.WorkingMaterialData[materialIndex].MaterialSampler = new SAMP();
