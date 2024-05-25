@@ -51,13 +51,14 @@
             clearCSTSsForScienceToolStripMenuItem = new ToolStripMenuItem();
             unswizzleDDSInPlacToolStripMenuItem = new ToolStripMenuItem();
             viewShaderPackageInfoToolStripMenuItem = new ToolStripMenuItem();
+            clearNODEInfoToolStripMenuItem = new ToolStripMenuItem();
             MenuStripOpenFileDialog = new OpenFileDialog();
             MenuStripSaveAsFileDialog = new SaveFileDialog();
             CurrentlyLoadedLabel = new Label();
             MenuStripReplaceFileDialog = new OpenFileDialog();
             MenuStripExportFBXFileDialog = new SaveFileDialog();
             LoadedPlatformLabel = new Label();
-            clearNODEInfoToolStripMenuItem = new ToolStripMenuItem();
+            calculateStringHashToolStripMenuItem = new ToolStripMenuItem();
             MenuStrip.SuspendLayout();
             SuspendLayout();
             // 
@@ -192,7 +193,7 @@
             // 
             // toolsToolStripMenuItem
             // 
-            toolsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { MenuStripToolsConvertGXT, MenuStripToolsConvertDDS, clearCSTSsForScienceToolStripMenuItem, unswizzleDDSInPlacToolStripMenuItem, viewShaderPackageInfoToolStripMenuItem, clearNODEInfoToolStripMenuItem });
+            toolsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { MenuStripToolsConvertGXT, MenuStripToolsConvertDDS, clearCSTSsForScienceToolStripMenuItem, unswizzleDDSInPlacToolStripMenuItem, viewShaderPackageInfoToolStripMenuItem, clearNODEInfoToolStripMenuItem, calculateStringHashToolStripMenuItem });
             toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             toolsToolStripMenuItem.Size = new Size(46, 20);
             toolsToolStripMenuItem.Text = "Tools";
@@ -232,6 +233,13 @@
             viewShaderPackageInfoToolStripMenuItem.Text = "View Shader Package Info";
             viewShaderPackageInfoToolStripMenuItem.Click += viewShaderPackageInfoToolStripMenuItem_Click;
             // 
+            // clearNODEInfoToolStripMenuItem
+            // 
+            clearNODEInfoToolStripMenuItem.Name = "clearNODEInfoToolStripMenuItem";
+            clearNODEInfoToolStripMenuItem.Size = new Size(209, 22);
+            clearNODEInfoToolStripMenuItem.Text = "Clear NODE info";
+            clearNODEInfoToolStripMenuItem.Click += clearNODEInfoToolStripMenuItem_Click;
+            // 
             // MenuStripOpenFileDialog
             // 
             MenuStripOpenFileDialog.Filter = "IA/VT Model File|*.mdl";
@@ -267,12 +275,12 @@
             LoadedPlatformLabel.TabIndex = 2;
             LoadedPlatformLabel.Text = "Platform:";
             // 
-            // clearNODEInfoToolStripMenuItem
+            // calculateStringHashToolStripMenuItem
             // 
-            clearNODEInfoToolStripMenuItem.Name = "clearNODEInfoToolStripMenuItem";
-            clearNODEInfoToolStripMenuItem.Size = new Size(209, 22);
-            clearNODEInfoToolStripMenuItem.Text = "Clear NODE info";
-            clearNODEInfoToolStripMenuItem.Click += clearNODEInfoToolStripMenuItem_Click;
+            calculateStringHashToolStripMenuItem.Name = "calculateStringHashToolStripMenuItem";
+            calculateStringHashToolStripMenuItem.Size = new Size(209, 22);
+            calculateStringHashToolStripMenuItem.Text = "Calculate String Hash";
+            calculateStringHashToolStripMenuItem.Click += calculateStringHashToolStripMenuItem_Click;
             // 
             // MainForm
             // 
@@ -323,5 +331,6 @@
         private ToolStripMenuItem sanityCzechToolStripMenuItem;
         private ToolStripMenuItem viewShaderPackageInfoToolStripMenuItem;
         private ToolStripMenuItem clearNODEInfoToolStripMenuItem;
+        private ToolStripMenuItem calculateStringHashToolStripMenuItem;
     }
 }

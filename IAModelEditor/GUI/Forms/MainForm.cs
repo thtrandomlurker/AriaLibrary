@@ -259,5 +259,13 @@ namespace IAModelEditor.GUI.Forms
                 node.NodeChild = -1;
             }
         }
+
+        private void calculateStringHashToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (StringHashCalculatorForm c = new StringHashCalculatorForm())
+            {
+                c.ShowDialog();
+            }
+        }
     }
 }

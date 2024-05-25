@@ -203,6 +203,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         bone.PossibleFlags = -256;
                         bone.U18 = -1;
                         bone.U1E = -1;
+                        bone.BoneNameHash = StringHelper.GetStringHash(bone.BoneName);
                         if (aiNode.ChildCount == 1)
                         {
                             bone.ChildID = (short)(WorkingObject.BRNT.Bones.Count + 1);
