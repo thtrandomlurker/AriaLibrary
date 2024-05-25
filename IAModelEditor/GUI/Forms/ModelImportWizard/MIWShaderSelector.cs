@@ -307,7 +307,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
 
                 SHCO shaderConst = new SHCO();
                 shaderConst.Name = input.ParameterName + "-" + ParentForm.WorkingMaterialData[materialIndex].MaterialName;
-                shaderConst.Data.Constants.Add(new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+                shaderConst.Data.Constants.Add(new Vector4(0.5f, 0.5f, 0.5f, 1.0f));
 
                 ParentForm.WorkingMaterialData[materialIndex].FragmentConstants.ConstantValues.Add(constValue);
 

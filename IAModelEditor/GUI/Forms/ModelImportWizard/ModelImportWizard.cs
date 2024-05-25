@@ -20,6 +20,7 @@ using AriaLibrary.Helpers;
 using Matrix4x4 = System.Numerics.Matrix4x4;
 using System.Security.Cryptography.X509Certificates;
 using Assimp.Unmanaged;
+using System.Security.Cryptography;
 
 namespace IAModelEditor.GUI.Forms.ModelImportWizard
 {
@@ -86,7 +87,8 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
 
                 // a naive assumption
 
-                MeshNodes = Scene.RootNode.Children.Skip(1).ToList();
+                MeshNodes = Scene.RootNode.Children.Where(x => x.MeshCount != 0).ToList();
+
 
                 WorkingObject.NODT.Remark = new REM("Model created using AriaLibrary v0.1");
                 // create base nodes
@@ -258,7 +260,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                             AddBones(child);
                         }
                     }
-                    AddBones(Scene.RootNode.Children[0].Children[0]);  // start from skeleton root.
+                    AddBones(Scene.RootNode.Children.First(x => x.MeshCount == 0));  // start from skeleton root. maybe.
                 }
 
                 Console.WriteLine("BRNT PREPASS FINISHED");
@@ -327,67 +329,49 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         mesh.VertexBuffer.BufferData = new byte[mesh.VertexBuffer.Data.VertexCount * mesh.VertexBuffer.Data.VertexStride];
                         mesh.VertexBuffer.Buffer = BufferName.Mesh;
 
-                        // (credits to skyth) borrowed from https://github.com/blueskythlikesclouds/MikuMikuLibrary
-                        Vector4[] blendWeights = new Vector4[mesh.SourceMesh.VertexCount];
-                        byte[][] blendIndices = new byte[mesh.SourceMesh.VertexCount][];
 
-                        if (mesh.SourceMesh.HasBones)
+                        byte[][] tIndices = new byte[mesh.SourceMesh.VertexCount][];
+                        float[][] tWeights = new float[mesh.SourceMesh.VertexCount][];
+                        int[] tIndicesCurPos = new int[mesh.SourceMesh.VertexCount];
+
+                        for (int i = 0; i < mesh.SourceMesh.VertexCount; i++)
                         {
-                            Array.Fill(blendIndices, new byte[4] { 0, 0, 0, 0 });
+                            tIndices[i] = new byte[4];
+                            tWeights[i] = new float[4];
+                        }
 
-                            var boneIndices = new List<ushort>(mesh.SourceMesh.BoneCount);
-
-                            // Blender has this weird quirk where it duplicates bones.
-                            // We can handle it by grouping bones of the same name.
-                            foreach (var boneGroup in mesh.SourceMesh.Bones.GroupBy(x => x.Name))
+                        foreach (var bone in mesh.SourceMesh.Bones)
+                        {
+                            foreach (var weight in bone.VertexWeights)
                             {
-                                // Likely going to have duplicates! Order by vertex ID so we can detect them.
-                                var vertexWeights = boneGroup
-                                    .SelectMany(x => x.VertexWeights).OrderBy(x => x.VertexID).ToList();
-
-                                // Skip if empty (apparently those also exist when exporting from Blender)
-                                if (vertexWeights.Count == 0)
-                                    continue;
-
-                                var aiBone = boneGroup.First();
-
-                                int boneIndex = WorkingObject.BRNT.Bones.Find(
-                                    x => x.BoneName == aiBone.Name).SkinID;
-
-                                int boneIndexInSubMesh = boneIndices.Count;
-                                boneIndices.Add((ushort)boneIndex);
-
-                                foreach (var vertexWeight in aiBone.VertexWeights)
+                                if (tIndicesCurPos[weight.VertexID] < 4)
                                 {
-                                    ref var blendWeightVec = ref blendWeights[vertexWeight.VertexID];
-                                    ref var blendIndexVec = ref blendIndices[vertexWeight.VertexID];
+                                    Console.WriteLine(weight.VertexID);
+                                    tIndices[weight.VertexID][tIndicesCurPos[weight.VertexID]] = (byte)WorkingObject.BRNT.Bones.First(x => x.BoneName == bone.Name).SkinID;
+                                    tWeights[weight.VertexID][tIndicesCurPos[weight.VertexID]] = weight.Weight;
+                                }
+                                tIndicesCurPos[weight.VertexID]++;
+                            }
+                        }
 
-                                    for (int j = 0; j < 4; j++)
-                                    {
-                                        // Add to the existing weight if it was already assigned before.
-                                        if (boneIndexInSubMesh == blendIndexVec[j])
-                                        {
-                                            blendWeightVec[j] += vertexWeight.Weight;
-                                            break;
-                                        }
-                                        // Sort weights in descending order otherwise.
-                                        if (vertexWeight.Weight > blendWeightVec[j])
-                                        {
-                                            for (int k = 3; k > j; k--)
-                                            {
-                                                blendWeightVec[k] = blendWeightVec[k - 1];
-                                                blendIndexVec[k] = blendIndexVec[k - 1];
-                                            }
-
-                                            blendWeightVec[j] = vertexWeight.Weight;
-                                            blendIndexVec[j] = (byte)boneIndexInSubMesh;
-
-                                            break;
-                                        }
-                                    }
+                        // fixup weights
+                        foreach (var weight in tWeights)
+                        {
+                            float sum = weight[0] + weight[1] + weight[2] + weight[3];
+                            if (!(0.9999f < sum && sum < 1.0001f))
+                            {
+                                float diff = 1f - sum;
+                                if (diff < 0f)
+                                {
+                                    weight[0] -= diff;
+                                }
+                                else
+                                {
+                                    weight[0] += diff;
                                 }
                             }
                         }
+
 
                         for (int i = 0; i < mesh.SourceMesh.VertexCount; i++)
                         {
@@ -404,22 +388,22 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                                         cPos += 12;
                                         break;
                                     case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_NORMAL:
-                                        vertex[cPos] = (byte)(mesh.SourceMesh.Normals[i].X / 128f); 
-                                        vertex[cPos + 1] = (byte)(mesh.SourceMesh.Normals[i].Y / 128f);
-                                        vertex[cPos + 2] = (byte)(mesh.SourceMesh.Normals[i].Z / 128f);
+                                        vertex[cPos] = (byte)(mesh.SourceMesh.Normals[i].X * 128f); 
+                                        vertex[cPos + 1] = (byte)(mesh.SourceMesh.Normals[i].Y * 128f);
+                                        vertex[cPos + 2] = (byte)(mesh.SourceMesh.Normals[i].Z * 128f);
                                         cPos += 3;
                                         break;
                                     case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TANGENT:
-                                        vertex[cPos] = (byte)(mesh.SourceMesh.Tangents[i].X / 128f);
-                                        vertex[cPos + 1] = (byte)(mesh.SourceMesh.Tangents[i].Y / 128f);
-                                        vertex[cPos + 2] = (byte)(mesh.SourceMesh.Tangents[i].Z / 128f);
+                                        vertex[cPos] = (byte)(mesh.SourceMesh.Tangents[i].X * 128f);
+                                        vertex[cPos + 1] = (byte)(mesh.SourceMesh.Tangents[i].Y * 128f);
+                                        vertex[cPos + 2] = (byte)(mesh.SourceMesh.Tangents[i].Z * 128f);
                                         cPos += 3;
                                         break;
                                     case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TEXCOORD:
                                         if (mesh.SourceMesh.TextureCoordinateChannelCount >= WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexSemanticIndices[j])
                                         {
-                                            Buffer.BlockCopy(BitConverter.GetBytes(BitConverter.ToHalf(BitConverter.GetBytes(mesh.SourceMesh.TextureCoordinateChannels[WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexSemanticIndices[j]][i].X))), 0, vertex, cPos, 2);
-                                            Buffer.BlockCopy(BitConverter.GetBytes(BitConverter.ToHalf(BitConverter.GetBytes(mesh.SourceMesh.TextureCoordinateChannels[WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexSemanticIndices[j]][i].Y))), 0, vertex, cPos + 2, 2);
+                                            Buffer.BlockCopy(BitConverter.GetBytes((Half)mesh.SourceMesh.TextureCoordinateChannels[WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexSemanticIndices[j]][i].X), 0, vertex, cPos, 2);
+                                            Buffer.BlockCopy(BitConverter.GetBytes((Half)mesh.SourceMesh.TextureCoordinateChannels[WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexSemanticIndices[j]][i].Y), 0, vertex, cPos + 2, 2);
                                             cPos += 4;
                                         }
                                         else
@@ -429,23 +413,23 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                                         }
                                         break;
                                     case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BLENDWEIGHT:
-                                        vertex[cPos] = (byte)(blendWeights[i].X / 255f);
-                                        vertex[cPos + 1] = (byte)(blendWeights[i].Y / 255f);
-                                        vertex[cPos + 2] = (byte)(blendWeights[i].Z / 255f);
-                                        vertex[cPos + 3] = (byte)(blendWeights[i].W / 255f);
+                                        vertex[cPos] = (byte)(tWeights[i][0] * 255f);
+                                        vertex[cPos + 1] = (byte)(tWeights[i][1] * 255f);
+                                        vertex[cPos + 2] = (byte)(tWeights[i][2] * 255f);
+                                        vertex[cPos + 3] = (byte)(tWeights[i][3] * 255f);
                                         cPos += 4;
                                         break;
                                     case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BLENDINDICES:
-                                        Buffer.BlockCopy(blendIndices[i], 0, vertex, cPos, 4);
+                                        Buffer.BlockCopy(tIndices[i], 0, vertex, cPos, 4);
                                         cPos += 4;
                                         break;
                                     case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_COLOR:
                                         if (mesh.SourceMesh.HasVertexColors(0))
                                         {
-                                            vertex[cPos] = (byte)(mesh.SourceMesh.VertexColorChannels[0][i].R / 255f);
-                                            vertex[cPos+1] = (byte)(mesh.SourceMesh.VertexColorChannels[0][i].G / 255f);
-                                            vertex[cPos+2] = (byte)(mesh.SourceMesh.VertexColorChannels[0][i].B / 255f);
-                                            vertex[cPos+3] = (byte)(mesh.SourceMesh.VertexColorChannels[0][i].A / 255f);
+                                            vertex[cPos] = (byte)(mesh.SourceMesh.VertexColorChannels[0][i].R * 255f);
+                                            vertex[cPos+1] = (byte)(mesh.SourceMesh.VertexColorChannels[0][i].G * 255f);
+                                            vertex[cPos+2] = (byte)(mesh.SourceMesh.VertexColorChannels[0][i].B * 255f);
+                                            vertex[cPos+3] = (byte)(mesh.SourceMesh.VertexColorChannels[0][i].A * 255f);
                                             cPos += 4;
                                         }
                                         else
