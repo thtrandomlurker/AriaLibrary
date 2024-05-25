@@ -267,5 +267,16 @@ namespace IAModelEditor.GUI.Forms
                 c.ShowDialog();
             }
         }
+
+        private void MenuStripReplace_Click(object sender, EventArgs e)
+        {
+            if (MenuStripReplaceFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                using (ModelReplaceWizard replaceDlg = new ModelReplaceWizard(MenuStripReplaceFileDialog.FileName, ref ObjectGroup))
+                {
+                    replaceDlg.ShowDialog();
+                }
+            }
+        }
     }
 }

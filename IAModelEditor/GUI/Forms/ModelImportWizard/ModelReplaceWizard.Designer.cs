@@ -33,7 +33,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
             MIWInitButtonNext = new Button();
             MIWInitButtonCancel = new Button();
             button1 = new Button();
-            MIWActiveStageControl = new MIWInitControl();
+            this.MIWActiveStageControl = new IAModelEditor.GUI.Controls.MIWInitControl();
             SuspendLayout();
             // 
             // MIWInitButtonNext

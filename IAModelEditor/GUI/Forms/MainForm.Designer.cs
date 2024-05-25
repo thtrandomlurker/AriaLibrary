@@ -52,13 +52,13 @@
             unswizzleDDSInPlacToolStripMenuItem = new ToolStripMenuItem();
             viewShaderPackageInfoToolStripMenuItem = new ToolStripMenuItem();
             clearNODEInfoToolStripMenuItem = new ToolStripMenuItem();
+            calculateStringHashToolStripMenuItem = new ToolStripMenuItem();
             MenuStripOpenFileDialog = new OpenFileDialog();
             MenuStripSaveAsFileDialog = new SaveFileDialog();
             CurrentlyLoadedLabel = new Label();
             MenuStripReplaceFileDialog = new OpenFileDialog();
             MenuStripExportFBXFileDialog = new SaveFileDialog();
             LoadedPlatformLabel = new Label();
-            calculateStringHashToolStripMenuItem = new ToolStripMenuItem();
             MenuStrip.SuspendLayout();
             SuspendLayout();
             // 
@@ -150,6 +150,7 @@
             MenuStripReplace.Name = "MenuStripReplace";
             MenuStripReplace.Size = new Size(186, 22);
             MenuStripReplace.Text = "Replace";
+            MenuStripReplace.Click += MenuStripReplace_Click;
             // 
             // sanityCzechToolStripMenuItem
             // 
@@ -240,6 +241,13 @@
             clearNODEInfoToolStripMenuItem.Text = "Clear NODE info";
             clearNODEInfoToolStripMenuItem.Click += clearNODEInfoToolStripMenuItem_Click;
             // 
+            // calculateStringHashToolStripMenuItem
+            // 
+            calculateStringHashToolStripMenuItem.Name = "calculateStringHashToolStripMenuItem";
+            calculateStringHashToolStripMenuItem.Size = new Size(209, 22);
+            calculateStringHashToolStripMenuItem.Text = "Calculate String Hash";
+            calculateStringHashToolStripMenuItem.Click += calculateStringHashToolStripMenuItem_Click;
+            // 
             // MenuStripOpenFileDialog
             // 
             MenuStripOpenFileDialog.Filter = "IA/VT Model File|*.mdl";
@@ -274,13 +282,6 @@
             LoadedPlatformLabel.Size = new Size(56, 15);
             LoadedPlatformLabel.TabIndex = 2;
             LoadedPlatformLabel.Text = "Platform:";
-            // 
-            // calculateStringHashToolStripMenuItem
-            // 
-            calculateStringHashToolStripMenuItem.Name = "calculateStringHashToolStripMenuItem";
-            calculateStringHashToolStripMenuItem.Size = new Size(209, 22);
-            calculateStringHashToolStripMenuItem.Text = "Calculate String Hash";
-            calculateStringHashToolStripMenuItem.Click += calculateStringHashToolStripMenuItem_Click;
             // 
             // MainForm
             // 

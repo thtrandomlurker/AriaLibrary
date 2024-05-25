@@ -261,7 +261,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                             AddBones(child);
                         }
                     }
-                    AddBones(Scene.RootNode.Children.First(x => x.MeshCount == 0));  // start from skeleton root. maybe.
+                    AddBones(Scene.RootNode.Children.First(x => x.MeshCount == 0).Children[0]);  // start from skeleton root. maybe.
                 }
 
                 Console.WriteLine("BRNT PREPASS FINISHED");
