@@ -170,8 +170,8 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                     case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TANGENT:
                         attr.DataType = VertexAttributeDataType.SignedByteNormalized;
                         attr.Offset = curOffset;
-                        curOffset += 3;
-                        attr.Count = 3;
+                        curOffset += 4;
+                        attr.Count = 4;
                         attr.VertexBufferIndex = 0;
                         break;
                     case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TEXCOORD:

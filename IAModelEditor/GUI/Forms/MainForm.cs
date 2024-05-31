@@ -47,7 +47,15 @@ namespace IAModelEditor.GUI.Forms
             {
                 if (SourceFilePath != null)
                 {
-                    ObjectGroup.SavePackage(SourceFilePath);
+                    ObjectGroup.SavePackage(SourceFilePath + "_");
+                    foreach (var file in ObjectGroup.SourcePackage.Files)
+                    {
+                        file.Close();
+                    }
+                    ObjectGroup.SourcePackage.BaseStream.Close();
+                    File.Delete(SourceFilePath);
+                    File.Move(SourceFilePath + "_", SourceFilePath);
+                    ObjectGroup.LoadPackage(SourceFilePath);
                 }
                 else if (MenuStripSaveAsFileDialog.ShowDialog() == DialogResult.OK)
                 {

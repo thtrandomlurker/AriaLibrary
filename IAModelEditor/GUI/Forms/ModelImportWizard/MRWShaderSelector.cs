@@ -169,8 +169,8 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                     case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TANGENT:
                         attr.DataType = VertexAttributeDataType.SignedByteNormalized;
                         attr.Offset = curOffset;
-                        curOffset += 3;
-                        attr.Count = 3;
+                        curOffset += 4;
+                        attr.Count = 4;
                         attr.VertexBufferIndex = 0;
                         break;
                     case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TEXCOORD:
@@ -325,6 +325,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
             ParentForm.WorkingMaterialData[materialIndex].PixelShaderSamplerBinding.Name = ParentForm.WorkingMaterialData[materialIndex].PixelShader.Name;
 
             // this also also gives us enough information to generate sampler information.
+            int curSamp = 0;
             ParentForm.WorkingMaterialData[materialIndex].MaterialSampler = new SAMP();
             foreach (var input in ParentForm.WorkingMaterialData[materialIndex].PixelShaderSamplerBinding.Data.Parameters)
             {
@@ -346,11 +347,13 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                 samplerState.Data.U04 = 1;
                 samplerState.Data.U08 = 512;
                 samplerState.Data.U0C = 0;
-                samplerState.Data.U10 = 0;
-                samplerState.Data.U14 = 0;
+                samplerState.Data.U10 = curSamp;
+                samplerState.Data.U14 = curSamp;
                 samplerState.Data.U18 = 31;
                 samplerState.Data.U1C = 134217728;
                 samplerState.Name = input.ParameterName + "-" + ParentForm.WorkingMaterialData[materialIndex].MaterialName;
+
+                curSamp += 1;
 
                 ParentForm.WorkingMaterialData[materialIndex].MaterialSampler.SSTVs.Add(samplerTextureView);
                 ParentForm.WorkingMaterialData[materialIndex].SamplerStates.Add(samplerState);

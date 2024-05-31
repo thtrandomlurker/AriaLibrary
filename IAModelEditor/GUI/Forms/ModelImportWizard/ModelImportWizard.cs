@@ -398,7 +398,8 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                                         vertex[cPos] = (byte)(mesh.SourceMesh.Tangents[i].X * 128f);
                                         vertex[cPos + 1] = (byte)(mesh.SourceMesh.Tangents[i].Y * 128f);
                                         vertex[cPos + 2] = (byte)(mesh.SourceMesh.Tangents[i].Z * 128f);
-                                        cPos += 3;
+                                        vertex[cPos + 3] = 127;
+                                        cPos += 4;
                                         break;
                                     case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TEXCOORD:
                                         if (mesh.SourceMesh.TextureCoordinateChannelCount >= WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexSemanticIndices[j])

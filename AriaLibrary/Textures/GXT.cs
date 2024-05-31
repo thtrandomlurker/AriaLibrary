@@ -130,7 +130,6 @@ namespace AriaLibrary.Textures
             uint tFmt = reader.ReadUInt32();
             TextureFormat = (SceGxmTextureBaseFormat)(tFmt & 0xFFFF0000);
             SwizzleMode = tFmt & 0x0000FFFF;
-            Console.WriteLine(TextureFormat);
             Width = reader.ReadInt16();
             Height = reader.ReadInt16();
             MipCount = reader.ReadInt32();
@@ -689,7 +688,21 @@ namespace AriaLibrary.Textures
                             writer.Write((ushort)0);
 
                             byte[] outPixelArray = new byte[pixelData.Length];
-                            // PPC
+
+                            int dMin, dMax;
+                            if (pWidth < pHeight)
+                            {
+                                dMin = pWidth;
+                                dMax = pHeight;
+                            }
+                            else
+                            {
+                                dMin = pHeight;
+                                dMax = pWidth;
+                            }
+
+                            int factor = dMax / dMin;  // how much larger the max is than the min
+                            // PPC  --  Breaks on wide/tall textures. i don't know how to fix this.
                             for (int d = 0; d < (type == SceGxmTextureType.Cube ? 6 : 1); d++)
                             {
 
@@ -698,12 +711,12 @@ namespace AriaLibrary.Textures
                                     for (int x = 0; x < pWidth; x++)
                                     {
                                         int encPos = EncodeMorton(x, y);
-    
-                                        for (int p = 0; p < blockSize; p++)
+                                        if ((d * (pWidth * pHeight * blockSize)) + ((encPos * blockSize)) < pWidth * pHeight * blockSize)
                                         {
-                                            Console.WriteLine((encPos * blockSize) + p);
-                                            Console.WriteLine((((y * pWidth) + x) * blockSize) + p);
-                                            outPixelArray[(d * (pWidth * pHeight * blockSize)) + (encPos * blockSize) + p] = pixelData[(d * (pWidth * pHeight * blockSize)) + (((y * pWidth) + x) * blockSize) + p];
+                                            for (int p = 0; p < blockSize; p++)
+                                            {           // cube face offset                     // pixel offset      //byte offset
+                                                outPixelArray[(d * (pWidth * pHeight * blockSize)) + (encPos * blockSize) + p] = pixelData[(d * (pWidth * pHeight * blockSize)) + (((y * pWidth) + x) * blockSize) + p];
+                                            }
                                         }
                                     }
                                 }

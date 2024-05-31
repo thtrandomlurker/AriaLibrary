@@ -90,7 +90,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
             PostProcessSteps.JoinIdenticalVertices | PostProcessSteps.Triangulate |
             PostProcessSteps.SplitLargeMeshes | PostProcessSteps.LimitBoneWeights |
             PostProcessSteps.ImproveCacheLocality | PostProcessSteps.SortByPrimitiveType |
-            PostProcessSteps.SplitByBoneCount | PostProcessSteps.FlipUVs);
+            PostProcessSteps.SplitByBoneCount | PostProcessSteps.FlipUVs | PostProcessSteps.CalculateTangentSpace);
 
             List<string> skinBoneList = new List<string>();
 
@@ -243,13 +243,13 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
 
 
                     byte[][] tIndices = new byte[mesh.SourceMesh.VertexCount][];
-                    float[][] tWeights = new float[mesh.SourceMesh.VertexCount][];
+                    byte[][] tWeights = new byte[mesh.SourceMesh.VertexCount][];
                     int[] tIndicesCurPos = new int[mesh.SourceMesh.VertexCount];
 
                     for (int i = 0; i < mesh.SourceMesh.VertexCount; i++)
                     {
                         tIndices[i] = new byte[4];
-                        tWeights[i] = new float[4];
+                        tWeights[i] = new byte[4];
                     }
 
                     foreach (var bone in mesh.SourceMesh.Bones)
@@ -260,27 +260,22 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                             {
                                 Console.WriteLine(weight.VertexID);
                                 tIndices[weight.VertexID][tIndicesCurPos[weight.VertexID]] = (byte)WorkingObject.BRNT.Bones.First(x => x.BoneName == bone.Name).SkinID;
-                                tWeights[weight.VertexID][tIndicesCurPos[weight.VertexID]] = weight.Weight;
+                                tWeights[weight.VertexID][tIndicesCurPos[weight.VertexID]] = (byte)(weight.Weight * 255f);
                             }
                             tIndicesCurPos[weight.VertexID]++;
                         }
                     }
 
-                    // fixup weights
+                    // fix weights?
                     foreach (var weight in tWeights)
                     {
-                        float sum = weight[0] + weight[1] + weight[2] + weight[3];
-                        if (!(0.9999f < sum && sum < 1.0001f))
+                        int sum = weight[0] + weight[1] + weight[2] + weight[3];
+
+                        weight[0] += (byte)(255 - sum);
+
+                        if (weight[0] + weight[1] + weight[2] + weight[3] != 255)
                         {
-                            float diff = 1f - sum;
-                            if (diff < 0f)
-                            {
-                                weight[0] -= diff;
-                            }
-                            else
-                            {
-                                weight[0] += diff;
-                            }
+                            Console.WriteLine("ono");
                         }
                     }
 
@@ -309,7 +304,8 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                                     vertex[cPos] = (byte)(mesh.SourceMesh.Tangents[i].X * 128f);
                                     vertex[cPos + 1] = (byte)(mesh.SourceMesh.Tangents[i].Y * 128f);
                                     vertex[cPos + 2] = (byte)(mesh.SourceMesh.Tangents[i].Z * 128f);
-                                    cPos += 3;
+                                    vertex[cPos + 3] = 127;
+                                    cPos += 4;
                                     break;
                                 case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TEXCOORD:
                                     if (mesh.SourceMesh.TextureCoordinateChannelCount >= WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexSemanticIndices[j])
@@ -325,10 +321,10 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                                     }
                                     break;
                                 case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BLENDWEIGHT:
-                                    vertex[cPos] = (byte)(tWeights[i][0] * 255f);
-                                    vertex[cPos + 1] = (byte)(tWeights[i][1] * 255f);
-                                    vertex[cPos + 2] = (byte)(tWeights[i][2] * 255f);
-                                    vertex[cPos + 3] = (byte)(tWeights[i][3] * 255f);
+                                    vertex[cPos] = tWeights[i][0];
+                                    vertex[cPos + 1] = tWeights[i][1];
+                                    vertex[cPos + 2] = tWeights[i][2];
+                                    vertex[cPos + 3] = tWeights[i][3];
                                     cPos += 4;
                                     break;
                                 case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BLENDINDICES:
