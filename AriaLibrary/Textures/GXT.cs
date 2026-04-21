@@ -710,7 +710,7 @@ namespace AriaLibrary.Textures
                                 {
                                     for (int x = 0; x < pWidth; x++)
                                     {
-                                        int encPos = EncodeMorton(x, y);
+                                        int encPos = EncodeMortonRect(x, y, pWidth, pHeight);
                                         if ((d * (pWidth * pHeight * blockSize)) + ((encPos * blockSize)) < pWidth * pHeight * blockSize)
                                         {
                                             for (int p = 0; p < blockSize; p++)
@@ -838,6 +838,39 @@ namespace AriaLibrary.Textures
 
 
             return ((encX << 1) | encY);
+        }
+
+        private static int EncodeMortonRect(int x, int y, int pWidth, int pHeight)
+        {
+            int dMin = pWidth < pHeight ? pWidth : pHeight;
+            if (dMin <= 0) return 0;
+            int k = (int)Math.Log(dMin, 2);
+            int bits = 2 * k;
+            int mask = (1 << bits) - 1;
+
+            if (pWidth < pHeight)
+            {
+                // j is the row-major index for the rectangular layout
+                int j = (y * pWidth) + x;
+                int upper = j & ~mask;               // tile group (preserve high bits)
+                int inner = j & mask;                // low bits encoding coordinates inside tile
+                int mortonX = (inner >> k) & (dMin - 1);
+                int mortonY = inner & (dMin - 1);
+                int low = EncodeMorton(mortonY, mortonX) & mask;
+                return upper | low;
+            }
+            else
+            {
+                // For wide textures the decoding used x = j / pHeight; y = j % pHeight
+                // So j = x * pHeight + y
+                int j = (x * pHeight) + y;
+                int upper = j & ~mask;
+                int inner = j & mask;
+                int mortonY = (inner >> k) & (dMin - 1);
+                int mortonX = inner & (dMin - 1);
+                int low = EncodeMorton(mortonY, mortonX) & mask;
+                return upper | low;
+            }
         }
 
         public GXT()

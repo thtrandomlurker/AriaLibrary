@@ -188,7 +188,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
 
                     void AddBones(Node aiNode)
                     {
-                        Bone bone = new Bone();
+                        AriaLibrary.Objects.Bone bone = new AriaLibrary.Objects.Bone();
                         bone.BoneName = aiNode.Name;
                         Matrix4x4 boneMat = aiNode.Transform.ToNumerics();
                         Matrix4x4.Invert(boneMat, out Matrix4x4 invMat);

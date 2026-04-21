@@ -8,81 +8,81 @@ using System.Numerics;
 using System.Security.Cryptography.X509Certificates;
 using AriaLibrary.Helpers;
 
-public class Bone
-{
-    public uint BoneNameHash;
-    public string BoneName;
-    public short BoneID;
-    public short BoneParent;
-    public short U18;
-    public short SkinID;
-    public short ChildID;
-    public short U1E;
-    public short PossibleFlags;
-    public short U22;
-    public short U24;
-    public short U26;
-    public Vector3 Translation;
-    public Vector3 Rotation;
-    public Vector3 Scale;
-    public int U4C;
-    public int U50;
-    public int U54;
-
-    public void Read(BinaryReader reader)
-    {
-        BoneNameHash = reader.ReadUInt32();
-        BoneName = new string(reader.ReadChars(16)).Split("\0")[0];
-        BoneID = reader.ReadInt16();
-        BoneParent = reader.ReadInt16();
-        U18 = reader.ReadInt16();
-        SkinID = reader.ReadInt16();
-        ChildID = reader.ReadInt16();
-        U1E = reader.ReadInt16();
-        PossibleFlags = reader.ReadInt16();
-        U22 = reader.ReadInt16();
-        U24 = reader.ReadInt16();
-        U26 = reader.ReadInt16();
-        Translation = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
-        Rotation = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
-        Scale = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
-        U4C = reader.ReadInt32();
-        U50 = reader.ReadInt32();
-        U54 = reader.ReadInt32();
-    }
-
-    public void Write(BinaryWriter writer)
-    {
-        writer.Write(BoneNameHash);
-        writer.Write(BoneName.ToCharArray());
-        writer.Write(new char[16 - BoneName.Length]);
-        writer.Write(BoneID);
-        writer.Write(BoneParent);
-        writer.Write(U18);
-        writer.Write(SkinID);
-        writer.Write(ChildID);
-        writer.Write(U1E);
-        writer.Write(PossibleFlags);
-        writer.Write(U22);
-        writer.Write(U24);
-        writer.Write(U26);
-        writer.Write(Translation.X);
-        writer.Write(Translation.Y);
-        writer.Write(Translation.Z);
-        writer.Write(Rotation.X);
-        writer.Write(Rotation.Y);
-        writer.Write(Rotation.Z);
-        writer.Write(Scale.X);
-        writer.Write(Scale.Y);
-        writer.Write(Scale.Z);
-        writer.Write(U4C);
-        writer.Write(U50);
-        writer.Write(U54);
-    }
-}
-
 namespace AriaLibrary.Objects
 {
+
+    public class Bone
+    {
+        public uint BoneNameHash;
+        public string BoneName;
+        public short BoneID;
+        public short BoneParent;
+        public short U18;
+        public short SkinID;
+        public short ChildID;
+        public short U1E;
+        public short PossibleFlags;
+        public short U22;
+        public short U24;
+        public short U26;
+        public Vector3 Translation;
+        public Vector3 Rotation;
+        public Vector3 Scale;
+        public int U4C;
+        public int U50;
+        public int U54;
+
+        public void Read(BinaryReader reader)
+        {
+            BoneNameHash = reader.ReadUInt32();
+            BoneName = new string(reader.ReadChars(16)).Split("\0")[0];
+            BoneID = reader.ReadInt16();
+            BoneParent = reader.ReadInt16();
+            U18 = reader.ReadInt16();
+            SkinID = reader.ReadInt16();
+            ChildID = reader.ReadInt16();
+            U1E = reader.ReadInt16();
+            PossibleFlags = reader.ReadInt16();
+            U22 = reader.ReadInt16();
+            U24 = reader.ReadInt16();
+            U26 = reader.ReadInt16();
+            Translation = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+            Rotation = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+            Scale = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+            U4C = reader.ReadInt32();
+            U50 = reader.ReadInt32();
+            U54 = reader.ReadInt32();
+        }
+
+        public void Write(BinaryWriter writer)
+        {
+            writer.Write(BoneNameHash);
+            writer.Write(BoneName.ToCharArray());
+            writer.Write(new char[16 - BoneName.Length]);
+            writer.Write(BoneID);
+            writer.Write(BoneParent);
+            writer.Write(U18);
+            writer.Write(SkinID);
+            writer.Write(ChildID);
+            writer.Write(U1E);
+            writer.Write(PossibleFlags);
+            writer.Write(U22);
+            writer.Write(U24);
+            writer.Write(U26);
+            writer.Write(Translation.X);
+            writer.Write(Translation.Y);
+            writer.Write(Translation.Z);
+            writer.Write(Rotation.X);
+            writer.Write(Rotation.Y);
+            writer.Write(Rotation.Z);
+            writer.Write(Scale.X);
+            writer.Write(Scale.Y);
+            writer.Write(Scale.Z);
+            writer.Write(U4C);
+            writer.Write(U50);
+            writer.Write(U54);
+        }
+    }
     public class BRNT
     {
         public List<Bone> Bones;
