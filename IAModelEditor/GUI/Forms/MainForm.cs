@@ -1,14 +1,18 @@
+using AriaLibrary.Helpers;
 using AriaLibrary.Objects;
 using AriaLibrary.Objects.Nodes;
+using AriaLibrary.Textures;
+using Assimp;
+using IAModelEditor.GUI.Forms.ModelImportWizard;
 using Ookii.Dialogs.WinForms;
 using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.Drawing.Design;
-using System.Windows.Forms.Design;
 using System.Windows.Forms;
-using IAModelEditor.GUI.Forms.ModelImportWizard;
-using AriaLibrary.Textures;
-
+using System.Windows.Forms.Design;
+using System.Numerics;
+using Matrix4x4 = System.Numerics.Matrix4x4;
+using System.Security.Permissions;
 namespace IAModelEditor.GUI.Forms
 {
     public partial class MainForm : Form
@@ -285,6 +289,140 @@ namespace IAModelEditor.GUI.Forms
                     replaceDlg.ShowDialog();
                 }
             }
+        }
+
+        private void calculateBindPoseStringHashToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (StringBindPoseHashCalculatorForm c = new StringBindPoseHashCalculatorForm())
+            {
+                c.ShowDialog();
+            }
+        }
+
+        private void dumpBindPoseInfoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // temporarily alter the behavior of MenuStripOpenFileDialog
+            MenuStripOpenFileDialog.Filter = "Bind Pose Info|*.60se";
+            if (MenuStripOpenFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                Stream bpStream = File.OpenRead(MenuStripOpenFileDialog.FileName);
+                BindPose bp = new BindPose();
+                using (BinaryReader reader = new BinaryReader(bpStream))
+                {
+                    bp.Read(reader);
+                    foreach (var entry in bp.BoneHierarchy)
+                    {
+                        Console.WriteLine($"Bone: {bp.BoneNames[entry.ID]} {((entry.ParentID & 0x8000) != 0 ? ($"--> {bp.BoneNames[entry.ParentID & 0x7FFF]}") : "")}");
+                        uint bHashT = StringHelper.GetBindPoseStringHash(bp.BoneNames[entry.ID]);
+                        if (bp.BoneHashes.Contains(bHashT))
+                        {
+                            Console.WriteLine($"Hash {bHashT} exists in table");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Hash {bHashT} not found");
+                        }
+                    }
+
+                    foreach (var entry in bp.BoneOrderList)
+                    {
+                        BoneRelation rel = bp.BoneHierarchy[entry];
+                        Console.WriteLine($"Skin Bone: {entry} --> {bp.BoneNames[rel.ID]}");
+                    }
+                }
+                // removes duplicate entries from hierarchy.
+                List<BoneRelation> hier = new List<BoneRelation>();
+                for (int i = 0; i < bp.BoneHierarchy.Length; i++)
+                {
+                    for (int j = 0; j < bp.BoneOrderList.Length; j++)
+                    {
+
+                    }
+                    BoneRelation b = new BoneRelation()
+                    {
+                        ID = bp.BoneHierarchy[i].ID,
+                        ParentID = bp.BoneHierarchy[i].ParentID
+                    };
+                    if (!hier.Any(x => x.ID == b.ID && x.ParentID == b.ParentID))
+                    {
+                        hier.Add(b);
+                    }
+                    if (hier.Any(x => x.ID == b.ID && x.ParentID == b.ParentID))
+                    {
+                        for (int j = 0; j < bp.BoneOrderList.Length; j++)
+                        {
+                            if (bp.BoneOrderList[j] == i)
+                            {
+                                bp.BoneOrderList[j] = (short)hier.FindIndex(x => x.ID == b.ID && x.ParentID == b.ParentID);
+                            }
+                        }
+                    }
+                }
+                bp.BoneHierarchy = hier.ToArray();
+                using (BinaryWriter writer = new BinaryWriter(File.Create(Path.Combine(Path.GetDirectoryName(MenuStripOpenFileDialog.FileName), "test.60se"))))
+                {
+                    bp.Write(writer);
+                }
+            }
+            MenuStripOpenFileDialog.Filter = "IA / VT Model File| *.mdl";
+        }
+
+        private void sEFromBRNTToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // temporarily alter the behavior of MenuStripOpenFileDialog
+            MenuStripOpenFileDialog.Filter = "BRNT|*.BRNT";
+            if (MenuStripOpenFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                Stream brntStream = File.OpenRead(MenuStripOpenFileDialog.FileName);
+                BRNT brnt = new BRNT();
+                BindPose bp = new BindPose();
+                using (BinaryReader reader = new BinaryReader(brntStream))
+                {
+                    brnt.Read(reader);
+                    bp.BoneHierarchy = new BoneRelation[brnt.Bones.Count];
+                    bp.BoneBindInfos = new BindInfo[brnt.Bones.Count];
+                    bp.BoneOrderList = new short[brnt.Bones.Count];
+                    bp.BoneHashes = new uint[brnt.Bones.Count];
+                    for (int i = 0; i < brnt.Bones.Count; i++)
+                    {
+                        AriaLibrary.Objects.Bone? bone = brnt.Bones[i];
+
+                        short boneId = bone.BoneID;
+                        short parentId = bone.BoneParent;
+
+                        BoneRelation b = new BoneRelation()
+                        {
+                            ID = boneId,
+                            ParentID = parentId == -1 ? (short)0x7FFF : (short)(parentId | 0x8000)
+                        };
+
+                        if (brnt.Bones[i].BoneName == "LUpperarm")
+                        {
+                            brnt.Bones[i].Scale *= 2.0f;
+                        }
+
+                        BindInfo bind = new BindInfo()
+                        {
+                            Rotation = MathHelper.EulerAnglesToQuaternion(bone.Rotation.X, bone.Rotation.Y, bone.Rotation.Z),
+                            Translation = new Vector4(bone.Translation.X, bone.Translation.Y, bone.Translation.Z, 1.0f),
+                            Scale = new Vector4(bone.Scale.X, bone.Scale.Y, bone.Scale.Z, 1.0f)
+                        };
+
+                        uint boneHash = StringHelper.GetBindPoseStringHash(bone.BoneName);
+
+                        bp.BoneHierarchy[i] = b;
+                        bp.BoneBindInfos[i] = bind;
+                        bp.BoneOrderList[i] = (short)i;
+                        bp.BoneHashes[i] = boneHash;
+                        bp.BoneNames.Add(bone.BoneName);
+                    }
+                }
+                using (BinaryWriter writer = new BinaryWriter(File.Create(Path.Combine(Path.GetDirectoryName(MenuStripOpenFileDialog.FileName), "TEST.60SE"))))
+                {
+                    bp.Write(writer);
+                }
+            }
+            MenuStripOpenFileDialog.Filter = "IA / VT Model File| *.mdl";
         }
     }
 }

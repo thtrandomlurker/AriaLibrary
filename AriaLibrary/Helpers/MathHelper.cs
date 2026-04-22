@@ -9,7 +9,7 @@ namespace AriaLibrary.Helpers
 {
     public static class MathHelper
     {
-        public static Vector3 QuaternionToEulerAngles(float w, float x, float y, float z)
+        public static Vector3 QuaternionToEulerAngles(float x, float y, float z, float w)
         {
             // Roll (x-axis rotation)
             float sinr_cosp = 2 * (w * x + y * z);
@@ -30,6 +30,24 @@ namespace AriaLibrary.Helpers
             float yaw = (float)Math.Atan2(siny_cosp, cosy_cosp);
 
             return new Vector3(roll, pitch, yaw);
+        }
+        public static Vector4 EulerAnglesToQuaternion(float x, float y, float z)
+        {
+            float x_r = x * (float)Math.PI / 180.0f;
+            float y_r = y * (float)Math.PI / 180.0f;
+            float z_r = z * (float)Math.PI / 180.0f;
+
+            float qx = (float)(Math.Sin(x_r / 2) * Math.Cos(y_r / 2) * Math.Cos(z_r / 2) -
+                 Math.Cos(x_r / 2) * Math.Sin(y_r / 2) * Math.Sin(z_r / 2));
+            float qy = (float)(Math.Cos(x_r / 2) * Math.Sin(y_r / 2) * Math.Cos(z_r / 2) +
+                 Math.Sin(x_r / 2) * Math.Cos(y_r / 2) * Math.Sin(z_r / 2));
+            float qz = (float)(Math.Cos(x_r / 2) * Math.Cos(y_r / 2) * Math.Sin(z_r / 2) -
+                 Math.Sin(x_r / 2) * Math.Sin(y_r / 2) * Math.Cos(z_r / 2));
+            float qw = (float)(Math.Cos(x_r / 2) * Math.Cos(y_r / 2) * Math.Cos(z_r / 2) +
+                 Math.Sin(x_r / 2) * Math.Sin(y_r / 2) * Math.Sin(z_r / 2));
+
+
+            return new Vector4(qx, qy, qz, qw);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,7 +9,17 @@ namespace AriaLibrary.Helpers
 {
     public static class StringHelper
     {
-        public static uint GetStringHash(string str)
+        private static readonly uint[] mCrc32Lookup = Enumerable.Range(0, 256).Select(i =>
+        {
+            uint crc = (uint)i;
+            for (int j = 0; j < 8; j++)
+            {
+                crc = (crc >> 1) ^ (0xEDB88320 & ~((crc & 1) - 1));
+            }
+            return crc;
+        }).ToArray();
+
+        public static uint GetBRNTStringHash(string str)
         {
             uint seed;
             uint calc;
@@ -29,6 +40,16 @@ namespace AriaLibrary.Helpers
                 result = calc - remain_positive;
             }
             return result;
+        }
+
+        public static uint GetBindPoseStringHash(string str)
+        {
+            uint mask = 0xFFFFFFFF;
+            for (int i = 0; i < str.Length; ++i)
+            {
+                mask = (mask >> 8) ^ mCrc32Lookup[(str[i] ^ mask) & 0xFF];
+            }
+            return mask;
         }
     }
 }

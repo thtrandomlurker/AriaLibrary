@@ -12,16 +12,16 @@ using System.Windows.Forms;
 
 namespace IAModelEditor.GUI.Forms
 {
-    public partial class StringHashCalculatorForm : Form
+    public partial class StringBindPoseHashCalculatorForm : Form
     {
-        public StringHashCalculatorForm()
+        public StringBindPoseHashCalculatorForm()
         {
             InitializeComponent();
         }
 
         public void button1_Click(object sender, EventArgs e)
         {
-            uint hash = StringHelper.GetBRNTStringHash(textBox1.Text);
+            uint hash = StringHelper.GetBindPoseStringHash(textBox1.Text);
             label1.Text = $"{hash}";
             label2.Text = $"{hash:X8}";
         }
