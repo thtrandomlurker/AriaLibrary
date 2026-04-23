@@ -1,6 +1,7 @@
 ﻿using AriaLibrary.Helpers;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,10 +11,10 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
 {
     public class IXBFData
     {
-        public int U00;
-        public int U04;
-        public int U08;
-        public int U0C;
+        public int U00 { get; set; }
+        public int U04 { get; set; }
+        public int U08 { get; set; }
+        public int U0C { get; set; }
 
         public void Read(BinaryReader reader, int dataPosition)
         {
@@ -39,7 +40,8 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
     public class IXBF : GPRSection
     {
         public override string Type => "IXBF";
-        public IXBFData Data;
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public IXBFData Data { get; set; }
         public override void Read(BinaryReader reader, int heapStringOffset, int heapDataOffset, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset, string platform)
         {
             int nameOffset = reader.ReadInt32();

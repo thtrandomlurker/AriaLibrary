@@ -24,7 +24,7 @@
     <Compile Update="GUI\Controls\MRWMaterialSetupControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Update="GUI\Forms\MIWShaderInfo.cs">
+    <Compile Update="GUI\Forms\ModelImportWizard\MIWShaderInfo.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="GUI\Forms\ModelImportWizard\MRWShaderSelector.cs">

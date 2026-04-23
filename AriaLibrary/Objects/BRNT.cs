@@ -7,30 +7,35 @@ using System.Threading.Tasks;
 using System.Numerics;
 using System.Security.Cryptography.X509Certificates;
 using AriaLibrary.Helpers;
+using System.ComponentModel;
+using AriaLibrary.TypeConverters;
 
 namespace AriaLibrary.Objects
 {
 
     public class Bone
     {
-        public uint BoneNameHash;
-        public string BoneName;
-        public short BoneID;
-        public short BoneParent;
-        public short U18;
-        public short SkinID;
-        public short ChildID;
-        public short U1E;
-        public short PossibleFlags;
-        public short U22;
-        public short U24;
-        public short U26;
-        public Vector3 Translation;
-        public Vector3 Rotation;
-        public Vector3 Scale;
-        public int U4C;
-        public int U50;
-        public int U54;
+        public uint BoneNameHash { get; set; }
+        public string BoneName { get; set; }
+        public short BoneID { get; set; }
+        public short BoneParent { get; set; }
+        public short U18 { get; set; }
+        public short SkinID { get; set; }
+        public short ChildID { get; set; }
+        public short U1E { get; set; }
+        public short PossibleFlags { get; set; }
+        public short U22 { get; set; }
+        public short U24 { get; set; }
+        public short U26 { get; set; }
+        [TypeConverter(typeof(Vector3TypeConverter))]
+        public Vector3 Translation { get; set; }
+        [TypeConverter(typeof(Vector3TypeConverter))]
+        public Vector3 Rotation { get; set; }
+        [TypeConverter(typeof(Vector3TypeConverter))]
+        public Vector3 Scale { get; set; }
+        public int U4C { get; set; }
+        public int U50 { get; set; }
+        public int U54 { get; set; }
 
         public void Read(BinaryReader reader)
         {
@@ -85,7 +90,7 @@ namespace AriaLibrary.Objects
     }
     public class BRNT
     {
-        public List<Bone> Bones;
+        public List<Bone> Bones { get; set; }
         public int NumRiggedBones => Bones.Where(x => x.SkinID != -1).Count();
 
         public void Read(BinaryReader reader)

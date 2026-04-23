@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Runtime.ConstrainedExecution;
 using System.Security.Cryptography;
@@ -13,10 +14,10 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
 {
     public class PixelShaderUniform
     {
-        public string Name;
-        public int ResourceIndex;
-        public int U08;
-        public int Size;
+        public string Name { get; set; }
+        public int ResourceIndex { get; set; }
+        public int U08 { get; set; }
+        public int Size { get; set; }
         public void Read(BinaryReader reader, int heapStringPosition)
         {
             Name = StringReader.ReadNullTerminatedStringAtOffset(reader, reader.ReadInt32() + heapStringPosition);
@@ -49,14 +50,14 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
 
     public class PXSHData
     {
-        public int U00;
-        public int U04;
-        public int U08;
-        public int U0C;
-        public int U10;
-        public int U14;
-        public List<PixelShaderUniform> Uniforms;
-        public int U1C;
+        public int U00 { get; set; }
+        public int U04 { get; set; }
+        public int U08 { get; set; }
+        public int U0C { get; set; }
+        public int U10 { get; set; }
+        public int U14 { get; set; }
+        public List<PixelShaderUniform> Uniforms { get; set; }
+        public int U1C { get; set; }
 
         public void Read(BinaryReader reader, int dataPosition, int heapStringPosition, string platform)
         {
@@ -104,7 +105,8 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
     public class PXSH : GPRSection
     {
         public override string Type => "PXSH";
-        public PXSHData Data;
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public PXSHData Data { get; set; }
         public override void Read(BinaryReader reader, int heapStringOffset, int heapDataOffset, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset, string platform)
         {
             int nameOffset = reader.ReadInt32();

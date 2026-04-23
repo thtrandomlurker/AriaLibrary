@@ -10,9 +10,9 @@ namespace AriaLibrary.Objects.Nodes
     public class CLUS : NodeBlock
     {
         public override string Type => "CLUS";
-        public int ClusterId;
-        public int ClusterName;
-        public int Neg1;
+        public int ClusterId { get; set; }
+        public int ClusterName { get; set; }
+        public int Neg1 { get; set; }
 
         public override void Read(BinaryReader reader)
         {

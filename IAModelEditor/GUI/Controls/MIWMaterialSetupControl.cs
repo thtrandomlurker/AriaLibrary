@@ -25,6 +25,7 @@ namespace IAModelEditor.GUI.Controls
             {
                 MIWMaterialListbox.Items.Add(matInfo.MaterialName);
             }
+            StringListViewer.SelectedObject = Parent.WorkingObject.MESH.StringBuffer;
         }
 
         private void MIWMaterialValidate_Click(object sender, EventArgs e)
@@ -41,6 +42,8 @@ namespace IAModelEditor.GUI.Controls
                 {
                     shaderSelector.ShowDialog();
                 }
+                MaterialProperties.Refresh();
+                StringListViewer.Refresh();
             }
         }
 
@@ -52,7 +55,15 @@ namespace IAModelEditor.GUI.Controls
                 {
                     shaderSelector.ShowDialog();
                 }
+                MaterialProperties.Refresh();
+                StringListViewer.Refresh();
             }
+        }
+
+        private void MIWMaterialListbox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            MaterialProperties.SelectedObject = Parent.WorkingMaterialData[MIWMaterialListbox.SelectedIndex];
+            MaterialProperties.Refresh();
         }
     }
 }

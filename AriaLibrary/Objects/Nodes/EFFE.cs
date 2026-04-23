@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,11 +11,12 @@ namespace AriaLibrary.Objects.Nodes
     public class EFFE : NodeBlock
     {
         public override string Type => "EFFE";
-        public int EffectID;
-        public int EffectName;
-        public int EffectFileName;
-        public int EffectType;
-        public TPAS TPAS;
+        public int EffectID { get; set; }
+        public int EffectName { get; set; }
+        public int EffectFileName { get; set; }
+        public int EffectType { get; set; }
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public TPAS TPAS { get; set; }
 
         public override void Read(BinaryReader reader)
         {

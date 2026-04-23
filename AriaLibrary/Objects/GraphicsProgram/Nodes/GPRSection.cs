@@ -15,10 +15,10 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
     public abstract class GPRSection: IGPRSection
     {
         public abstract string Type { get; }
-        public string Name;
-        public int ReservedNameHash;
-        public BufferName Buffer;
-        public byte[] BufferData;
+        public string Name { get; set; }
+        public int ReservedNameHash { get; set; }
+        public BufferName Buffer { get; set; }
+        public byte[] BufferData { get; set; }
         public abstract void Read(BinaryReader reader, int heapStringOffset, int heapDataOffset, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset, string platform);
         public abstract void Write(BinaryWriter heapWriter, BinaryWriter stringWriter, BinaryWriter dataWriter, BinaryWriter bufferWriter, ref Dictionary<string, int> stringPosMap, ref List<int> sectionDataPositions, ref int curDataPositionIdx);
 

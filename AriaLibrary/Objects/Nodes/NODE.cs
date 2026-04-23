@@ -6,22 +6,23 @@ using System.Threading.Tasks;
 using AriaLibrary.Helpers;
 using System.Numerics;
 using System.Runtime.Intrinsics.X86;
+using System.ComponentModel;
 
 namespace AriaLibrary.Objects.Nodes
 {
     public class NODE : NodeBlock
     {
         public override string Type => "NODE";
-        public int NodeId;
-        public int NodeParent;
-        public int NodeChild;
-        public int NodeName;
+        public int NodeId { get; set; }
+        public int NodeParent { get; set; }
+        public int NodeChild { get; set; }
+        public int NodeName { get; set; }
 
-        public Matrix4x4 NodeMatrix;
+        public Matrix4x4 NodeMatrix { get; set; }
 
-        public int One;
-
-        public INST? InstanceData;
+        public int One { get; set; }
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public INST? InstanceData { get; set; }
 
         public override void Read(BinaryReader reader)
         {
@@ -31,22 +32,24 @@ namespace AriaLibrary.Objects.Nodes
             NodeParent = reader.ReadInt32();
             NodeChild = reader.ReadInt32();
             NodeName = reader.ReadInt32();
-            NodeMatrix[0, 0] = reader.ReadSingle();
-            NodeMatrix[0, 1] = reader.ReadSingle();
-            NodeMatrix[0, 2] = reader.ReadSingle();
-            NodeMatrix[0, 3] = reader.ReadSingle();
-            NodeMatrix[1, 0] = reader.ReadSingle();
-            NodeMatrix[1, 1] = reader.ReadSingle();
-            NodeMatrix[1, 2] = reader.ReadSingle();
-            NodeMatrix[1, 3] = reader.ReadSingle();
-            NodeMatrix[2, 0] = reader.ReadSingle();
-            NodeMatrix[2, 1] = reader.ReadSingle();
-            NodeMatrix[2, 2] = reader.ReadSingle();
-            NodeMatrix[2, 3] = reader.ReadSingle();
-            NodeMatrix[3, 0] = reader.ReadSingle();
-            NodeMatrix[3, 1] = reader.ReadSingle();
-            NodeMatrix[3, 2] = reader.ReadSingle();
-            NodeMatrix[3, 3] = reader.ReadSingle();
+            Matrix4x4 tMatrix = new Matrix4x4();
+            tMatrix[0, 0] = reader.ReadSingle();
+            tMatrix[0, 1] = reader.ReadSingle();
+            tMatrix[0, 2] = reader.ReadSingle();
+            tMatrix[0, 3] = reader.ReadSingle();
+            tMatrix[1, 0] = reader.ReadSingle();
+            tMatrix[1, 1] = reader.ReadSingle();
+            tMatrix[1, 2] = reader.ReadSingle();
+            tMatrix[1, 3] = reader.ReadSingle();
+            tMatrix[2, 0] = reader.ReadSingle();
+            tMatrix[2, 1] = reader.ReadSingle();
+            tMatrix[2, 2] = reader.ReadSingle();
+            tMatrix[2, 3] = reader.ReadSingle();
+            tMatrix[3, 0] = reader.ReadSingle();
+            tMatrix[3, 1] = reader.ReadSingle();
+            tMatrix[3, 2] = reader.ReadSingle();
+            tMatrix[3, 3] = reader.ReadSingle();
+            NodeMatrix = tMatrix;
             One = reader.ReadInt32();
             if (dataSize > 0x54)
             {

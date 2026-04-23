@@ -1,6 +1,7 @@
 ﻿using AriaLibrary.Helpers;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.ConstrainedExecution;
@@ -12,10 +13,10 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
 {
     public class VXBFData
     {
-        public int U00;
-        public int U04;
-        public int VertexCount;
-        public int VertexStride;
+        public int U00 { get; set; }
+        public int U04 { get; set; }
+        public int VertexCount { get; set; }
+        public int VertexStride { get; set; }
 
         public void Read(BinaryReader reader, int dataPosition)
         {
@@ -41,7 +42,8 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
     public class VXBF : GPRSection
     {
         public override string Type => "VXBF";
-        public VXBFData Data;
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public VXBFData Data { get; set; }
         public override void Read(BinaryReader reader, int heapStringOffset, int heapDataOffset, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset, string platform)
         {
             int nameOffset = reader.ReadInt32();

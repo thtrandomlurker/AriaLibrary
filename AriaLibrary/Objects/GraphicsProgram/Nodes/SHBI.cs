@@ -1,6 +1,7 @@
 ﻿using AriaLibrary.Helpers;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,9 +12,9 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
 {
     public class ShaderParameter
     {
-        public string ParameterName;
-        public int ParameterResourceIndex;
-        public int ParameterArraySize;
+        public string ParameterName { get; set; }
+        public int ParameterResourceIndex { get; set; }
+        public int ParameterArraySize { get; set; }
         public void Read(BinaryReader reader, int heapStringOffset)
         {
             ParameterName = StringReader.ReadNullTerminatedStringAtOffset(reader, heapStringOffset + reader.ReadInt32());
@@ -43,9 +44,9 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
     }
     public class SHBIData
     {
-        public int U00;
-        public int U04;
-        public List<ShaderParameter> Parameters;
+        public int U00 { get; set; }
+        public int U04 { get; set; }
+        public List<ShaderParameter> Parameters { get; set; }
 
         public void Read(BinaryReader reader, int heapDataOffset, int heapStringOffset)
         {
@@ -85,7 +86,8 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
     public class SHBI : GPRSection
     {
         public override string Type => "SHBI";
-        public SHBIData Data;
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public SHBIData Data { get; set; }
 
         public override void Read(BinaryReader reader, int heapStringOffset, int heapDataOffset, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset, string platform)
         {

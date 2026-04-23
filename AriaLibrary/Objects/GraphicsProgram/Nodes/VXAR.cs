@@ -23,10 +23,10 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
     }
     public class VertexAttribute
     {
-        public int Offset;
-        public int VertexBufferIndex;
-        public int Count;
-        public VertexAttributeDataType DataType;
+        public int Offset { get; set; }
+        public int VertexBufferIndex { get; set; }
+        public int Count { get; set; }
+        public VertexAttributeDataType DataType { get; set; }
 
         public void Read(BinaryReader reader)
         {
@@ -45,7 +45,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
     }
     public class VXARData
     {
-        public List<VertexAttribute> VertexAttributes;
+        public List<VertexAttribute> VertexAttributes { get; set; }
 
         public void Read(BinaryReader reader, int dataPosition)
         {

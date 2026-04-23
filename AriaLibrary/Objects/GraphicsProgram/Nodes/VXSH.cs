@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Runtime.ConstrainedExecution;
 using System.Runtime.Intrinsics.Arm;
@@ -13,10 +14,10 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
 {
     public class VertexShaderUniform
     {
-        public string Name;
-        public int ResourceIndex;
-        public int U08;
-        public int Size;
+        public string Name { get; set; }
+        public int ResourceIndex { get; set; }
+        public int U08 { get; set; }
+        public int Size { get; set; }
         public void Read(BinaryReader reader, int heapStringPosition)
         {
             Name = StringReader.ReadNullTerminatedStringAtOffset(reader, reader.ReadInt32() + heapStringPosition);
@@ -41,22 +42,27 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             dataWriter.Write(Size);
         }
 
-        public VertexShaderUniform(string name="")
+        public VertexShaderUniform(string name)
         {
             Name = name;
+        }
+
+        public VertexShaderUniform()
+        {
+            Name = "";
         }
     }
 
     public class VXSHData
     {
-        public int U00;
-        public int U04;
-        public int U08;
-        public int U0C;
-        public int U10;
-        public int U14;
-        public List<VertexShaderUniform> Uniforms;
-        public int U1C;
+        public int U00 { get; set; }
+        public int U04 { get; set; }
+        public int U08 { get; set; }
+        public int U0C { get; set; }
+        public int U10 { get; set; }
+        public int U14 { get; set; }
+        public List<VertexShaderUniform> Uniforms { get; }
+        public int U1C { get; set; }
 
         public void Read(BinaryReader reader, int dataPosition, int heapStringPosition, string platform)
         {
@@ -104,7 +110,8 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
     public class VXSH : GPRSection
     {
         public override string Type => "VXSH";
-        public VXSHData Data;
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public VXSHData Data { get; set; }
         public override void Read(BinaryReader reader, int heapStringOffset, int heapDataOffset, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset, string platform)
         {
             int nameOffset = reader.ReadInt32();

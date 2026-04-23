@@ -10,12 +10,12 @@ namespace AriaLibrary.Objects.Nodes
     public class TPAS : NodeBlock
     {
         public override string Type => "TPAS";
-        public int U00;
-        public int U04;
-        public int TPASId;
-        public int VertexShaderName;
-        public int PixelShaderName;
-        public int U14;
+        public int U00 { get; set; }
+        public int U04 { get; set; }
+        public int TPASId { get; set; }
+        public int VertexShaderName { get; set; }
+        public int PixelShaderName { get; set; }
+        public int U14 { get; set; }
 
         public override void Read(BinaryReader reader)
         {

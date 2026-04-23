@@ -10,14 +10,14 @@ namespace AriaLibrary.Objects.Nodes
     public class MATE : NodeBlock
     {
         public override string Type => "MATE";
-        public int MaterialID;
-        public int Name1;
-        public int Name2;
-        public int EffectID;
-        public int VertexConstantID;
-        public int Neg1;
-        public int PixelConstantID;
-        public int SamplerID;
+        public int MaterialID { get; set; }
+        public int Name1 { get; set; }
+        public int Name2 { get; set; }
+        public int EffectID { get; set; }
+        public int VertexConstantID { get; set; }
+        public int Neg1 { get; set; }
+        public int PixelConstantID { get; set; }
+        public int SamplerID { get; set; }
 
         public override void Read(BinaryReader reader)
         {

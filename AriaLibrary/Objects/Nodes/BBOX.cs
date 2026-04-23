@@ -11,12 +11,12 @@ namespace AriaLibrary.Objects.Nodes
     public class BBOX : NodeBlock
     {
         public override string Type => "BBOX";
-        public int BoundingBoxName;
-        public int U04;
-        public int U08;
-        public int U0C;
+        public int BoundingBoxName { get; set; }
+        public int U04 { get; set; }
+        public int U08 { get; set; }
+        public int U0C { get; set; }
 
-        public Matrix4x4 BoundingMatrix;
+        public Matrix4x4 BoundingMatrix { get; set; }
 
         public override void Read(BinaryReader reader)
         {
@@ -26,22 +26,24 @@ namespace AriaLibrary.Objects.Nodes
             U04 = reader.ReadInt32();
             U08 = reader.ReadInt32();
             U0C = reader.ReadInt32();
-            BoundingMatrix[0, 0] = reader.ReadSingle();
-            BoundingMatrix[0, 1] = reader.ReadSingle();
-            BoundingMatrix[0, 2] = reader.ReadSingle();
-            BoundingMatrix[0, 3] = reader.ReadSingle();
-            BoundingMatrix[1, 0] = reader.ReadSingle();
-            BoundingMatrix[1, 1] = reader.ReadSingle();
-            BoundingMatrix[1, 2] = reader.ReadSingle();
-            BoundingMatrix[1, 3] = reader.ReadSingle();
-            BoundingMatrix[2, 0] = reader.ReadSingle();
-            BoundingMatrix[2, 1] = reader.ReadSingle();
-            BoundingMatrix[2, 2] = reader.ReadSingle();
-            BoundingMatrix[2, 3] = reader.ReadSingle();
-            BoundingMatrix[3, 0] = reader.ReadSingle();
-            BoundingMatrix[3, 1] = reader.ReadSingle();
-            BoundingMatrix[3, 2] = reader.ReadSingle();
-            BoundingMatrix[3, 3] = reader.ReadSingle();
+            Matrix4x4 tMatrix = new Matrix4x4();
+            tMatrix[0, 0] = reader.ReadSingle();
+            tMatrix[0, 1] = reader.ReadSingle();
+            tMatrix[0, 2] = reader.ReadSingle();
+            tMatrix[0, 3] = reader.ReadSingle();
+            tMatrix[1, 0] = reader.ReadSingle();
+            tMatrix[1, 1] = reader.ReadSingle();
+            tMatrix[1, 2] = reader.ReadSingle();
+            tMatrix[1, 3] = reader.ReadSingle();
+            tMatrix[2, 0] = reader.ReadSingle();
+            tMatrix[2, 1] = reader.ReadSingle();
+            tMatrix[2, 2] = reader.ReadSingle();
+            tMatrix[2, 3] = reader.ReadSingle();
+            tMatrix[3, 0] = reader.ReadSingle();
+            tMatrix[3, 1] = reader.ReadSingle();
+            tMatrix[3, 2] = reader.ReadSingle();
+            tMatrix[3, 3] = reader.ReadSingle();
+            BoundingMatrix = tMatrix;
         }
 
         public override void Write(BinaryWriter writer)

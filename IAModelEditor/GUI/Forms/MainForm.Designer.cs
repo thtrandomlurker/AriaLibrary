@@ -55,13 +55,15 @@
             calculateStringHashToolStripMenuItem = new ToolStripMenuItem();
             calculateBindPoseStringHashToolStripMenuItem = new ToolStripMenuItem();
             dumpBindPoseInfoToolStripMenuItem = new ToolStripMenuItem();
+            sEFromBRNTToolStripMenuItem = new ToolStripMenuItem();
+            inspectObjectGroupToolStripMenuItem = new ToolStripMenuItem();
             MenuStripOpenFileDialog = new OpenFileDialog();
             MenuStripSaveAsFileDialog = new SaveFileDialog();
             CurrentlyLoadedLabel = new Label();
             MenuStripReplaceFileDialog = new OpenFileDialog();
             MenuStripExportFBXFileDialog = new SaveFileDialog();
             LoadedPlatformLabel = new Label();
-            sEFromBRNTToolStripMenuItem = new ToolStripMenuItem();
+            propertyGrid1 = new PropertyGrid();
             MenuStrip.SuspendLayout();
             SuspendLayout();
             // 
@@ -197,7 +199,7 @@
             // 
             // toolsToolStripMenuItem
             // 
-            toolsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { MenuStripToolsConvertGXT, MenuStripToolsConvertDDS, clearCSTSsForScienceToolStripMenuItem, unswizzleDDSInPlacToolStripMenuItem, viewShaderPackageInfoToolStripMenuItem, clearNODEInfoToolStripMenuItem, calculateStringHashToolStripMenuItem, calculateBindPoseStringHashToolStripMenuItem, dumpBindPoseInfoToolStripMenuItem, sEFromBRNTToolStripMenuItem });
+            toolsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { MenuStripToolsConvertGXT, MenuStripToolsConvertDDS, clearCSTSsForScienceToolStripMenuItem, unswizzleDDSInPlacToolStripMenuItem, viewShaderPackageInfoToolStripMenuItem, clearNODEInfoToolStripMenuItem, calculateStringHashToolStripMenuItem, calculateBindPoseStringHashToolStripMenuItem, dumpBindPoseInfoToolStripMenuItem, sEFromBRNTToolStripMenuItem, inspectObjectGroupToolStripMenuItem });
             toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             toolsToolStripMenuItem.Size = new Size(47, 20);
             toolsToolStripMenuItem.Text = "Tools";
@@ -265,6 +267,20 @@
             dumpBindPoseInfoToolStripMenuItem.Text = "Dump Bind Pose Info";
             dumpBindPoseInfoToolStripMenuItem.Click += dumpBindPoseInfoToolStripMenuItem_Click;
             // 
+            // sEFromBRNTToolStripMenuItem
+            // 
+            sEFromBRNTToolStripMenuItem.Name = "sEFromBRNTToolStripMenuItem";
+            sEFromBRNTToolStripMenuItem.Size = new Size(242, 22);
+            sEFromBRNTToolStripMenuItem.Text = "60SE from BRNT";
+            sEFromBRNTToolStripMenuItem.Click += sEFromBRNTToolStripMenuItem_Click;
+            // 
+            // inspectObjectGroupToolStripMenuItem
+            // 
+            inspectObjectGroupToolStripMenuItem.Name = "inspectObjectGroupToolStripMenuItem";
+            inspectObjectGroupToolStripMenuItem.Size = new Size(242, 22);
+            inspectObjectGroupToolStripMenuItem.Text = "Inspect ObjectGroup";
+            inspectObjectGroupToolStripMenuItem.Click += inspectObjectGroupToolStripMenuItem_Click;
+            // 
             // MenuStripOpenFileDialog
             // 
             MenuStripOpenFileDialog.Filter = "IA/VT Model File|*.mdl";
@@ -300,18 +316,20 @@
             LoadedPlatformLabel.TabIndex = 2;
             LoadedPlatformLabel.Text = "Platform:";
             // 
-            // sEFromBRNTToolStripMenuItem
+            // propertyGrid1
             // 
-            sEFromBRNTToolStripMenuItem.Name = "sEFromBRNTToolStripMenuItem";
-            sEFromBRNTToolStripMenuItem.Size = new Size(242, 22);
-            sEFromBRNTToolStripMenuItem.Text = "60SE from BRNT";
-            sEFromBRNTToolStripMenuItem.Click += sEFromBRNTToolStripMenuItem_Click;
+            propertyGrid1.HelpVisible = false;
+            propertyGrid1.Location = new Point(12, 42);
+            propertyGrid1.Name = "propertyGrid1";
+            propertyGrid1.Size = new Size(378, 265);
+            propertyGrid1.TabIndex = 3;
             // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(402, 52);
+            ClientSize = new Size(402, 319);
+            Controls.Add(propertyGrid1);
             Controls.Add(LoadedPlatformLabel);
             Controls.Add(CurrentlyLoadedLabel);
             Controls.Add(MenuStrip);
@@ -360,5 +378,7 @@
         private ToolStripMenuItem calculateBindPoseStringHashToolStripMenuItem;
         private ToolStripMenuItem dumpBindPoseInfoToolStripMenuItem;
         private ToolStripMenuItem sEFromBRNTToolStripMenuItem;
+        private ToolStripMenuItem inspectObjectGroupToolStripMenuItem;
+        private PropertyGrid propertyGrid1;
     }
 }

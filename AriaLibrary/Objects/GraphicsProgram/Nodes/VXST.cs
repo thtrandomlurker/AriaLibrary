@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,14 +11,18 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
 {
     public class VXSTData
     {
-        public int U00;
-        public VXBOData VertexBindingObjectReference;
-        public int U08;
-        public int FaceIndexCount;
-        public List<VXBFData> VertexBufferReferences;
-        public int VXBFCount;
-        public VXARData VertexArrayReference;
-        public IXBFData IndexBufferReference;
+        public int U00 { get; set; }
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public VXBOData VertexBindingObjectReference { get; set; }
+        public int U08 { get; set; }
+        public int FaceIndexCount { get; set; }
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public List<VXBFData> VertexBufferReferences { get; set; }
+        public int VXBFCount { get; set; }
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public VXARData VertexArrayReference { get; set; }
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public IXBFData IndexBufferReference { get; set; }
 
         public void Read(BinaryReader reader, int dataPosition, int heapDataPosition)
         {

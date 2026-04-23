@@ -10,8 +10,8 @@ namespace AriaLibrary.Objects.Nodes
     public class DSNA : NodeBlock
     {
         public override string Type => "DSNA";
-        public int Object;
-        public int Mode;
+        public int Object { get; set; }
+        public int Mode { get; set; }
 
         public override void Read(BinaryReader reader)
         {

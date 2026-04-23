@@ -10,8 +10,8 @@ namespace AriaLibrary.Objects.Nodes
     public class BOIF : NodeBlock
     {
         public override string Type => "BOIF";
-        public int BoneName;
-        public int BoneId;
+        public int BoneName { get; set; }
+        public int BoneId { get; set; }
 
         public override void Read(BinaryReader reader)
         {

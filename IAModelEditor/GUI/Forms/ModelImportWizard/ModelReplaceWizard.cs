@@ -141,11 +141,10 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         }
                     }
 
-                    MeshData mesh = new MeshData();
+                    MeshData mesh = new MeshData(Scene.Meshes[meshIndex]);
                     mesh.MeshName = $"importMesh{cmesh}-geom-P{cmesh}";
                     mesh.BufferName = $"importMesh{cmesh}-geom-S{cmesh}";
                     mesh.SetName = $"SET_{mesh.MeshName}";
-                    mesh.SourceMesh = Scene.Meshes[meshIndex];
 
                     // we can create prim data here as it should directly correlate to the materials created later
                     // also cluster data
@@ -221,7 +220,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                     mesh.VertexBindingObject.Name = mesh.MeshName;
                     mesh.VertexAttributes = new VXAR();
                     mesh.VertexAttributes.Name = mesh.MeshName;
-                    mesh.VertexAttributes.Data = WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexArray.Data;
+                    mesh.VertexAttributes.Data = WorkingMeshData[mesh.SourceMesh.MaterialIndex].VertexAttributes.Data;
                     mesh.IndexBuffer = new IXBF();
                     mesh.IndexBuffer.Name = mesh.MeshName;
                     mesh.IndexBuffer.BufferData = new byte[mesh.SourceMesh.FaceCount * 3 * 2];
@@ -236,7 +235,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                     mesh.VertexBuffer.Name = mesh.BufferName;
                     mesh.VertexBuffer.Data.U00 = 0;
                     mesh.VertexBuffer.Data.U04 = 0;
-                    mesh.VertexBuffer.Data.VertexStride = WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexStride;
+                    mesh.VertexBuffer.Data.VertexStride = mesh.VertexStride;
                     mesh.VertexBuffer.Data.VertexCount = mesh.SourceMesh.VertexCount;
                     mesh.VertexBuffer.BufferData = new byte[mesh.VertexBuffer.Data.VertexCount * mesh.VertexBuffer.Data.VertexStride];
                     mesh.VertexBuffer.Buffer = BufferName.Mesh;
@@ -284,9 +283,9 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                     {
                         byte[] vertex = new byte[mesh.VertexBuffer.Data.VertexStride];
                         int cPos = 0;
-                        for (int j = 0; j < WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexSemantics.Count; j++)
+                        for (int j = 0; j < WorkingMeshData[mesh.SourceMesh.MaterialIndex].VertexSemantics.Count; j++)
                         {
-                            switch (WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexSemantics[j])
+                            switch (WorkingMeshData[mesh.SourceMesh.MaterialIndex].VertexSemantics[j])
                             {
                                 case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_POSITION:
                                     Buffer.BlockCopy(BitConverter.GetBytes(mesh.SourceMesh.Vertices[i].X), 0, vertex, cPos, 4);
@@ -308,10 +307,10 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                                     cPos += 4;
                                     break;
                                 case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TEXCOORD:
-                                    if (mesh.SourceMesh.TextureCoordinateChannelCount >= WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexSemanticIndices[j])
+                                    if (mesh.SourceMesh.TextureCoordinateChannelCount >= WorkingMeshData[mesh.SourceMesh.MaterialIndex].VertexSemanticIndices[j])
                                     {
-                                        Buffer.BlockCopy(BitConverter.GetBytes((Half)mesh.SourceMesh.TextureCoordinateChannels[WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexSemanticIndices[j]][i].X), 0, vertex, cPos, 2);
-                                        Buffer.BlockCopy(BitConverter.GetBytes((Half)mesh.SourceMesh.TextureCoordinateChannels[WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexSemanticIndices[j]][i].Y), 0, vertex, cPos + 2, 2);
+                                        Buffer.BlockCopy(BitConverter.GetBytes((Half)mesh.SourceMesh.TextureCoordinateChannels[WorkingMeshData[mesh.SourceMesh.MaterialIndex].VertexSemanticIndices[j]][i].X), 0, vertex, cPos, 2);
+                                        Buffer.BlockCopy(BitConverter.GetBytes((Half)mesh.SourceMesh.TextureCoordinateChannels[WorkingMeshData[mesh.SourceMesh.MaterialIndex].VertexSemanticIndices[j]][i].Y), 0, vertex, cPos + 2, 2);
                                         cPos += 4;
                                     }
                                     else

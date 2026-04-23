@@ -11,7 +11,7 @@ namespace AriaLibrary.Objects.Nodes
     public class IMTX : NodeBlock
     {
         public override string Type => "IMTX";
-        public float[] Matrix;
+        public float[] Matrix { get; set; }
 
         public override void Read(BinaryReader reader)
         {

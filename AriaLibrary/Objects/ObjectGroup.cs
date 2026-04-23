@@ -19,6 +19,8 @@ using Assimp.Configs;
 using System.ComponentModel.DataAnnotations;
 using AriaLibrary.Textures;
 using System.Runtime.ConstrainedExecution;
+using System.ComponentModel;
+using System.Numerics;
 
 namespace AriaLibrary.Objects
 {
@@ -26,10 +28,16 @@ namespace AriaLibrary.Objects
     public class ObjectGroup
     {
         public KPack SourcePackage;
-        public GraphicsProgram.GraphicsProgram GPR;
-        public MESH MESH;
-        public NODT NODT;
-        public BRNT? BRNT;
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public GraphicsProgram.GraphicsProgram GPR { get; set; }
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public MESH MESH { get; set; }
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public NODT NODT { get; set; }
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public BRNT? BRNT { get; set; }
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public BindPose? BindPose { get; set; }
         public string SourcePath = "";
 
         public void ImportModelFromFBX(string filePath/*, string baseShaderPackagePath*/)
@@ -294,10 +302,10 @@ namespace AriaLibrary.Objects
                 {
                     Node boneToNode = new Node(bone.BoneName);
 
-                    Matrix4x4 trsMatrix = Matrix4x4.FromTranslation(new Vector3D(-bone.Translation.X, -bone.Translation.Y, -bone.Translation.Z));
-                    Matrix4x4 rotMatrix = Matrix4x4.FromEulerAnglesXYZ(bone.Rotation.X * (float)Math.PI / 180, bone.Rotation.Y * (float)Math.PI / 180, bone.Rotation.Z * (float)Math.PI / 180);
-                    Matrix4x4 sclMatrix = Matrix4x4.FromScaling(new Vector3D(bone.Scale.X, bone.Scale.Y, bone.Scale.Z));
-                    Matrix4x4 outMatrix = Matrix4x4.Identity;
+                    Assimp.Matrix4x4 trsMatrix = Assimp.Matrix4x4.FromTranslation(new Vector3D(-bone.Translation.X, -bone.Translation.Y, -bone.Translation.Z));
+                    Assimp.Matrix4x4 rotMatrix = Assimp.Matrix4x4.FromEulerAnglesXYZ(bone.Rotation.X * (float)Math.PI / 180, bone.Rotation.Y * (float)Math.PI / 180, bone.Rotation.Z * (float)Math.PI / 180);
+                    Assimp.Matrix4x4 sclMatrix = Assimp.Matrix4x4.FromScaling(new Vector3D(bone.Scale.X, bone.Scale.Y, bone.Scale.Z));
+                    Assimp.Matrix4x4 outMatrix = Assimp.Matrix4x4.Identity;
                     outMatrix *= trsMatrix;
                     outMatrix *= rotMatrix;
                     outMatrix *= sclMatrix;
@@ -312,6 +320,11 @@ namespace AriaLibrary.Objects
                     {
                         scene.RootNode.Children.Add(boneToNode);
                     }
+                    // check
+                    Assimp.Matrix4x4 mat = boneToNode.Transform;
+                    mat.Decompose(out Vector3D scale, out Assimp.Quaternion rotation, out Vector3D translation);
+                    Vector3 eulerRot = MathHelper.QuaternionToEulerAngles(rotation.X, rotation.Y, rotation.Z, rotation.W);
+                    Console.WriteLine(bone.Translation.Y);
                 }
             }
 
@@ -331,7 +344,7 @@ namespace AriaLibrary.Objects
                 {
                     foreach (var bone in BRNT.Bones)
                     {
-                        Matrix4x4 offsetMatrix = AssimpHelpers.CalculateNodeMatrixWS(scene.RootNode.FindNode(bone.BoneName));
+                        Assimp.Matrix4x4 offsetMatrix = AssimpHelpers.CalculateNodeMatrixWS(scene.RootNode.FindNode(bone.BoneName));
                         offsetMatrix.Inverse();
 
                         Assimp.Bone aiBone = new Assimp.Bone();
@@ -797,10 +810,10 @@ namespace AriaLibrary.Objects
                 {
                     Node boneToNode = new Node(bone.BoneName);
 
-                    Matrix4x4 trsMatrix = Matrix4x4.FromTranslation(new Vector3D(-bone.Translation.X, -bone.Translation.Y, -bone.Translation.Z));
-                    Matrix4x4 rotMatrix = Matrix4x4.FromEulerAnglesXYZ(bone.Rotation.X * (float)Math.PI / 180, bone.Rotation.Y * (float)Math.PI / 180, bone.Rotation.Z * (float)Math.PI / 180);
-                    Matrix4x4 sclMatrix = Matrix4x4.FromScaling(new Vector3D(bone.Scale.X, bone.Scale.Y, bone.Scale.Z));
-                    Matrix4x4 outMatrix = Matrix4x4.Identity;
+                    Assimp.Matrix4x4 trsMatrix = Assimp.Matrix4x4.FromTranslation(new Vector3D(-bone.Translation.X, -bone.Translation.Y, -bone.Translation.Z));
+                    Assimp.Matrix4x4 rotMatrix = Assimp.Matrix4x4.FromEulerAnglesXYZ(bone.Rotation.X * (float)Math.PI / 180, bone.Rotation.Y * (float)Math.PI / 180, bone.Rotation.Z * (float)Math.PI / 180);
+                    Assimp.Matrix4x4 sclMatrix = Assimp.Matrix4x4.FromScaling(new Vector3D(bone.Scale.X, bone.Scale.Y, bone.Scale.Z));
+                    Assimp.Matrix4x4 outMatrix = Assimp.Matrix4x4.Identity;
                     outMatrix *= trsMatrix;
                     outMatrix *= rotMatrix;
                     outMatrix *= sclMatrix;
@@ -834,7 +847,7 @@ namespace AriaLibrary.Objects
                 {
                     foreach (var bone in BRNT.Bones)
                     {
-                        Matrix4x4 offsetMatrix = AssimpHelpers.CalculateNodeMatrixWS(scene.RootNode.FindNode(bone.BoneName));
+                        Assimp.Matrix4x4 offsetMatrix = AssimpHelpers.CalculateNodeMatrixWS(scene.RootNode.FindNode(bone.BoneName));
                         offsetMatrix.Inverse();
 
                         Assimp.Bone aiBone = new Assimp.Bone();
@@ -1012,6 +1025,15 @@ namespace AriaLibrary.Objects
                 BRNT.Load(package.Files[3].Stream);
                 package.Files[3].Close();
             }
+
+            if (package.Files.Count() > 4)
+            {
+                // safe to assume it has a 60SE
+                package.Files[4].Open();
+                BindPose = new BindPose();
+                BindPose.Load(package.Files[4].Stream);
+                package.Files[4].Close();
+            }
             SourcePackage = package;
         }
         public void Load(string filePath)
@@ -1077,6 +1099,11 @@ namespace AriaLibrary.Objects
                     KPackFile file = new KPackFile(0, 0, null);
                     SourcePackage.Files.Add(file);
                 }
+                if (BindPose != null)
+                {
+                    KPackFile file = new KPackFile(0, 0, null);
+                    SourcePackage.Files.Add(file);
+                }
             }
             foreach (var file in SourcePackage.Files)
             {
@@ -1086,6 +1113,7 @@ namespace AriaLibrary.Objects
             Stream gprStream = new MemoryStream();
             Stream nodtStream = new MemoryStream();
             Stream brntStream = new MemoryStream();
+            Stream bpStream = new MemoryStream();
             MESH.Save(meshStream, true);
             GPR.Save(gprStream, true);
             NODT.Save(nodtStream, true);
@@ -1112,6 +1140,15 @@ namespace AriaLibrary.Objects
                 SourcePackage.Files[3].Stream = brntStream;
                 fileBase++;
             }
+            if (BindPose != null)
+            {
+                BindPose.Save(bpStream, true);
+                SourcePackage.Files[4].Size = (int)bpStream.Length;
+                SourcePackage.Files[4].Offset = PositionHelper.PadValue(0x40 + SourcePackage.Files[3].Offset + SourcePackage.Files[3].Size, 0x40);
+                SourcePackage.Files[4].BaseStream = null;
+                SourcePackage.Files[4].Stream = bpStream;
+                fileBase++;
+            }
             for (int i = fileBase; i < SourcePackage.Files.Count; i++)
             {
                 SourcePackage.Files[i].Offset = PositionHelper.PadValue(0x40 + SourcePackage.Files[i - 1].Offset + SourcePackage.Files[i - 1].Size, 0x40);
@@ -1121,6 +1158,7 @@ namespace AriaLibrary.Objects
             gprStream.Close();
             nodtStream.Close();
             brntStream.Close();
+            bpStream.Close();
         }
 
         public void Save(Stream gprStream, Stream meshStream, Stream nodtStream)

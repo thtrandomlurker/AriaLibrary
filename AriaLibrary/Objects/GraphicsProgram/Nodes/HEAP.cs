@@ -11,9 +11,9 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
 {
     public class HEAP
     {
-        public string Name;
-        public int ReservedNameHash;
-        public List<GPRSection> Sections;
+        public string Name { get; set; }
+        public int ReservedNameHash { get; set; }
+        public List<GPRSection> Sections { get; set; }
 
         public void Read(BinaryReader reader, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset, string platform)
         {

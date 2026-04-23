@@ -10,11 +10,11 @@ namespace AriaLibrary.Objects.Nodes
     public class VARI : NodeBlock
     {
         public override string Type => "VARI";
-        public int VARIId;
-        public int U04;
-        public int U08;
-        public int U0C;
-        public List<PRIM> PRIMs;
+        public int VARIId { get; set; }
+        public int U04 { get; set; }
+        public int U08 { get; set; }
+        public int U0C { get; set; }
+        public List<PRIM> PRIMs { get; set; }
 
         public override void Read(BinaryReader reader)
         {

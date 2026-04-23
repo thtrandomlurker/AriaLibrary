@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,14 +12,14 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
 {
     public class SMSTData
     {
-        public int U00;
-        public int U04;
-        public int U08;
-        public int U0C;
-        public int U10;
-        public int U14;
-        public int U18;
-        public int U1C;
+        public int U00 { get; set; }
+        public int U04 { get; set; }
+        public int U08 { get; set; }
+        public int U0C { get; set; }
+        public int U10 { get; set; }
+        public int U14 { get; set; }
+        public int U18 { get; set; }
+        public int U1C { get; set; }
         public void Read(BinaryReader reader, int dataOffset)
         {
             long cur = reader.BaseStream.Position;
@@ -51,7 +52,8 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
     public class SMST : GPRSection
     {
         public override string Type => "SMST";
-        public SMSTData Data;
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public SMSTData Data { get; set; }
         public override void Read(BinaryReader reader, int heapStringOffset, int heapDataOffset, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset, string platform)
         {
             int nameOffset = reader.ReadInt32();

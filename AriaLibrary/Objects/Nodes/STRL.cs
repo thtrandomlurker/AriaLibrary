@@ -13,7 +13,7 @@ namespace AriaLibrary.Objects.Nodes
     public class STRL : NodeBlock
     {
         public override string Type => "STRL";
-        public List<string> Strings;
+        public List<string> Strings { get; }
         public int GetSize()
         {
             int s = 0;

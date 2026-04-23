@@ -10,13 +10,13 @@ namespace AriaLibrary.Objects.Nodes
     public class PRIM : NodeBlock
     {
         public override string Type => "PRIM";
-        public int PrimitiveID;
-        public int MeshName;
-        public int SetPolygonName;
-        public int ObjectName;
-        public int MeshNameDupe;
-        public int MaterialID;
-        public int U18;
+        public int PrimitiveID { get; set; }
+        public int MeshName { get; set; }
+        public int SetPolygonName { get; set; }
+        public int ObjectName { get; set; }
+        public int MeshNameDupe { get; set; }
+        public int MaterialID { get; set; }
+        public int U18 { get; set; }
 
         public override void Read(BinaryReader reader)
         {

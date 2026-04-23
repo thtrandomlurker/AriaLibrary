@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,45 +24,62 @@ namespace IAModelEditor.ImportHelpers
     }
     public class MaterialData
     {
-        public Material SourceMaterial;
+        public Material? SourceMaterial;
         // MESH material related sections
-        public EFFE? MaterialEffect;  // read shader from GPR or external
-        public SAMP? MaterialSampler;  // read smst from GPR
-        public CSTS? VertexConstants;  // read shco from gpr
-        public CSTS? FragmentConstants;  // read shco from gpr
-        public TRSP? MaterialTransparencySetting;
-        public MATE? Material;
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public EFFE MaterialEffect { get; set; }  // read shader from GPR or external
+
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public SAMP MaterialSampler { get; set; }  // read smst from GPR
+
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public CSTS VertexConstants { get; set; }  // read shco from gpr
+
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public CSTS FragmentConstants { get; set; }  // read shco from gpr
+
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public TRSP MaterialTransparencySetting { get; set; }
+
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public MATE Material { get; set; }
 
         // GPR material related sections
-        public List<SHCO> ShaderConstants;
-        public List<SMST> SamplerStates;
+        public List<SHCO> ShaderConstants { get; set; }
+        public List<SMST> SamplerStates { get; set; }
 
-        public SHMI? ShaderMetadata;  // usually nulled
-        public VXSH? VertexShader;
-        public SHBI? VertexShaderBinding; // contains per-material parameters, bound to the vertex shader from constants
 
-        public PXSH? PixelShader;
-        public SHBI? PixelShaderConstantBinding; // contains per-material parameters, bound from constants
-        public SHBI? PixelShaderSamplerBinding; // contains per-material parameters, bound from constants
+        public SHMI ShaderMetadata { get; set; }  // usually nulled
 
-        public VXSB? VXSB;
-        public PXSB? PXSB;
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public VXSH VertexShader { get; set; }
 
-        public VXAR? VertexArray;
-        public List<SceGxmParameterSemantic>? VertexSemantics;
-        public List<int>? VertexSemanticIndices;
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public SHBI VertexShaderBinding { get; set; } // contains per-material parameters, bound to the vertex shader from constants
 
-        public int VertexStride;
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public PXSH PixelShader { get; set; }
 
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public SHBI PixelShaderConstantBinding { get; set; } // contains per-material parameters, bound from constants
+
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public SHBI PixelShaderSamplerBinding { get; set; } // contains per-material parameters, bound from constants
+
+
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public VXSB? VXSB { get; set; }
+
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public PXSB? PXSB { get; set; }
 
         public byte[]? VertexProgram;  // Vertex shader program
         public byte[]? FragmentProgram;  // Fragment shader program
-
         // internal
-        public string? ShaderName;  // Stores the name of the shader to be used
+        public string? ShaderName { get; set; }  // Stores the name of the shader to be used
         public int ShaderPermutation;  // Stores the permutation index. Useless?
 
-        public string? MaterialName;
+        public string? MaterialName { get; set; }
         public bool Initialized = false;
 
         public MaterialValidity IsValid(STRL stringList)
@@ -216,9 +234,12 @@ namespace IAModelEditor.ImportHelpers
 
         public MaterialData()
         {
+            MaterialEffect = new EFFE();
             MaterialSampler = new SAMP();
             VertexConstants = new CSTS();
             FragmentConstants = new CSTS();
+            MaterialTransparencySetting = new TRSP();
+            Material = new MATE();
             ShaderConstants = new List<SHCO>();
             SamplerStates = new List<SMST>();
         }

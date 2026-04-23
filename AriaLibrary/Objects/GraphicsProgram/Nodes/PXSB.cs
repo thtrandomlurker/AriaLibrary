@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,10 +12,13 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
 {
     public class PXSBData
     {
-        public int U00;
-        public PXSHData PixelShaderData;
-        public SHBIData? PixelShaderConstBind;
-        public SHBIData? PixelShaderSamplerBind;
+        public int U00 { get; set; }
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public PXSHData PixelShaderData { get; set; }
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public SHBIData? PixelShaderConstBind { get; set; }
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public SHBIData? PixelShaderSamplerBind { get; set; }
         public void Read(BinaryReader reader, int dataOffset, int heapDataOffset, int heapStringOffset, string platform)
         {
             long cur = reader.BaseStream.Position;
@@ -71,7 +75,8 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
     public class PXSB : GPRSection
     {
         public override string Type => "PXSB";
-        public PXSBData Data;
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public PXSBData Data { get; set; }
         public override void Read(BinaryReader reader, int heapStringOffset, int heapDataOffset, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset, string platform)
         {
             int nameOffset = reader.ReadInt32();

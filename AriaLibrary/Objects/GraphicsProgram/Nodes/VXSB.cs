@@ -1,10 +1,11 @@
-﻿using System;
+﻿using AriaLibrary.Helpers;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using AriaLibrary.Helpers;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using StringReader = AriaLibrary.IO.StringReader;
 
@@ -13,9 +14,12 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
     public class VXSBData
     {
         public int U00;
-        public VXSHData VertexShaderData;
-        public SHBIData? ShaderBind0;
-        public SHBIData? ShaderBind1;
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public VXSHData VertexShaderData { get; set; }
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public SHBIData? ShaderBind0 { get; set; }
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public SHBIData? ShaderBind1 { get; set; }
         public void Read(BinaryReader reader, int dataOffset, int heapDataOffset, int heapStringOffset, string platform)
         {
             long cur = reader.BaseStream.Position;
@@ -72,7 +76,8 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
     public class VXSB : GPRSection
     {
         public override string Type => "VXSB";
-        public VXSBData Data;
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public VXSBData Data { get; set; }
         public override void Read(BinaryReader reader, int heapStringOffset, int heapDataOffset, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset, string platform)
         {
             int nameOffset = reader.ReadInt32();

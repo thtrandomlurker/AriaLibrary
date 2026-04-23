@@ -1,6 +1,7 @@
 ﻿using AriaLibrary.Helpers;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,8 +12,9 @@ namespace AriaLibrary.Objects.Nodes
     public class STRB : NodeBlock
     {
         public override string Type => "STRB";
-        public int StringCount;
-        public STRL StringList;
+        public int StringCount { get; set; }
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public STRL StringList { get; set; }
 
         public override void Read(BinaryReader reader)
         {
@@ -21,8 +23,8 @@ namespace AriaLibrary.Objects.Nodes
             // Skip the STRL magic
             reader.BaseStream.Seek(4, SeekOrigin.Current);
             StringList.Read(reader);
-            // sanity check to sync the length of the StringList with the length in the STRB
-            StringList.Strings = StringList.Strings.Take(StringCount).ToList();
+            while (StringList.Strings.Count > StringCount)
+                StringList.Strings.RemoveAt(StringCount);
         }
 
         public override void Write(BinaryWriter writer)

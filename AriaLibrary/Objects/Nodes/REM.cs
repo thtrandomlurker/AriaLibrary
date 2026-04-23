@@ -10,7 +10,7 @@ namespace AriaLibrary.Objects.Nodes
     public class REM : NodeBlock
     {
         public override string Type => "REM";
-        public string Comment;
+        public string Comment { get; set; }
 
         public override void Read(BinaryReader reader)
         {

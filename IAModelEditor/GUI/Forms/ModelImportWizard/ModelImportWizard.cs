@@ -71,12 +71,11 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
 
                 // (credits to skyth) borrow this from MikuMikuLibrary https://github.com/blueskythlikesclouds/MikuMikuLibrary/blob/master/MikuMikuLibrary/Objects/Processing/Assimp/AssimpSceneHelper.cs
                 Context.SetConfig(new FBXPreservePivotsConfig(false));
-                Context.SetConfig(new MaxBoneCountConfig(64));
+                Context.SetConfig(new MaxBoneCountConfig(96));
                 Context.SetConfig(new MeshTriangleLimitConfig(524288));
                 Context.SetConfig(new MeshVertexLimitConfig(32768));
                 Context.SetConfig(new VertexBoneWeightLimitConfig(4));
                 Context.SetConfig(new VertexCacheSizeConfig(63));
-
                 Scene = Context.ImportFile(mSourceFilePath,
                 PostProcessSteps.JoinIdenticalVertices | PostProcessSteps.Triangulate |
                 PostProcessSteps.SplitLargeMeshes | PostProcessSteps.LimitBoneWeights |
@@ -88,6 +87,18 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                 // a naive assumption
 
                 MeshNodes = Scene.RootNode.Children.Where(x => x.MeshCount != 0).ToList();
+
+                // ensure one mesh per material, one material per mesh.
+
+                List<Material> matList = new List<Material>();
+                for (int i = 0; i < Scene.MeshCount; i++)
+                {
+                    matList.Add(Scene.Materials[Scene.Meshes[i].MaterialIndex]);
+                    matList[i].Name = $"{Scene.Meshes[i].Name}_{matList[i].Name}";
+                    Scene.Meshes[i].MaterialIndex = i;
+                }
+                Scene.Materials.Clear();
+                Scene.Materials.AddRange(matList);
 
 
                 WorkingObject.NODT.Remark = new REM("Model created using AriaLibrary v0.1");
@@ -148,15 +159,20 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                             foreach (var bone in Scene.Meshes[meshIndex].Bones)
                             {
                                 if (!skinBoneList.Contains(bone.Name))
-                                    skinBoneList.Add(bone.Name);
+                                {
+                                    if (bone.VertexWeights.Count != 0)
+                                    {
+                                        skinBoneList.Add(bone.Name);
+                                    }
+                                }
                             }
                         }
 
-                        MeshData mesh = new MeshData();
+                        MeshData mesh = new MeshData(Scene.Meshes[meshIndex]);
                         mesh.MeshName = $"importMesh{cmesh}-geom-P{cmesh}";
                         mesh.BufferName = $"importMesh{cmesh}-geom-S{cmesh}";
                         mesh.SetName = $"SET_{mesh.MeshName}";
-                        mesh.SourceMesh = Scene.Meshes[meshIndex];
+                        mesh.SetPolygonName = $"SetPolygon{cmesh}";
 
                         // we can create prim data here as it should directly correlate to the materials created later
                         // also cluster data
@@ -173,7 +189,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         mesh.PrimitiveData.MeshNameDupe = WorkingObject.MESH.StringBuffer.StringList.Strings.Count;
                         WorkingObject.MESH.StringBuffer.StringList.Strings.Add(mesh.MeshName);
                         mesh.PrimitiveData.SetPolygonName = WorkingObject.MESH.StringBuffer.StringList.Strings.Count;
-                        WorkingObject.MESH.StringBuffer.StringList.Strings.Add(mesh.SetName);
+                        WorkingObject.MESH.StringBuffer.StringList.Strings.Add(mesh.SetPolygonName);
                         mesh.PrimitiveData.MaterialID = Scene.Meshes[meshIndex].MaterialIndex;
                         mesh.PrimitiveData.U18 = -1;
                         WorkingMeshData.Add(mesh);
@@ -190,12 +206,11 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                     {
                         AriaLibrary.Objects.Bone bone = new AriaLibrary.Objects.Bone();
                         bone.BoneName = aiNode.Name;
-                        Matrix4x4 boneMat = aiNode.Transform.ToNumerics();
-                        Matrix4x4.Invert(boneMat, out Matrix4x4 invMat);
-                        Matrix4x4.Decompose(invMat, out Vector3 scl, out System.Numerics.Quaternion rot, out Vector3 loc);
-                        bone.Translation = new Vector3(boneMat[0,3], boneMat[1,3], boneMat[2,3]);
-                        Vector3 eulerRot = MathHelper.QuaternionToEulerAngles(rot.W, rot.X, rot.Y, rot.Z);
-                        eulerRot *= (float)(180 / Math.PI);  // conv all at once
+                        Assimp.Matrix4x4 boneMat = aiNode.Transform;
+                        boneMat.Decompose(out Vector3D scl, out Assimp.Quaternion rot, out Vector3D trs);
+                        bone.Translation = new Vector3(trs.X, trs.Y, trs.Z);
+                        Vector3 eulerRot = MathHelper.QuaternionToEulerAngles(rot.X, rot.Y, rot.Z, rot.W);
+                        eulerRot *= (float)(180.0f / Math.PI);  // conv all at once
                         bone.Rotation = eulerRot;
                         bone.Scale = new Vector3(scl.X, scl.Y, scl.Z);
                         bone.BoneID = (short)WorkingObject.BRNT.Bones.Count;
@@ -262,6 +277,8 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         }
                     }
                     AddBones(Scene.RootNode.Children.First(x => x.MeshCount == 0).Children[0]);  // start from skeleton root. maybe.
+
+                    WorkingObject.BindPose = BindPose.FromBRNT(WorkingObject.BRNT);
                 }
 
                 Console.WriteLine("BRNT PREPASS FINISHED");
@@ -270,7 +287,8 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                 // seemingly no reference from anything though... based on index?
                 for (int i = 0; i < Scene.MaterialCount; i++)
                 {
-                    WorkingObject.MESH.ChildNodes.Add(new TRSP() { TRSPId = i, Culling = Scene.Materials[i].IsTwoSided ? CullMode.None : CullMode.BackFace, U08 = 1, U0C = 0, U10 = 2, U14 = 0, U18 = 1, U1C = 1 });
+                    WorkingObject.MESH.ChildNodes.Add(new TRSP() { TRSPId = i, Culling = Scene.Materials[i].IsTwoSided ? CullMode.None : CullMode.BackFace, U08 = 1, U0C = 0, U10 = WorkingObject.MESH.StringBuffer.StringList.Strings.Count, U14 = 0, U18 = 1, U1C = 1 });
+                    WorkingObject.MESH.StringBuffer.StringList.Strings.Add("Disable");
                 }
 
                 // generate material infos
@@ -308,9 +326,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                     {
                         mesh.VertexBindingObject = new VXBO();
                         mesh.VertexBindingObject.Name = mesh.MeshName;
-                        mesh.VertexAttributes = new VXAR();
                         mesh.VertexAttributes.Name = mesh.MeshName;
-                        mesh.VertexAttributes.Data = WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexArray.Data;
                         mesh.IndexBuffer = new IXBF();
                         mesh.IndexBuffer.Name = mesh.MeshName;
                         mesh.IndexBuffer.BufferData = new byte[mesh.SourceMesh.FaceCount * 3 * 2];
@@ -325,20 +341,20 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         mesh.VertexBuffer.Name = mesh.BufferName;
                         mesh.VertexBuffer.Data.U00 = 0;
                         mesh.VertexBuffer.Data.U04 = 0;
-                        mesh.VertexBuffer.Data.VertexStride = WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexStride;
                         mesh.VertexBuffer.Data.VertexCount = mesh.SourceMesh.VertexCount;
+                        mesh.VertexBuffer.Data.VertexStride = mesh.VertexStride;
                         mesh.VertexBuffer.BufferData = new byte[mesh.VertexBuffer.Data.VertexCount * mesh.VertexBuffer.Data.VertexStride];
                         mesh.VertexBuffer.Buffer = BufferName.Mesh;
 
 
                         byte[][] tIndices = new byte[mesh.SourceMesh.VertexCount][];
-                        float[][] tWeights = new float[mesh.SourceMesh.VertexCount][];
+                        byte[][] tWeights = new byte[mesh.SourceMesh.VertexCount][];
                         int[] tIndicesCurPos = new int[mesh.SourceMesh.VertexCount];
 
                         for (int i = 0; i < mesh.SourceMesh.VertexCount; i++)
                         {
                             tIndices[i] = new byte[4];
-                            tWeights[i] = new float[4];
+                            tWeights[i] = new byte[4];
                         }
 
                         foreach (var bone in mesh.SourceMesh.Bones)
@@ -349,27 +365,22 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                                 {
                                     Console.WriteLine(weight.VertexID);
                                     tIndices[weight.VertexID][tIndicesCurPos[weight.VertexID]] = (byte)WorkingObject.BRNT.Bones.First(x => x.BoneName == bone.Name).SkinID;
-                                    tWeights[weight.VertexID][tIndicesCurPos[weight.VertexID]] = weight.Weight;
+                                    tWeights[weight.VertexID][tIndicesCurPos[weight.VertexID]] = (byte)(weight.Weight * 255f);
                                 }
                                 tIndicesCurPos[weight.VertexID]++;
                             }
                         }
 
-                        // fixup weights
+                        // fix weights?
                         foreach (var weight in tWeights)
                         {
-                            float sum = weight[0] + weight[1] + weight[2] + weight[3];
-                            if (!(0.9999f < sum && sum < 1.0001f))
+                            int sum = weight[0] + weight[1] + weight[2] + weight[3];
+
+                            weight[0] += (byte)(255 - sum);
+
+                            if (weight[0] + weight[1] + weight[2] + weight[3] != 255)
                             {
-                                float diff = 1f - sum;
-                                if (diff < 0f)
-                                {
-                                    weight[0] -= diff;
-                                }
-                                else
-                                {
-                                    weight[0] += diff;
-                                }
+                                Console.WriteLine("ono");
                             }
                         }
 
@@ -378,67 +389,97 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         {
                             byte[] vertex = new byte[mesh.VertexBuffer.Data.VertexStride];
                             int cPos = 0;
-                            for (int j = 0; j < WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexSemantics.Count; j++)
+                            for (int j = 0; j < mesh.VertexSemantics.Count; j++)
                             {
-                                switch (WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexSemantics[j])
+                                Vector4 sourceValue;
+                                switch (mesh.VertexAttributeDataSources[j])
+                                {
+                                    case AttributeDataSource.Position:
+                                        sourceValue = new Vector4(mesh.SourceMesh.Vertices[i].X, mesh.SourceMesh.Vertices[i].Y, mesh.SourceMesh.Vertices[i].Z, 1.0f);
+                                        break;
+                                    case AttributeDataSource.Normal:
+                                        sourceValue = new Vector4(mesh.SourceMesh.Normals[i].X, mesh.SourceMesh.Normals[i].Y, mesh.SourceMesh.Normals[i].Z, 0.0f);
+                                        break;
+                                    case AttributeDataSource.Tangent:
+                                        sourceValue = new Vector4(mesh.SourceMesh.Tangents[i].X, mesh.SourceMesh.Tangents[i].Y, mesh.SourceMesh.Tangents[i].Z, 0.0f);
+                                        break;
+                                    case AttributeDataSource.Bitangent:
+                                        sourceValue = new Vector4(mesh.SourceMesh.BiTangents[i].X, mesh.SourceMesh.BiTangents[i].Y, mesh.SourceMesh.BiTangents[i].Z, 0.0f);
+                                        break;
+                                    case AttributeDataSource.UV0:
+                                        sourceValue = new Vector4(mesh.SourceMesh.TextureCoordinateChannels[0][i].X, mesh.SourceMesh.TextureCoordinateChannels[0][i].Y, 0.0f, 0.0f);
+                                        break;
+                                    case AttributeDataSource.UV1:
+                                        sourceValue = new Vector4(mesh.SourceMesh.TextureCoordinateChannels[1][i].X, mesh.SourceMesh.TextureCoordinateChannels[1][i].Y, 0.0f, 0.0f);
+                                        break;
+                                    case AttributeDataSource.UV2:
+                                        sourceValue = new Vector4(mesh.SourceMesh.TextureCoordinateChannels[2][i].X, mesh.SourceMesh.TextureCoordinateChannels[2][i].Y, 0.0f, 0.0f);
+                                        break;
+                                    case AttributeDataSource.UV3:
+                                        sourceValue = new Vector4(mesh.SourceMesh.TextureCoordinateChannels[3][i].X, mesh.SourceMesh.TextureCoordinateChannels[3][i].Y, 0.0f, 0.0f);
+                                        break;
+                                    case AttributeDataSource.BlendIndices:
+                                        sourceValue = new Vector4(tIndices[i][0], tIndices[i][1], tIndices[i][2], tIndices[i][3]);
+                                        break;
+                                    case AttributeDataSource.BlendWeights:
+                                        sourceValue = new Vector4(tWeights[i][0], tWeights[i][1], tWeights[i][2], tWeights[i][3]);
+                                        break;
+                                    case AttributeDataSource.Color0:
+                                        sourceValue = new Vector4(mesh.SourceMesh.VertexColorChannels[0][i].R, mesh.SourceMesh.VertexColorChannels[0][i].G, mesh.SourceMesh.VertexColorChannels[0][i].B, mesh.SourceMesh.VertexColorChannels[0][i].A);
+                                        break;
+                                    case AttributeDataSource.Color1:
+                                        sourceValue = new Vector4(mesh.SourceMesh.VertexColorChannels[1][i].R, mesh.SourceMesh.VertexColorChannels[1][i].G, mesh.SourceMesh.VertexColorChannels[1][i].B, mesh.SourceMesh.VertexColorChannels[1][i].A);
+                                        break;
+                                    default:
+                                        sourceValue = new Vector4();
+                                        break;
+                                }
+                                switch (mesh.VertexSemantics[j])
                                 {
                                     case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_POSITION:
-                                        Buffer.BlockCopy(BitConverter.GetBytes(mesh.SourceMesh.Vertices[i].X), 0, vertex, cPos, 4);
-                                        Buffer.BlockCopy(BitConverter.GetBytes(mesh.SourceMesh.Vertices[i].Y), 0, vertex, cPos + 4, 4);
-                                        Buffer.BlockCopy(BitConverter.GetBytes(mesh.SourceMesh.Vertices[i].Z), 0, vertex, cPos + 8, 4);
+                                        Buffer.BlockCopy(BitConverter.GetBytes(sourceValue.X), 0, vertex, cPos, 4);
+                                        Buffer.BlockCopy(BitConverter.GetBytes(sourceValue.Y), 0, vertex, cPos + 4, 4);
+                                        Buffer.BlockCopy(BitConverter.GetBytes(sourceValue.Z), 0, vertex, cPos + 8, 4);
                                         cPos += 12;
                                         break;
                                     case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_NORMAL:
-                                        vertex[cPos] = (byte)(mesh.SourceMesh.Normals[i].X * 128f); 
-                                        vertex[cPos + 1] = (byte)(mesh.SourceMesh.Normals[i].Y * 128f);
-                                        vertex[cPos + 2] = (byte)(mesh.SourceMesh.Normals[i].Z * 128f);
+                                        vertex[cPos] = (byte)(sourceValue.X * 128f);
+                                        vertex[cPos + 1] = (byte)(sourceValue.Y * 128f);
+                                        vertex[cPos + 2] = (byte)(sourceValue.Z * 128f);
                                         cPos += 3;
                                         break;
                                     case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TANGENT:
-                                        vertex[cPos] = (byte)(mesh.SourceMesh.Tangents[i].X * 128f);
-                                        vertex[cPos + 1] = (byte)(mesh.SourceMesh.Tangents[i].Y * 128f);
-                                        vertex[cPos + 2] = (byte)(mesh.SourceMesh.Tangents[i].Z * 128f);
+                                        vertex[cPos] = (byte)(sourceValue.X * 128f);
+                                        vertex[cPos + 1] = (byte)(sourceValue.Y * 128f);
+                                        vertex[cPos + 2] = (byte)(sourceValue.Z * 128f);
                                         vertex[cPos + 3] = 127;
                                         cPos += 4;
                                         break;
                                     case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TEXCOORD:
-                                        if (mesh.SourceMesh.TextureCoordinateChannelCount >= WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexSemanticIndices[j])
-                                        {
-                                            Buffer.BlockCopy(BitConverter.GetBytes((Half)mesh.SourceMesh.TextureCoordinateChannels[WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexSemanticIndices[j]][i].X), 0, vertex, cPos, 2);
-                                            Buffer.BlockCopy(BitConverter.GetBytes((Half)mesh.SourceMesh.TextureCoordinateChannels[WorkingMaterialData[mesh.SourceMesh.MaterialIndex].VertexSemanticIndices[j]][i].Y), 0, vertex, cPos + 2, 2);
-                                            cPos += 4;
-                                        }
-                                        else
-                                        {
-                                            Buffer.BlockCopy(BitConverter.GetBytes((int)0), 0, vertex, cPos, 4);
-                                            cPos += 4;
-                                        }
+                                        Buffer.BlockCopy(BitConverter.GetBytes((Half)sourceValue.X), 0, vertex, cPos, 2);
+                                        Buffer.BlockCopy(BitConverter.GetBytes((Half)sourceValue.Y), 0, vertex, cPos + 2, 2);
+                                        cPos += 4;
                                         break;
                                     case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BLENDWEIGHT:
-                                        vertex[cPos] = (byte)(tWeights[i][0] * 255f);
-                                        vertex[cPos + 1] = (byte)(tWeights[i][1] * 255f);
-                                        vertex[cPos + 2] = (byte)(tWeights[i][2] * 255f);
-                                        vertex[cPos + 3] = (byte)(tWeights[i][3] * 255f);
+                                        vertex[cPos] = (byte)(sourceValue.X);
+                                        vertex[cPos + 1] = (byte)(sourceValue.Y);
+                                        vertex[cPos + 2] = (byte)(sourceValue.Z);
+                                        vertex[cPos + 3] = (byte)(sourceValue.W);
                                         cPos += 4;
                                         break;
                                     case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BLENDINDICES:
-                                        Buffer.BlockCopy(tIndices[i], 0, vertex, cPos, 4);
+                                        vertex[cPos] = (byte)(sourceValue.X);
+                                        vertex[cPos + 1] = (byte)(sourceValue.Y);
+                                        vertex[cPos + 2] = (byte)(sourceValue.Z);
+                                        vertex[cPos + 3] = (byte)(sourceValue.W);
                                         cPos += 4;
                                         break;
                                     case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_COLOR:
-                                        if (mesh.SourceMesh.HasVertexColors(0))
-                                        {
-                                            vertex[cPos] = (byte)(mesh.SourceMesh.VertexColorChannels[0][i].R * 255f);
-                                            vertex[cPos+1] = (byte)(mesh.SourceMesh.VertexColorChannels[0][i].G * 255f);
-                                            vertex[cPos+2] = (byte)(mesh.SourceMesh.VertexColorChannels[0][i].B * 255f);
-                                            vertex[cPos+3] = (byte)(mesh.SourceMesh.VertexColorChannels[0][i].A * 255f);
-                                            cPos += 4;
-                                        }
-                                        else
-                                        {
-                                            Buffer.BlockCopy(BitConverter.GetBytes((int)-1), 0, vertex, cPos, 4);
-                                            cPos += 4;
-                                        }
+                                        vertex[cPos] = (byte)(sourceValue.X * 255f);
+                                        vertex[cPos + 1] = (byte)(sourceValue.Y * 255f);
+                                        vertex[cPos + 2] = (byte)(sourceValue.Z * 255f);
+                                        vertex[cPos + 3] = (byte)(sourceValue.W * 255f);
+                                        cPos += 4;
                                         break;
                                 }
                             }
@@ -456,10 +497,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                     // we *done* in this
                     // now this is going to be a bit scuffed but, we should be able to do this now
                     // start with trsp
-                    foreach (var mat in WorkingMaterialData)
-                    {
-                        WorkingObject.MESH.ChildNodes.Add(mat.MaterialTransparencySetting);
-                    }
+
                     // next effe
                     foreach (var mat in WorkingMaterialData)
                     {
@@ -558,6 +596,11 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                     WorkingObject.Save($"{Path.GetDirectoryName(saveFileDialog.FileName)}\\gpr.GPR", $"{Path.GetDirectoryName(saveFileDialog.FileName)}\\mesh.MESH", $"{Path.GetDirectoryName(saveFileDialog.FileName)}\\nodt.NODT");
                 }
             }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            Console.WriteLine("Unpause!");
         }
     }
 }

@@ -16,6 +16,7 @@ using System.Windows.Forms;
 using System.Numerics;
 using IAModelEditor.ImportHelpers;
 using System.Diagnostics.Eventing.Reader;
+using Assimp;
 
 namespace IAModelEditor.GUI.Forms.ModelImportWizard
 {
@@ -100,9 +101,6 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
             ParentForm.WorkingMaterialData[materialIndex].VertexProgram = new byte[ShaderPackage.Files[(shaderIndex * 2)].Size];
             ParentForm.WorkingMaterialData[materialIndex].FragmentProgram = new byte[ShaderPackage.Files[(shaderIndex * 2)+1].Size];
 
-            // so we begin with the TRPS
-            ParentForm.WorkingMaterialData[materialIndex].MaterialTransparencySetting = new TRSP() { TRSPId = materialIndex, Culling = CullMode.None, U08 = 1, U0C = 0, U10 = 2, U14 = 0, U18 = 1, U1C = 1 };
-
             // then the EFFE
             ParentForm.WorkingMaterialData[materialIndex].MaterialEffect = new EFFE();
             ParentForm.WorkingMaterialData[materialIndex].MaterialEffect.EffectID = materialIndex;
@@ -142,11 +140,12 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
             List<SceGxmProgramParameter> vertexParameters = ShaderHelper.GetParameters(ShaderPackage.Files[(shaderIndex * 2)].Stream, true);
 
             // quick interjection to generate the VXAR. We will grab this per mesh from the material data later. it's a bit messy but it's the cleaner solution.
-            ParentForm.WorkingMaterialData[materialIndex].VertexArray = new VXAR();
-            ParentForm.WorkingMaterialData[materialIndex].VertexSemantics = new List<SceGxmParameterSemantic>();
-            ParentForm.WorkingMaterialData[materialIndex].VertexSemanticIndices = new List<int>();
+            ParentForm.WorkingMeshData[materialIndex].VertexAttributes = new VXAR();
+            ParentForm.WorkingMeshData[materialIndex].VertexSemantics = new List<SceGxmParameterSemantic>();
+            ParentForm.WorkingMeshData[materialIndex].VertexSemanticIndices = new List<int>();
 
             int curOffset = 0;
+            bool autoMap = MessageBox.Show("Automatically map semantics to data inputs?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
 
             foreach (var attribute in vertexParameters.Where(x => x.Category == SceGxmParameterCategory.SCE_GXM_PARAMETER_CATEGORY_ATTRIBUTE))
             {
@@ -203,11 +202,63 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         attr.VertexBufferIndex = 0;
                         break;
                 }
-                ParentForm.WorkingMaterialData[materialIndex].VertexArray.Data.VertexAttributes.Add(attr);
-                ParentForm.WorkingMaterialData[materialIndex].VertexSemantics.Add(attribute.Semantic);
-                ParentForm.WorkingMaterialData[materialIndex].VertexSemanticIndices.Add(attribute.SemanticIndex);
+                ParentForm.WorkingMeshData[materialIndex].VertexAttributes.Data.VertexAttributes.Add(attr);
+                ParentForm.WorkingMeshData[materialIndex].VertexSemantics.Add(attribute.Semantic);
+                ParentForm.WorkingMeshData[materialIndex].VertexSemanticIndices.Add(attribute.SemanticIndex);
+                if (autoMap)
+                {
+                    switch (attribute.Semantic)
+                    {
+                        case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_POSITION:
+                            ParentForm.WorkingMeshData[materialIndex].VertexAttributeDataSources.Add(AttributeDataSource.Position);
+                            break;
+                        case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_NORMAL:
+                            ParentForm.WorkingMeshData[materialIndex].VertexAttributeDataSources.Add(AttributeDataSource.Normal);
+                            break;
+                        case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TANGENT:
+                            ParentForm.WorkingMeshData[materialIndex].VertexAttributeDataSources.Add(AttributeDataSource.Tangent);
+                            break;
+                        case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TEXCOORD:
+                            if (attribute.SemanticIndex <= ParentForm.WorkingMeshData[materialIndex].SourceMesh.TextureCoordinateChannelCount)
+                                ParentForm.WorkingMeshData[materialIndex].VertexAttributeDataSources.Add((AttributeDataSource)((int)AttributeDataSource.UV0 + attribute.SemanticIndex));
+                            else
+                                ParentForm.WorkingMeshData[materialIndex].VertexAttributeDataSources.Add(AttributeDataSource.UV0);  // use UV0 as a fallback
+                            break;
+                        case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BLENDINDICES:
+                            ParentForm.WorkingMeshData[materialIndex].VertexAttributeDataSources.Add(AttributeDataSource.BlendIndices);
+                            break;
+                        case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BLENDWEIGHT:
+                            ParentForm.WorkingMeshData[materialIndex].VertexAttributeDataSources.Add(AttributeDataSource.BlendWeights);
+                            break;
+                        case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_COLOR:
+                            if (attribute.SemanticIndex <= ParentForm.WorkingMeshData[materialIndex].SourceMesh.VertexColorChannelCount)
+                                ParentForm.WorkingMeshData[materialIndex].VertexAttributeDataSources.Add((AttributeDataSource)((int)AttributeDataSource.Color0 + attribute.SemanticIndex));
+                            else
+                                ParentForm.WorkingMeshData[materialIndex].VertexAttributeDataSources.Add(AttributeDataSource.Color0);  // use Color as a fallback
+                            break;
+                    }
+                }
+                else
+                {
+                    using (MIWAttributeSourceSelector sourceSelector = new MIWAttributeSourceSelector(attribute.ParameterName))
+                    {
+                        sourceSelector.SetDesktopLocation((this.DesktopLocation.X + this.Size.Width / 2), (this.DesktopLocation.Y + this.Size.Height / 2));
+                        if (sourceSelector.ShowDialog() == DialogResult.OK)
+                        {
+                            ParentForm.WorkingMeshData[materialIndex].VertexAttributeDataSources.Add(Enum.Parse<AttributeDataSource>(sourceSelector.comboBox1.Text));
+                        }
+                    }
+                }
             }
-            ParentForm.WorkingMaterialData[materialIndex].VertexStride = curOffset;
+            if (ParentForm.WorkingMeshData[materialIndex].SourceMesh.VertexColorChannelCount == 0 && ParentForm.WorkingMeshData[materialIndex].VertexAttributeDataSources.Contains(AttributeDataSource.Color0))
+            {
+                // No color channels, but color data is being bound... make dummy data.
+
+                Color4D[] tColors = new Color4D[ParentForm.WorkingMeshData[materialIndex].SourceMesh.VertexCount];
+                Array.Fill(tColors, new Color4D(1.0f, 1.0f, 1.0f, 1.0f));
+                ParentForm.WorkingMeshData[materialIndex].SourceMesh.VertexColorChannels[0] = tColors.ToList();
+            }
+            ParentForm.WorkingMeshData[materialIndex].VertexStride = curOffset;
 
             foreach (var uniform in vertexParameters.Where(x => x.Category == SceGxmParameterCategory.SCE_GXM_PARAMETER_CATEGORY_UNIFORM)) {
                 VertexShaderUniform vxUniform = new VertexShaderUniform();
@@ -249,7 +300,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                 
                 SHCO shaderConst = new SHCO();
                 shaderConst.Name = input.ParameterName + "-" + ParentForm.WorkingMaterialData[materialIndex].MaterialName;
-                shaderConst.Data.Constants.Add(new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+                shaderConst.Data.Constants.Add(new SHCOValue(1.0f, 1.0f, 1.0f, 1.0f));
                 
                 ParentForm.WorkingMaterialData[materialIndex].VertexConstants.ConstantValues.Add(constValue);
                 
@@ -296,7 +347,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
 
             // this also gives us enough information to create the CSTS/CSTV/SHCO
             ParentForm.WorkingMaterialData[materialIndex].FragmentConstants = new CSTS();
-            ParentForm.WorkingMaterialData[materialIndex].FragmentConstants.ConstantSetID = (materialIndex * 2);  // 2 per mat. For safety. Surely having this with a shader that doesn't utilize it won't cause issues.
+            ParentForm.WorkingMaterialData[materialIndex].FragmentConstants.ConstantSetID = ((materialIndex * 2) + 1);  // 2 per mat. For safety. Surely having this with a shader that doesn't utilize it won't cause issues.
             foreach (var input in ParentForm.WorkingMaterialData[materialIndex].PixelShaderConstantBinding.Data.Parameters)
             {
                 CSTV constValue = new CSTV();
@@ -307,7 +358,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
 
                 SHCO shaderConst = new SHCO();
                 shaderConst.Name = input.ParameterName + "-" + ParentForm.WorkingMaterialData[materialIndex].MaterialName;
-                shaderConst.Data.Constants.Add(new Vector4(0.5f, 0.5f, 0.5f, 1.0f));
+                shaderConst.Data.Constants.Add(new SHCOValue(0.5f, 0.5f, 0.5f, 1.0f));
 
                 ParentForm.WorkingMaterialData[materialIndex].FragmentConstants.ConstantValues.Add(constValue);
 
@@ -331,6 +382,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
 
             // this also also gives us enough information to generate sampler information.
             ParentForm.WorkingMaterialData[materialIndex].MaterialSampler = new SAMP();
+            ParentForm.WorkingMaterialData[materialIndex].MaterialSampler.SamplerID = materialIndex;
             foreach (var input in ParentForm.WorkingMaterialData[materialIndex].PixelShaderSamplerBinding.Data.Parameters)
             {
                 SSTV samplerTextureView = new SSTV();

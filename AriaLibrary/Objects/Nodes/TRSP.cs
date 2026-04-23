@@ -16,14 +16,14 @@ namespace AriaLibrary.Objects.Nodes
     public class TRSP : NodeBlock
     {
         public override string Type => "TRSP";
-        public int TRSPId;
-        public CullMode Culling;
-        public int U08;
-        public int U0C;
-        public int U10;
-        public int U14;
-        public int U18;
-        public int U1C;
+        public int TRSPId { get; set; }
+        public CullMode Culling { get; set; }
+        public int U08 { get; set; }
+        public int U0C { get; set; }
+        public int U10 { get; set; }
+        public int U14 { get; set; }
+        public int U18 { get; set; }
+        public int U1C { get; set; }
 
         public override void Read(BinaryReader reader)
         {

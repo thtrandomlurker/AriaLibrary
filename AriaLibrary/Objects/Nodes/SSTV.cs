@@ -10,9 +10,9 @@ namespace AriaLibrary.Objects.Nodes
     public class SSTV : NodeBlock
     {
         public override string Type => "SSTV";
-        public int TextureSlot;
-        public int TextureSourcePath;
-        public int TextureName;
+        public int TextureSlot { get; set; }
+        public int TextureSourcePath { get; set; }
+        public int TextureName { get; set; }
 
         public override void Read(BinaryReader reader)
         {

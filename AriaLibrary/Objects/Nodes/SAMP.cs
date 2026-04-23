@@ -10,8 +10,8 @@ namespace AriaLibrary.Objects.Nodes
     public class SAMP : NodeBlock
     {
         public override string Type => "SAMP";
-        public int SamplerID;
-        public List<SSTV> SSTVs;
+        public int SamplerID { get; set; }
+        public List<SSTV> SSTVs { get; set; }
 
         public override void Read(BinaryReader reader)
         {

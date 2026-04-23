@@ -10,9 +10,9 @@ namespace AriaLibrary.Objects.Nodes
     public class MESC : NodeBlock
     {
         public override string Type => "MESC";
-        public int MeshClusterId;
-        public int MeshClusterName;
-        public List<CLUS> Clusters;
+        public int MeshClusterId { get; set; }
+        public int MeshClusterName { get; set; }
+        public List<CLUS> Clusters { get; set; }
 
         public int GetSize()
         {

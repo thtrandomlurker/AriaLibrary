@@ -1,6 +1,7 @@
 ﻿using AriaLibrary.Helpers;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,9 +10,12 @@ namespace AriaLibrary.Objects.Nodes
 {
     public class MESH
     {
-        public REM Remark;
-        public STRB StringBuffer;
-        public List<NodeBlock> ChildNodes;
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public REM Remark { get; set; }
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public STRB StringBuffer { get; set; }
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public List<NodeBlock> ChildNodes { get; set; }
 
         public void Read(BinaryReader reader)
         {

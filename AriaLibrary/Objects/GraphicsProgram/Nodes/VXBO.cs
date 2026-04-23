@@ -9,7 +9,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
 {
     public class VXBOData
     {
-        public float[] Floats;
+        public float[] Floats { get; set;}
 
         public void Read(BinaryReader reader, int heapDataOffset)
         {

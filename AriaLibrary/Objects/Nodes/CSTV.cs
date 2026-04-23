@@ -10,8 +10,8 @@ namespace AriaLibrary.Objects.Nodes
     public class CSTV : NodeBlock
     {
         public override string Type => "CSTV";
-        public int ConstantName;
-        public int ConstantDataName;
+        public int ConstantName { get; set; }
+        public int ConstantDataName { get; set; }
 
         public override void Read(BinaryReader reader)
         {

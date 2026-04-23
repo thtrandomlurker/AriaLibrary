@@ -7,12 +7,25 @@ using StringReader = AriaLibrary.IO.StringReader;
 using System.Numerics;
 using AriaLibrary.Helpers;
 using Microsoft.VisualBasic;
+using System.ComponentModel;
+using AriaLibrary.TypeConverters;
 
 namespace AriaLibrary.Objects.GraphicsProgram.Nodes
 {
+    public class SHCOValue
+    {
+        [TypeConverter(typeof(Vector4TypeConverter))]
+        public Vector4 Value { get; set; } = new Vector4();
+
+        public SHCOValue(float x, float y, float z, float w)
+        {
+            Value = new Vector4(x, y, z, w);
+        }
+        public SHCOValue() { }
+    }
     public class SHCOData
     {
-        public List<Vector4> Constants;
+        public List<SHCOValue> Constants { get; }
 
         public void Read(BinaryReader reader, int heapDataOffset)
         {
@@ -21,7 +34,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             int constantCount = reader.ReadInt32();
             for (int i = 0; i < constantCount; i++)
             {
-                Constants.Add(new Vector4(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle()));
+                Constants.Add(new SHCOValue(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle()));
             }
 
             reader.BaseStream.Seek(cur, SeekOrigin.Begin);
@@ -30,25 +43,26 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
         public void Write(BinaryWriter dataWriter)
         {
             dataWriter.Write(Constants.Count);
-            foreach (Vector4 constant in Constants)
+            foreach (SHCOValue constant in Constants)
             {
-                dataWriter.Write(constant.X);
-                dataWriter.Write(constant.Y);
-                dataWriter.Write(constant.Z);
-                dataWriter.Write(constant.W);
+                dataWriter.Write(constant.Value.X);
+                dataWriter.Write(constant.Value.Y);
+                dataWriter.Write(constant.Value.Z);
+                dataWriter.Write(constant.Value.W);
             }
             PositionHelper.AlignWriter(dataWriter, 0x10);
         }
 
         public SHCOData()
         {
-            Constants = new List<Vector4>();
+            Constants = new List<SHCOValue>();
         }
     }
     public class SHCO: GPRSection
     {
         public override string Type => "SHCO";
-        public SHCOData Data;
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public SHCOData Data { get; set; }
 
         public override void Read(BinaryReader reader, int heapStringOffset, int heapDataOffset, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset, string platform)
         {

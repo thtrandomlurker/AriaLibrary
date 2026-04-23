@@ -35,19 +35,24 @@
             MIWMaterialSelectShader = new Button();
             MIWMaterialOpenShaderDialog = new OpenFileDialog();
             MIWMaterialSelectShaderAll = new Button();
+            MaterialProperties = new PropertyGrid();
+            StringListViewer = new PropertyGrid();
             SuspendLayout();
             // 
             // MIWMaterialListbox
             // 
+            MIWMaterialListbox.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             MIWMaterialListbox.FormattingEnabled = true;
             MIWMaterialListbox.ItemHeight = 15;
             MIWMaterialListbox.Location = new Point(3, 3);
             MIWMaterialListbox.Name = "MIWMaterialListbox";
             MIWMaterialListbox.Size = new Size(274, 469);
             MIWMaterialListbox.TabIndex = 0;
+            MIWMaterialListbox.SelectedIndexChanged += MIWMaterialListbox_SelectedIndexChanged;
             // 
             // MIWMaterialValidate
             // 
+            MIWMaterialValidate.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             MIWMaterialValidate.Location = new Point(283, 449);
             MIWMaterialValidate.Name = "MIWMaterialValidate";
             MIWMaterialValidate.Size = new Size(354, 23);
@@ -75,6 +80,7 @@
             // 
             // MIWMaterialSelectShader
             // 
+            MIWMaterialSelectShader.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             MIWMaterialSelectShader.Location = new Point(283, 420);
             MIWMaterialSelectShader.Name = "MIWMaterialSelectShader";
             MIWMaterialSelectShader.Size = new Size(354, 23);
@@ -90,6 +96,7 @@
             // 
             // MIWMaterialSelectShaderAll
             // 
+            MIWMaterialSelectShaderAll.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             MIWMaterialSelectShaderAll.Location = new Point(283, 391);
             MIWMaterialSelectShaderAll.Name = "MIWMaterialSelectShaderAll";
             MIWMaterialSelectShaderAll.Size = new Size(354, 23);
@@ -98,10 +105,30 @@
             MIWMaterialSelectShaderAll.UseVisualStyleBackColor = true;
             MIWMaterialSelectShaderAll.Click += MIWMaterialSelectShaderAll_Click;
             // 
+            // MaterialProperties
+            // 
+            MaterialProperties.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            MaterialProperties.HelpVisible = false;
+            MaterialProperties.Location = new Point(283, 226);
+            MaterialProperties.Name = "MaterialProperties";
+            MaterialProperties.Size = new Size(354, 159);
+            MaterialProperties.TabIndex = 3;
+            // 
+            // StringListViewer
+            // 
+            StringListViewer.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            StringListViewer.HelpVisible = false;
+            StringListViewer.Location = new Point(283, 63);
+            StringListViewer.Name = "StringListViewer";
+            StringListViewer.Size = new Size(354, 157);
+            StringListViewer.TabIndex = 3;
+            // 
             // MIWMaterialSetupControl
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
+            Controls.Add(StringListViewer);
+            Controls.Add(MaterialProperties);
             Controls.Add(MIWMaterialValidationStatus);
             Controls.Add(MIWMaterialValidateStatusLabel);
             Controls.Add(MIWMaterialSelectShaderAll);
@@ -123,5 +150,7 @@
         private OpenFileDialog MIWMaterialOpenShaderDialog;
         public ListBox MIWMaterialListbox;
         private Button MIWMaterialSelectShaderAll;
+        private PropertyGrid MaterialProperties;
+        private PropertyGrid StringListViewer;
     }
 }

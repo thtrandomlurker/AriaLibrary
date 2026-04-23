@@ -1,6 +1,8 @@
 ﻿using AriaLibrary.Helpers;
+using AriaLibrary.TypeConverters;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Numerics;
 using System.Security.Cryptography;
@@ -10,22 +12,26 @@ using System.Threading.Tasks;
 namespace AriaLibrary.Objects
 {
     public struct BoneRelation {
-        public short ID;
-        public short ParentID;
+        public short ID { get; set; }
+        public short ParentID { get; set; }
     }
     public struct BindInfo
     {
-        public Vector4 Rotation;
-        public Vector4 Translation;
-        public Vector4 Scale;
+        [TypeConverter(typeof(Vector4TypeConverter))]
+        public Vector4 Rotation { get; set; }
+        [TypeConverter(typeof(Vector4TypeConverter))]
+        public Vector4 Translation { get; set; }
+
+        [TypeConverter(typeof(Vector4TypeConverter))]
+        public Vector4 Scale { get; set; }
     }
     public class BindPose
     {
-        public BoneRelation[] BoneHierarchy;
-        public BindInfo[] BoneBindInfos;
-        public short[] BoneOrderList;
-        public List<string> BoneNames;
-        public uint[] BoneHashes;
+        public BoneRelation[] BoneHierarchy { get; set; }
+        public BindInfo[] BoneBindInfos { get; set; }
+        public short[] BoneOrderList { get; set; }
+        public List<string> BoneNames { get; set; }
+        public uint[] BoneHashes { get; set; }
         public void Read(BinaryReader reader)
         {
             string magic = new string(reader.ReadChars(4));
@@ -224,6 +230,71 @@ namespace AriaLibrary.Objects
             int size = (int)writer.BaseStream.Position;
             writer.Seek(4, SeekOrigin.Begin);
             writer.Write(size);
+        }
+        public void Load(Stream stream)
+        {
+            using (BinaryReader reader = new BinaryReader(stream))
+            {
+                Read(reader);
+            }
+        }
+        public void Load(string filePath)
+        {
+            Load(File.OpenRead(filePath));
+        }
+        public void Save(Stream stream, bool leaveOpen = false)
+        {
+            using (BinaryWriter writer = new BinaryWriter(stream, Encoding.ASCII, leaveOpen))
+            {
+                Write(writer);
+            }
+        }
+        public void Save(string filePath)
+        {
+            Save(File.Create(filePath));
+        }
+
+        public static BindPose FromBRNT(BRNT brnt)
+        {
+            BindPose bp = new BindPose(); 
+            bp.BoneHierarchy = new BoneRelation[brnt.Bones.Count];
+            bp.BoneBindInfos = new BindInfo[brnt.Bones.Count];
+            bp.BoneOrderList = new short[brnt.Bones.Count];
+            bp.BoneHashes = new uint[brnt.Bones.Count];
+            for (int i = 0; i < brnt.Bones.Count; i++)
+            {
+                AriaLibrary.Objects.Bone? bone = brnt.Bones[i];
+
+                short boneId = bone.BoneID;
+                short parentId = bone.BoneParent;
+
+                BoneRelation b = new BoneRelation()
+                {
+                    ID = boneId,
+                    ParentID = parentId == -1 ? (short)0x7FFF : (short)(parentId | 0x8000)
+                };
+
+                if (brnt.Bones[i].BoneName == "LUpperarm")
+                {
+                    brnt.Bones[i].Scale *= 2.0f;
+                }
+
+                BindInfo bind = new BindInfo()
+                {
+                    Rotation = MathHelper.EulerAnglesToQuaternion(bone.Rotation.X, bone.Rotation.Y, bone.Rotation.Z),
+                    Translation = new Vector4(bone.Translation.X, bone.Translation.Y, bone.Translation.Z, 1.0f),
+                    Scale = new Vector4(bone.Scale.X, bone.Scale.Y, bone.Scale.Z, 1.0f)
+                };
+
+                uint boneHash = StringHelper.GetBindPoseStringHash(bone.BoneName);
+
+                bp.BoneHierarchy[i] = b;
+                bp.BoneBindInfos[i] = bind;
+                bp.BoneOrderList[i] = (short)i;
+                bp.BoneHashes[i] = boneHash;
+                bp.BoneNames.Add(bone.BoneName);
+            }
+            return bp;
         }
 
         public BindPose()

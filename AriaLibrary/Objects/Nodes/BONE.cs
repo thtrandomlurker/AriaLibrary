@@ -12,8 +12,8 @@ namespace AriaLibrary.Objects.Nodes
     {
         public override string Type => "BONE";
         public int Name;
-        public List<BOIF> BoneInformation;
-        public List<IMTX> InverseMatrices;
+        public List<BOIF> BoneInformation { get; set; }
+        public List<IMTX> InverseMatrices { get; set; }
 
         public override void Read(BinaryReader reader)
         {

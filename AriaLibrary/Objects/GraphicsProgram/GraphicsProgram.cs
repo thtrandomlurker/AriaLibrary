@@ -2,6 +2,7 @@
 using AriaLibrary.Objects.GraphicsProgram.Nodes;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,7 +11,8 @@ namespace AriaLibrary.Objects.GraphicsProgram
 {
     public class GraphicsProgram
     {
-        public HEAP Heap;
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public HEAP Heap { get; set; }
 
         public string Platform { get; set; }
 

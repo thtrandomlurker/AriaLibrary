@@ -29,70 +29,75 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MIWInitControl));
-            this.MIWInitDNSAModeLabel = new System.Windows.Forms.Label();
-            this.MIWInitModelNameLabel = new System.Windows.Forms.Label();
-            this.MIWInitDSNAMode = new System.Windows.Forms.TextBox();
-            this.MIWInitModelName = new System.Windows.Forms.TextBox();
-            this.MIWIntroText = new System.Windows.Forms.Label();
-            this.SuspendLayout();
+            MIWInitDNSAModeLabel = new Label();
+            MIWInitModelNameLabel = new Label();
+            MIWInitDSNAMode = new TextBox();
+            MIWInitModelName = new TextBox();
+            MIWIntroText = new Label();
+            SuspendLayout();
             // 
             // MIWInitDNSAModeLabel
             // 
-            this.MIWInitDNSAModeLabel.AutoSize = true;
-            this.MIWInitDNSAModeLabel.Location = new System.Drawing.Point(124, 316);
-            this.MIWInitDNSAModeLabel.Name = "MIWInitDNSAModeLabel";
-            this.MIWInitDNSAModeLabel.Size = new System.Drawing.Size(75, 15);
-            this.MIWInitDNSAModeLabel.TabIndex = 7;
-            this.MIWInitDNSAModeLabel.Text = "DSNA Mode:";
+            MIWInitDNSAModeLabel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            MIWInitDNSAModeLabel.AutoSize = true;
+            MIWInitDNSAModeLabel.Location = new Point(124, 316);
+            MIWInitDNSAModeLabel.Name = "MIWInitDNSAModeLabel";
+            MIWInitDNSAModeLabel.Size = new Size(75, 15);
+            MIWInitDNSAModeLabel.TabIndex = 7;
+            MIWInitDNSAModeLabel.Text = "DSNA Mode:";
             // 
             // MIWInitModelNameLabel
             // 
-            this.MIWInitModelNameLabel.AutoSize = true;
-            this.MIWInitModelNameLabel.Location = new System.Drawing.Point(124, 248);
-            this.MIWInitModelNameLabel.Name = "MIWInitModelNameLabel";
-            this.MIWInitModelNameLabel.Size = new System.Drawing.Size(79, 15);
-            this.MIWInitModelNameLabel.TabIndex = 8;
-            this.MIWInitModelNameLabel.Text = "Model Name:";
+            MIWInitModelNameLabel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            MIWInitModelNameLabel.AutoSize = true;
+            MIWInitModelNameLabel.Location = new Point(124, 248);
+            MIWInitModelNameLabel.Name = "MIWInitModelNameLabel";
+            MIWInitModelNameLabel.Size = new Size(79, 15);
+            MIWInitModelNameLabel.TabIndex = 8;
+            MIWInitModelNameLabel.Text = "Model Name:";
             // 
             // MIWInitDSNAMode
             // 
-            this.MIWInitDSNAMode.Location = new System.Drawing.Point(124, 334);
-            this.MIWInitDSNAMode.Name = "MIWInitDSNAMode";
-            this.MIWInitDSNAMode.Size = new System.Drawing.Size(392, 23);
-            this.MIWInitDSNAMode.TabIndex = 5;
-            this.MIWInitDSNAMode.Text = "DRAW";
+            MIWInitDSNAMode.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            MIWInitDSNAMode.Location = new Point(124, 334);
+            MIWInitDSNAMode.Name = "MIWInitDSNAMode";
+            MIWInitDSNAMode.Size = new Size(392, 23);
+            MIWInitDSNAMode.TabIndex = 5;
+            MIWInitDSNAMode.Text = "DRAW";
             // 
             // MIWInitModelName
             // 
-            this.MIWInitModelName.Location = new System.Drawing.Point(124, 266);
-            this.MIWInitModelName.Name = "MIWInitModelName";
-            this.MIWInitModelName.Size = new System.Drawing.Size(392, 23);
-            this.MIWInitModelName.TabIndex = 6;
-            this.MIWInitModelName.Text = "COS_000";
+            MIWInitModelName.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            MIWInitModelName.Location = new Point(124, 266);
+            MIWInitModelName.Name = "MIWInitModelName";
+            MIWInitModelName.Size = new Size(392, 23);
+            MIWInitModelName.TabIndex = 6;
+            MIWInitModelName.Text = "COS_000";
             // 
             // MIWIntroText
             // 
-            this.MIWIntroText.AutoSize = true;
-            this.MIWIntroText.Location = new System.Drawing.Point(124, 123);
-            this.MIWIntroText.Name = "MIWIntroText";
-            this.MIWIntroText.Size = new System.Drawing.Size(392, 90);
-            this.MIWIntroText.TabIndex = 4;
-            this.MIWIntroText.Text = resources.GetString("MIWIntroText.Text");
+            MIWIntroText.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            MIWIntroText.AutoSize = true;
+            MIWIntroText.Location = new Point(124, 123);
+            MIWIntroText.Name = "MIWIntroText";
+            MIWIntroText.Size = new Size(394, 90);
+            MIWIntroText.TabIndex = 4;
+            MIWIntroText.Text = resources.GetString("MIWIntroText.Text");
             // 
             // MIWInitControl
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.MIWInitDNSAModeLabel);
-            this.Controls.Add(this.MIWInitModelNameLabel);
-            this.Controls.Add(this.MIWInitDSNAMode);
-            this.Controls.Add(this.MIWInitModelName);
-            this.Controls.Add(this.MIWIntroText);
-            this.Location = new System.Drawing.Point(72, 12);
-            this.Name = "MIWInitControl";
-            this.Size = new System.Drawing.Size(640, 480);
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            Controls.Add(MIWInitDNSAModeLabel);
+            Controls.Add(MIWInitModelNameLabel);
+            Controls.Add(MIWInitDSNAMode);
+            Controls.Add(MIWInitModelName);
+            Controls.Add(MIWIntroText);
+            Location = new Point(72, 12);
+            Name = "MIWInitControl";
+            Size = new Size(640, 480);
+            ResumeLayout(false);
+            PerformLayout();
 
         }
 

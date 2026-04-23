@@ -1,16 +1,19 @@
-﻿using System;
+﻿using AriaLibrary.Helpers;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using AriaLibrary.Helpers;
 
 namespace AriaLibrary.Objects.Nodes
 {
     public class INST : NodeBlock
     {
         public override string Type => "INST";
-        public MESC MeshCluster;
+
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public MESC MeshCluster { get; set; }
 
         public override void Read(BinaryReader reader)
         {

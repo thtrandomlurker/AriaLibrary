@@ -141,9 +141,9 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
             List<SceGxmProgramParameter> vertexParameters = ShaderHelper.GetParameters(ShaderPackage.Files[(shaderIndex * 2)].Stream, true);
 
             // quick interjection to generate the VXAR. We will grab this per mesh from the material data later. it's a bit messy but it's the cleaner solution.
-            ParentForm.WorkingMaterialData[materialIndex].VertexArray = new VXAR();
-            ParentForm.WorkingMaterialData[materialIndex].VertexSemantics = new List<SceGxmParameterSemantic>();
-            ParentForm.WorkingMaterialData[materialIndex].VertexSemanticIndices = new List<int>();
+            ParentForm.WorkingMeshData[materialIndex].VertexAttributes = new VXAR();
+            ParentForm.WorkingMeshData[materialIndex].VertexSemantics = new List<SceGxmParameterSemantic>();
+            ParentForm.WorkingMeshData[materialIndex].VertexSemanticIndices = new List<int>();
 
             int curOffset = 0;
 
@@ -202,11 +202,11 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         attr.VertexBufferIndex = 0;
                         break;
                 }
-                ParentForm.WorkingMaterialData[materialIndex].VertexArray.Data.VertexAttributes.Add(attr);
-                ParentForm.WorkingMaterialData[materialIndex].VertexSemantics.Add(attribute.Semantic);
-                ParentForm.WorkingMaterialData[materialIndex].VertexSemanticIndices.Add(attribute.SemanticIndex);
+                ParentForm.WorkingMeshData[materialIndex].VertexAttributes.Data.VertexAttributes.Add(attr);
+                ParentForm.WorkingMeshData[materialIndex].VertexSemantics.Add(attribute.Semantic);
+                ParentForm.WorkingMeshData[materialIndex].VertexSemanticIndices.Add(attribute.SemanticIndex);
             }
-            ParentForm.WorkingMaterialData[materialIndex].VertexStride = curOffset;
+            ParentForm.WorkingMeshData[materialIndex].VertexStride = curOffset;
 
             foreach (var uniform in vertexParameters.Where(x => x.Category == SceGxmParameterCategory.SCE_GXM_PARAMETER_CATEGORY_UNIFORM)) {
                 VertexShaderUniform vxUniform = new VertexShaderUniform();
@@ -246,7 +246,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                 
                 SHCO shaderConst = new SHCO();
                 shaderConst.Name = input.ParameterName + "-" + ParentForm.WorkingMaterialData[materialIndex].MaterialName;
-                shaderConst.Data.Constants.Add(new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+                shaderConst.Data.Constants.Add(new SHCOValue(1.0f, 1.0f, 1.0f, 1.0f));
                 
                 ParentForm.WorkingMaterialData[materialIndex].VertexConstants.ConstantValues.Add(constValue);
                 
@@ -302,7 +302,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
 
                 SHCO shaderConst = new SHCO();
                 shaderConst.Name = input.ParameterName + "-" + ParentForm.WorkingMaterialData[materialIndex].MaterialName;
-                shaderConst.Data.Constants.Add(new Vector4(0.5f, 0.5f, 0.5f, 1.0f));
+                shaderConst.Data.Constants.Add(new SHCOValue(0.5f, 0.5f, 0.5f, 1.0f));
 
                 ParentForm.WorkingMaterialData[materialIndex].FragmentConstants.ConstantValues.Add(constValue);
 

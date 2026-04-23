@@ -41,6 +41,7 @@ namespace IAModelEditor.GUI.Forms
                 MenuStripExportFBX.Enabled = true;
                 MenuStripExportFBXBasic.Enabled = true;
                 MenuStripReplace.Enabled = true;
+                propertyGrid1.SelectedObject = ObjectGroup;
                 Console.WriteLine("Dummy");
             }
         }
@@ -423,6 +424,11 @@ namespace IAModelEditor.GUI.Forms
                 }
             }
             MenuStripOpenFileDialog.Filter = "IA / VT Model File| *.mdl";
+        }
+
+        private void inspectObjectGroupToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Console.WriteLine("Inspec Complet");
         }
     }
 }
