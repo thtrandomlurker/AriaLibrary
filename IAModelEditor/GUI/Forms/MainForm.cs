@@ -430,5 +430,27 @@ namespace IAModelEditor.GUI.Forms
         {
             Console.WriteLine("Inspec Complet");
         }
+
+        private void showVertexShaderAttributeInfoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // temporarily alter the behavior of MenuStripOpenFileDialog
+            MenuStripOpenFileDialog.Filter = "GXP|*.gxp;*.vp;*.vpo";
+            if (MenuStripOpenFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                string info = "";
+
+                var data = File.ReadAllBytes(MenuStripOpenFileDialog.FileName);
+                var parameters = ShaderHelper.GetParameters(File.OpenRead(MenuStripOpenFileDialog.FileName));
+                foreach (var param in parameters)
+                {
+                    if (param.Category == SceGxmParameterCategory.SCE_GXM_PARAMETER_CATEGORY_ATTRIBUTE)
+                    {
+                        info += $"Name: {param.ParameterName} | Semantic: {param.SemanticName} | Index: {param.SemanticIndex} | DataType: {param.DataType} | Components: {param.ComponentCount}\n";
+                    }
+                }
+                MessageBox.Show(info, "Vertex Shader Attribute Info");
+            }
+            MenuStripOpenFileDialog.Filter = "IA / VT Model File| *.mdl";
+        }
     }
 }

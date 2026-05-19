@@ -64,6 +64,7 @@
             MenuStripExportFBXFileDialog = new SaveFileDialog();
             LoadedPlatformLabel = new Label();
             propertyGrid1 = new PropertyGrid();
+            showVertexShaderAttributeInfoToolStripMenuItem = new ToolStripMenuItem();
             MenuStrip.SuspendLayout();
             SuspendLayout();
             // 
@@ -199,7 +200,7 @@
             // 
             // toolsToolStripMenuItem
             // 
-            toolsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { MenuStripToolsConvertGXT, MenuStripToolsConvertDDS, clearCSTSsForScienceToolStripMenuItem, unswizzleDDSInPlacToolStripMenuItem, viewShaderPackageInfoToolStripMenuItem, clearNODEInfoToolStripMenuItem, calculateStringHashToolStripMenuItem, calculateBindPoseStringHashToolStripMenuItem, dumpBindPoseInfoToolStripMenuItem, sEFromBRNTToolStripMenuItem, inspectObjectGroupToolStripMenuItem });
+            toolsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { MenuStripToolsConvertGXT, MenuStripToolsConvertDDS, clearCSTSsForScienceToolStripMenuItem, unswizzleDDSInPlacToolStripMenuItem, viewShaderPackageInfoToolStripMenuItem, clearNODEInfoToolStripMenuItem, calculateStringHashToolStripMenuItem, calculateBindPoseStringHashToolStripMenuItem, dumpBindPoseInfoToolStripMenuItem, sEFromBRNTToolStripMenuItem, inspectObjectGroupToolStripMenuItem, showVertexShaderAttributeInfoToolStripMenuItem });
             toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             toolsToolStripMenuItem.Size = new Size(47, 20);
             toolsToolStripMenuItem.Text = "Tools";
@@ -207,77 +208,77 @@
             // MenuStripToolsConvertGXT
             // 
             MenuStripToolsConvertGXT.Name = "MenuStripToolsConvertGXT";
-            MenuStripToolsConvertGXT.Size = new Size(242, 22);
+            MenuStripToolsConvertGXT.Size = new Size(250, 22);
             MenuStripToolsConvertGXT.Text = "Convert GXT(s) to DDS";
             MenuStripToolsConvertGXT.Click += MenuStripToolsConvertGXT_Click;
             // 
             // MenuStripToolsConvertDDS
             // 
             MenuStripToolsConvertDDS.Name = "MenuStripToolsConvertDDS";
-            MenuStripToolsConvertDDS.Size = new Size(242, 22);
+            MenuStripToolsConvertDDS.Size = new Size(250, 22);
             MenuStripToolsConvertDDS.Text = "Convert DDS(s) to GXT";
             MenuStripToolsConvertDDS.Click += MenuStripToolsConvertDDS_Click;
             // 
             // clearCSTSsForScienceToolStripMenuItem
             // 
             clearCSTSsForScienceToolStripMenuItem.Name = "clearCSTSsForScienceToolStripMenuItem";
-            clearCSTSsForScienceToolStripMenuItem.Size = new Size(242, 22);
+            clearCSTSsForScienceToolStripMenuItem.Size = new Size(250, 22);
             clearCSTSsForScienceToolStripMenuItem.Text = "Clear CSTSs for science";
             clearCSTSsForScienceToolStripMenuItem.Click += clearCSTSsForScienceToolStripMenuItem_Click;
             // 
             // unswizzleDDSInPlacToolStripMenuItem
             // 
             unswizzleDDSInPlacToolStripMenuItem.Name = "unswizzleDDSInPlacToolStripMenuItem";
-            unswizzleDDSInPlacToolStripMenuItem.Size = new Size(242, 22);
+            unswizzleDDSInPlacToolStripMenuItem.Size = new Size(250, 22);
             unswizzleDDSInPlacToolStripMenuItem.Text = "Unswizzle DDS In Plac";
             unswizzleDDSInPlacToolStripMenuItem.Click += unswizzleDDSInPlacToolStripMenuItem_Click;
             // 
             // viewShaderPackageInfoToolStripMenuItem
             // 
             viewShaderPackageInfoToolStripMenuItem.Name = "viewShaderPackageInfoToolStripMenuItem";
-            viewShaderPackageInfoToolStripMenuItem.Size = new Size(242, 22);
+            viewShaderPackageInfoToolStripMenuItem.Size = new Size(250, 22);
             viewShaderPackageInfoToolStripMenuItem.Text = "View Shader Package Info";
             viewShaderPackageInfoToolStripMenuItem.Click += viewShaderPackageInfoToolStripMenuItem_Click;
             // 
             // clearNODEInfoToolStripMenuItem
             // 
             clearNODEInfoToolStripMenuItem.Name = "clearNODEInfoToolStripMenuItem";
-            clearNODEInfoToolStripMenuItem.Size = new Size(242, 22);
+            clearNODEInfoToolStripMenuItem.Size = new Size(250, 22);
             clearNODEInfoToolStripMenuItem.Text = "Clear NODE info";
             clearNODEInfoToolStripMenuItem.Click += clearNODEInfoToolStripMenuItem_Click;
             // 
             // calculateStringHashToolStripMenuItem
             // 
             calculateStringHashToolStripMenuItem.Name = "calculateStringHashToolStripMenuItem";
-            calculateStringHashToolStripMenuItem.Size = new Size(242, 22);
+            calculateStringHashToolStripMenuItem.Size = new Size(250, 22);
             calculateStringHashToolStripMenuItem.Text = "Calculate String Hash";
             calculateStringHashToolStripMenuItem.Click += calculateStringHashToolStripMenuItem_Click;
             // 
             // calculateBindPoseStringHashToolStripMenuItem
             // 
             calculateBindPoseStringHashToolStripMenuItem.Name = "calculateBindPoseStringHashToolStripMenuItem";
-            calculateBindPoseStringHashToolStripMenuItem.Size = new Size(242, 22);
+            calculateBindPoseStringHashToolStripMenuItem.Size = new Size(250, 22);
             calculateBindPoseStringHashToolStripMenuItem.Text = "Calculate Bind Pose String Hash";
             calculateBindPoseStringHashToolStripMenuItem.Click += calculateBindPoseStringHashToolStripMenuItem_Click;
             // 
             // dumpBindPoseInfoToolStripMenuItem
             // 
             dumpBindPoseInfoToolStripMenuItem.Name = "dumpBindPoseInfoToolStripMenuItem";
-            dumpBindPoseInfoToolStripMenuItem.Size = new Size(242, 22);
+            dumpBindPoseInfoToolStripMenuItem.Size = new Size(250, 22);
             dumpBindPoseInfoToolStripMenuItem.Text = "Dump Bind Pose Info";
             dumpBindPoseInfoToolStripMenuItem.Click += dumpBindPoseInfoToolStripMenuItem_Click;
             // 
             // sEFromBRNTToolStripMenuItem
             // 
             sEFromBRNTToolStripMenuItem.Name = "sEFromBRNTToolStripMenuItem";
-            sEFromBRNTToolStripMenuItem.Size = new Size(242, 22);
+            sEFromBRNTToolStripMenuItem.Size = new Size(250, 22);
             sEFromBRNTToolStripMenuItem.Text = "60SE from BRNT";
             sEFromBRNTToolStripMenuItem.Click += sEFromBRNTToolStripMenuItem_Click;
             // 
             // inspectObjectGroupToolStripMenuItem
             // 
             inspectObjectGroupToolStripMenuItem.Name = "inspectObjectGroupToolStripMenuItem";
-            inspectObjectGroupToolStripMenuItem.Size = new Size(242, 22);
+            inspectObjectGroupToolStripMenuItem.Size = new Size(250, 22);
             inspectObjectGroupToolStripMenuItem.Text = "Inspect ObjectGroup";
             inspectObjectGroupToolStripMenuItem.Click += inspectObjectGroupToolStripMenuItem_Click;
             // 
@@ -323,6 +324,13 @@
             propertyGrid1.Name = "propertyGrid1";
             propertyGrid1.Size = new Size(378, 265);
             propertyGrid1.TabIndex = 3;
+            // 
+            // showVertexShaderAttributeInfoToolStripMenuItem
+            // 
+            showVertexShaderAttributeInfoToolStripMenuItem.Name = "showVertexShaderAttributeInfoToolStripMenuItem";
+            showVertexShaderAttributeInfoToolStripMenuItem.Size = new Size(250, 22);
+            showVertexShaderAttributeInfoToolStripMenuItem.Text = "Show Vertex Shader Attribute Info";
+            showVertexShaderAttributeInfoToolStripMenuItem.Click += showVertexShaderAttributeInfoToolStripMenuItem_Click;
             // 
             // MainForm
             // 
@@ -380,5 +388,6 @@
         private ToolStripMenuItem sEFromBRNTToolStripMenuItem;
         private ToolStripMenuItem inspectObjectGroupToolStripMenuItem;
         private PropertyGrid propertyGrid1;
+        private ToolStripMenuItem showVertexShaderAttributeInfoToolStripMenuItem;
     }
 }

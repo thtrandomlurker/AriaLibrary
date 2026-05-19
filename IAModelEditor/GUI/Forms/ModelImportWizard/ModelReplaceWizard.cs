@@ -354,7 +354,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                     mesh.VertexState.Data.VXBFCount = 1;
                     mesh.VertexState.Data.FaceIndexCount = mesh.SourceMesh.FaceCount * 3;
                     mesh.VertexState.Data.VertexBindingObjectReference = mesh.VertexBindingObject.Data;
-                    mesh.VertexState.Data.VertexArrayReference = mesh.VertexAttributes.Data;
+                    mesh.VertexState.Data.VertexAttributeReferences.Add(mesh.VertexAttributes.Data);
                     mesh.VertexState.Data.VertexBufferReferences.Add(mesh.VertexBuffer.Data);
                     mesh.VertexState.Data.IndexBufferReference = mesh.IndexBuffer.Data;
                 }

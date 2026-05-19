@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -46,6 +47,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
     public class VXARData
     {
         public List<VertexAttribute> VertexAttributes { get; set; }
+        internal int SourceOffset { get; set; }
 
         public void Read(BinaryReader reader, int dataPosition)
         {
@@ -80,7 +82,8 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
     public class VXAR : GPRSection
     {
         public override string Type => "VXAR";
-        public VXARData Data;
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public VXARData Data { get; set; }
         public override void Read(BinaryReader reader, int heapStringOffset, int heapDataOffset, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset, string platform)
         {
             int nameOffset = reader.ReadInt32();
@@ -96,6 +99,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             // Data
             Data = new VXARData();
             Data.Read(reader, heapDataOffset + dataOffset);
+            Data.SourceOffset = heapDataOffset + dataOffset;
         }
 
         public override void Write(BinaryWriter heapWriter, BinaryWriter stringWriter, BinaryWriter dataWriter, BinaryWriter bufferWriter, ref Dictionary<string, int> stringPosMap, ref List<int> sectionDataPositions, ref int curDataPositionIdx)

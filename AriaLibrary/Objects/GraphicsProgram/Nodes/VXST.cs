@@ -19,8 +19,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public List<VXBFData> VertexBufferReferences { get; set; }
         public int VXBFCount { get; set; }
-        [TypeConverter(typeof(ExpandableObjectConverter))]
-        public VXARData VertexArrayReference { get; set; }
+        public List<VXARData> VertexAttributeReferences { get; set; }
         [TypeConverter(typeof(ExpandableObjectConverter))]
         public IXBFData IndexBufferReference { get; set; }
 
@@ -35,18 +34,21 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             FaceIndexCount = reader.ReadInt32();
             int ixbfDataOffset = reader.ReadInt32();
             VXBFCount = reader.ReadInt32();
-            int vxarDataOffset = reader.ReadInt32();
-            int vxbfDataOffset = reader.ReadInt32();
 
             VertexBindingObjectReference.Read(reader, heapDataPosition + vxboDataOffset);
             for (int i = 0; i < VXBFCount; i++)
             {
-                VXBFData data = new VXBFData();
-                data.Read(reader, heapDataPosition + vxbfDataOffset + (0x10 * i));
-                VertexBufferReferences.Add(data);
+                int vxarDataOffset = reader.ReadInt32();
+                int vxbfDataOffset = reader.ReadInt32();
+                VXBFData vxbfData = new VXBFData();
+                VXARData vxarData = new VXARData();
+                vxbfData.Read(reader, heapDataPosition + vxbfDataOffset);
+                vxbfData.SourceOffset = heapDataPosition + vxbfDataOffset;
+                vxarData.Read(reader, heapDataPosition + vxarDataOffset);
+                vxarData.SourceOffset = heapDataPosition + vxarDataOffset;
+                VertexBufferReferences.Add(vxbfData);
+                VertexAttributeReferences.Add(vxarData);
             }
-
-            VertexArrayReference.Read(reader, heapDataPosition + vxarDataOffset);
             IndexBufferReference.Read(reader, heapDataPosition + ixbfDataOffset);
 
             reader.BaseStream.Seek(cur, SeekOrigin.Begin);
@@ -74,14 +76,15 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
         {
             VertexBindingObjectReference = new VXBOData();
             VertexBufferReferences = new List<VXBFData>();
-            VertexArrayReference = new VXARData();
+            VertexAttributeReferences = new List<VXARData>();
             IndexBufferReference = new IXBFData();
         }
     }
     public class VXST : GPRSection
     {
         public override string Type => "VXST";
-        public VXSTData Data;
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public VXSTData Data { get; set; }
         public override void Read(BinaryReader reader, int heapStringOffset, int heapDataOffset, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset, string platform)
         {
             int nameOffset = reader.ReadInt32();

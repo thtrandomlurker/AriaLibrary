@@ -17,6 +17,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
         public int U04 { get; set; }
         public int VertexCount { get; set; }
         public int VertexStride { get; set; }
+        internal int SourceOffset { get; set; }
 
         public void Read(BinaryReader reader, int dataPosition)
         {
@@ -58,6 +59,7 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
             // Data
             Data = new VXBFData();
             Data.Read(reader, heapDataOffset + dataOffset);
+            Data.SourceOffset = heapDataOffset + dataOffset;
             // Buffer
             switch (Buffer)
             {

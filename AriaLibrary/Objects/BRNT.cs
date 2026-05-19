@@ -22,7 +22,7 @@ namespace AriaLibrary.Objects
         public short U18 { get; set; }
         public short SkinID { get; set; }
         public short ChildID { get; set; }
-        public short U1E { get; set; }
+        public short SiblingID { get; set; }
         public short PossibleFlags { get; set; }
         public short U22 { get; set; }
         public short U24 { get; set; }
@@ -46,7 +46,7 @@ namespace AriaLibrary.Objects
             U18 = reader.ReadInt16();
             SkinID = reader.ReadInt16();
             ChildID = reader.ReadInt16();
-            U1E = reader.ReadInt16();
+            SiblingID = reader.ReadInt16();
             PossibleFlags = reader.ReadInt16();
             U22 = reader.ReadInt16();
             U24 = reader.ReadInt16();
@@ -69,7 +69,7 @@ namespace AriaLibrary.Objects
             writer.Write(U18);
             writer.Write(SkinID);
             writer.Write(ChildID);
-            writer.Write(U1E);
+            writer.Write(SiblingID);
             writer.Write(PossibleFlags);
             writer.Write(U22);
             writer.Write(U24);

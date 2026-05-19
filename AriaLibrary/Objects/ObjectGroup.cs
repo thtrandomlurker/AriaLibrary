@@ -356,15 +356,26 @@ namespace AriaLibrary.Objects
 
                 VXST vxst = (VXST)GPR.Heap.Sections.Where(x => x.Type == "VXST").ElementAt(prim.PrimitiveID);
 
-                VXAR vxar = (VXAR)GPR.Heap.Sections.Where(x => x.Type == "VXAR").ElementAt(prim.PrimitiveID);
+                //VXAR vxar = (VXAR)GPR.Heap.Sections.Where(x => x.Type == "VXAR").ElementAt(prim.PrimitiveID);
+                List<GPRSection> vxars = new List<GPRSection>();
+                foreach (var vxarRef in vxst.Data.VertexAttributeReferences)
+                {
+                    // might not always work?
+                    vxars.Add(GPR.Heap.Sections.Where(x => x.Type == "VXAR" && ((VXAR)x).Data.SourceOffset == vxarRef.SourceOffset).First());
+                }
 
                 IXBF ixbf = (IXBF)GPR.Heap.Sections.Where(x => x.Type == "IXBF").ElementAt(prim.PrimitiveID);
-                VXBF vxbf = (VXBF)GPR.Heap.Sections.Where(x => x.Type == "VXBF").ElementAt(prim.PrimitiveID);
+                List<GPRSection> vxbfs = new();
+                foreach (var vxbfRef in vxst.Data.VertexBufferReferences)
+                {
+                    // might not always work?
+                    vxbfs.Add(GPR.Heap.Sections.Where(x => x.Type == "VXBF" && ((VXBF)x).Data.SourceOffset == vxbfRef.SourceOffset).First());
+                }
 
                 // diry code
-                TRSP trsp = (TRSP)MESH.ChildNodes.Where(x => x.Type == "TRSP").ElementAt(prim.PrimitiveID);
 
                 MATE mate = (MATE)MESH.ChildNodes.Where(x => x.Type == "MATE").ElementAt(prim.MaterialID);
+                TRSP trsp = (TRSP)MESH.ChildNodes.Where(x => x.Type == "TRSP").ElementAt(prim.MaterialID);
                 SAMP samp = (SAMP)MESH.ChildNodes.Where(x => x.Type == "SAMP").ElementAt(mate.SamplerID);  // samplers should always be linear
 
                 EFFE effe = (EFFE)MESH.ChildNodes.Where(x => x.Type == "EFFE").ElementAt(mate.EffectID);
@@ -374,48 +385,56 @@ namespace AriaLibrary.Objects
                 // Rule #1: KISS (keep it simple, stupid)
                 List<SceGxmProgramParameter> attributes = ShaderHelper.GetParameters(new MemoryStream(vs.BufferData)).Where(x => x.Category == SceGxmParameterCategory.SCE_GXM_PARAMETER_CATEGORY_ATTRIBUTE).ToList();
 
-                Material material = new Material();
-                material.Name = MESH.StringBuffer.StringList.Strings[mate.Name1];
-                material.IsTwoSided = trsp.Culling == CullMode.None;
-
-                foreach (var sstv in samp.SSTVs)
+                if (!scene.Materials.Any(x => x.Name == MESH.StringBuffer.StringList.Strings[mate.Name1]))
                 {
-                    switch (MESH.StringBuffer.StringList.Strings[sstv.TextureSlot])
-                    {
-                        case "Albedo0":
-                            TextureSlot diffSlot = new TextureSlot();
-                            diffSlot.TextureType = TextureType.Diffuse;
-                            diffSlot.FilePath = Path.GetFileName(MESH.StringBuffer.StringList.Strings[sstv.TextureSourcePath]);
-                            material.AddMaterialTexture(diffSlot);
-                            break;
-                        case "envTexture":
-                            TextureSlot envSlot = new TextureSlot();
-                            envSlot.TextureType = TextureType.Reflection;
-                            envSlot.FilePath = Path.GetFileName(MESH.StringBuffer.StringList.Strings[sstv.TextureSourcePath]);
-                            material.AddMaterialTexture(envSlot);
-                            break;
-                    }
-                    if (Directory.Exists($"{Path.GetDirectoryName(SourcePath)}\\..\\mdltex"))
-                    {
-                        Console.WriteLine($"{Path.GetDirectoryName(filePath)}\\{Path.GetFileName(MESH.StringBuffer.StringList.Strings[sstv.TextureSourcePath])}");
-                        GXT.MakeDDSFromGXT($"{Path.GetDirectoryName(SourcePath)}\\..\\mdltex\\{Path.GetFileNameWithoutExtension(MESH.StringBuffer.StringList.Strings[sstv.TextureSourcePath])}.mxt", $"{Path.GetDirectoryName(filePath)}\\{Path.GetFileName(MESH.StringBuffer.StringList.Strings[sstv.TextureSourcePath])}");
-                    }
-                }
+                    Material material = new Material();
+                    material.Name = MESH.StringBuffer.StringList.Strings[mate.Name1];
+                    material.IsTwoSided = trsp.Culling == CullMode.None;
 
-                scene.Materials.Add(material);
-                mesh.MaterialIndex = prim.MaterialID;
+                    foreach (var sstv in samp.SSTVs)
+                    {
+                        switch (MESH.StringBuffer.StringList.Strings[sstv.TextureSlot])
+                        {
+                            case "Albedo0":
+                                TextureSlot diffSlot = new TextureSlot();
+                                diffSlot.TextureType = TextureType.Diffuse;
+                                diffSlot.FilePath = Path.GetFileName(MESH.StringBuffer.StringList.Strings[sstv.TextureSourcePath]);
+                                material.AddMaterialTexture(diffSlot);
+                                break;
+                            case "envTexture":
+                                TextureSlot envSlot = new TextureSlot();
+                                envSlot.TextureType = TextureType.Reflection;
+                                envSlot.FilePath = Path.GetFileName(MESH.StringBuffer.StringList.Strings[sstv.TextureSourcePath]);
+                                material.AddMaterialTexture(envSlot);
+                                break;
+                        }
+                        if (Directory.Exists($"{Path.GetDirectoryName(SourcePath)}\\..\\mdltex"))
+                        {
+                            Console.WriteLine($"{Path.GetDirectoryName(filePath)}\\{Path.GetFileName(MESH.StringBuffer.StringList.Strings[sstv.TextureSourcePath])}");
+                            GXT.MakeDDSFromGXT($"{Path.GetDirectoryName(SourcePath)}\\..\\mdltex\\{Path.GetFileNameWithoutExtension(MESH.StringBuffer.StringList.Strings[sstv.TextureSourcePath])}.mxt", $"{Path.GetDirectoryName(filePath)}\\{Path.GetFileName(MESH.StringBuffer.StringList.Strings[sstv.TextureSourcePath])}");
+                        }
+                    }
+
+                    mesh.MaterialIndex = scene.MaterialCount;
+                    scene.Materials.Add(material);
+                }
+                else
+                {
+                    mesh.MaterialIndex = scene.Materials.FindIndex(x => x.Name == MESH.StringBuffer.StringList.Strings[mate.Name1]);
+                }
 
                 List<int[]> tWeightIndices = new List<int[]>();
                 List<float[]> tWeights = new List<float[]>();
-                int vertexCount = vxst.Data.VertexBufferReferences[0].VertexCount;
 
-                for (int a = 0; a < vxar.Data.VertexAttributes.Count; a++)
+                foreach (VXAR vxar in vxars)
                 {
-                    // in line with KISS, the VXAR and VXBF layout have to be generated from the origin shader... so the order should always be the same as the shader's data.
-                    Console.WriteLine($"{attributes[a].ParameterName}, {vxar.Data.VertexAttributes[a].DataType}, {vxar.Data.VertexAttributes[a].Offset}, {vxar.Data.VertexAttributes[a].Count}");
-                }
 
-                mesh.TextureCoordinateChannels[0].Capacity = vertexCount;
+                    for (int a = 0; a < vxar.Data.VertexAttributes.Count; a++)
+                    {
+                        // in line with KISS, the VXAR and VXBF layout have to be generated from the origin shader... so the order should always be the same as the shader's data.
+                        Console.WriteLine($"{attributes[a].ParameterName}, {vxar.Data.VertexAttributes[a].DataType}, {vxar.Data.VertexAttributes[a].Offset}, {vxar.Data.VertexAttributes[a].Count}, {vxar.Data.VertexAttributes[a].VertexBufferIndex}");
+                    }
+                }
 
                 int GetSizeFromDataType(VertexAttributeDataType type)
                 {
@@ -644,98 +663,107 @@ namespace AriaLibrary.Objects
                     return outVec;
                 }
 
-                for (int i = 0; i < vertexCount; i++)
+                Console.WriteLine(vxbfs[0].BufferData.Length);
+                Console.WriteLine(mesh.Name);
+
+                for (int idx = 0; idx < vxst.Data.VertexBufferReferences.Count; idx++)
                 {
-                    for (int a = 0; a < vxar.Data.VertexAttributes.Count; a++)
+                    VXAR vxar = vxars[idx] as VXAR;
+                    int vertexCount = ((VXBF)vxbfs[idx]).Data.VertexCount;
+                    for (int i = 0; i < vertexCount; i++)
                     {
-                        if (vxar.Data.VertexAttributes[a].VertexBufferIndex == 0)
+                        for (int a = 0; a < vxar.Data.VertexAttributes.Count; a++)
                         {
-                            var inputParam = attributes[a];
-                            if (inputParam != null)
+                            //if (vxar.Data.VertexAttributes[a].VertexBufferIndex == 0 && vxbfs[0].BufferData.Length != 0)
+                            if (true)
                             {
-                                switch (inputParam.Semantic)
+                                var inputParam = attributes[a];
+                                if (inputParam != null)
                                 {
-                                    case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_POSITION:
-                                        if (vxar.Data.VertexAttributes[a].Count != 3)
-                                        {
-                                            Console.WriteLine($"Unexpected vertex attribute count for position semantic: {vxar.Data.VertexAttributes[a].Count}");
-                                        }
-                                        mesh.Vertices.Add(BytesToVector3D(vxbf.BufferData.Skip(i * vxbf.Data.VertexStride + vxar.Data.VertexAttributes[a].Offset).Take(GetSizeFromDataType(vxar.Data.VertexAttributes[a].DataType) * vxar.Data.VertexAttributes[a].Count).ToArray(), vxar.Data.VertexAttributes[a].DataType));
-                                        break;
-                                    case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BINORMAL:
-                                        if (vxar.Data.VertexAttributes[a].Count != 3)
-                                        {
-                                            Console.WriteLine($"Unexpected vertex attribute count for binormal semantic: {vxar.Data.VertexAttributes[a].Count}");
-                                        }
-                                        mesh.BiTangents.Add(BytesToVector3D(vxbf.BufferData.Skip(i * vxbf.Data.VertexStride + vxar.Data.VertexAttributes[a].Offset).Take(GetSizeFromDataType(vxar.Data.VertexAttributes[a].DataType) * vxar.Data.VertexAttributes[a].Count).ToArray(), vxar.Data.VertexAttributes[a].DataType));
-                                        break;
-                                    case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BLENDINDICES:
-                                        if (vxar.Data.VertexAttributes[a].Count != 4)
-                                        {
-                                            Console.WriteLine($"Unexpected vertex attribute count for blendindices semantic: {vxar.Data.VertexAttributes[a].Count}");
-                                        }
-                                        Color4D indexVec = BytesToColor4D(vxbf.BufferData.Skip(i * vxbf.Data.VertexStride + vxar.Data.VertexAttributes[a].Offset).Take(GetSizeFromDataType(vxar.Data.VertexAttributes[a].DataType) * vxar.Data.VertexAttributes[a].Count).ToArray(), vxar.Data.VertexAttributes[a].DataType);
-                                        int[] boneIndices = new int[4];
-                                        for (int b = 0; b < 4; b++)
-                                        {
-                                            boneIndices[b] = (int)indexVec[b];
-                                        }
-                                        break;
-                                    case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BLENDWEIGHT:
-                                        if (vxar.Data.VertexAttributes[a].Count != 4)
-                                        {
-                                            Console.WriteLine($"Unexpected vertex attribute count for blendweight semantic: {vxar.Data.VertexAttributes[a].Count}");
-                                        }
-                                        Color4D weightVec = BytesToColor4D(vxbf.BufferData.Skip(i * vxbf.Data.VertexStride + vxar.Data.VertexAttributes[a].Offset).Take(GetSizeFromDataType(vxar.Data.VertexAttributes[a].DataType) * vxar.Data.VertexAttributes[a].Count).ToArray(), vxar.Data.VertexAttributes[a].DataType);
-                                        float[] boneWeights = new float[4];
-                                        for (int b = 0; b < 4; b++)
-                                        {
-                                            boneWeights[b] = weightVec[b];
-                                        }
-                                        break;
-                                    case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_COLOR:
-                                        if (vxar.Data.VertexAttributes[a].Count != 4)
-                                        {
-                                            Console.WriteLine($"Unexpected vertex attribute count for color semantic: {vxar.Data.VertexAttributes[a].Count}");
-                                        }
-                                        mesh.VertexColorChannels[inputParam.SemanticIndex].Add(BytesToColor4D(vxbf.BufferData.Skip(i * vxbf.Data.VertexStride + vxar.Data.VertexAttributes[a].Offset).Take(GetSizeFromDataType(vxar.Data.VertexAttributes[a].DataType) * vxar.Data.VertexAttributes[a].Count).ToArray(), vxar.Data.VertexAttributes[a].DataType));
-                                        break;
-                                    case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_NORMAL:
-                                        if (vxar.Data.VertexAttributes[a].Count != 3)
-                                        {
-                                            Console.WriteLine($"Unexpected vertex attribute count for normal semantic: {vxar.Data.VertexAttributes[a].Count}");
-                                        }
-                                        mesh.Normals.Add(BytesToVector3D(vxbf.BufferData.Skip(i * vxbf.Data.VertexStride + vxar.Data.VertexAttributes[a].Offset).Take(GetSizeFromDataType(vxar.Data.VertexAttributes[a].DataType) * vxar.Data.VertexAttributes[a].Count).ToArray(), vxar.Data.VertexAttributes[a].DataType));
-                                        break;
-                                    case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TANGENT:
-                                        if (vxar.Data.VertexAttributes[a].Count != 3)
-                                        {
-                                            Console.WriteLine($"Unexpected vertex attribute count for tangent semantic: {vxar.Data.VertexAttributes[a].Count}");
-                                        }
-                                        mesh.Tangents.Add(BytesToVector3D(vxbf.BufferData.Skip(i * vxbf.Data.VertexStride + vxar.Data.VertexAttributes[a].Offset).Take(GetSizeFromDataType(vxar.Data.VertexAttributes[a].DataType) * vxar.Data.VertexAttributes[a].Count).ToArray(), vxar.Data.VertexAttributes[a].DataType));
-                                        break;
-                                    case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TEXCOORD:
-                                        if (vxar.Data.VertexAttributes[a].Count != 2)
-                                        {
-                                            Console.WriteLine($"Unexpected vertex attribute count for position semantic: {vxar.Data.VertexAttributes[a].Count}");
-                                        }
-                                        Vector2D uv = BytesToVector2D(vxbf.BufferData.Skip(i * vxbf.Data.VertexStride + vxar.Data.VertexAttributes[a].Offset).Take(GetSizeFromDataType(vxar.Data.VertexAttributes[a].DataType) * vxar.Data.VertexAttributes[a].Count).ToArray(), vxar.Data.VertexAttributes[a].DataType);
-                                        mesh.TextureCoordinateChannels[inputParam.SemanticIndex].Add(new Vector3D(uv, 0));
-                                        break;
+                                    switch (inputParam.Semantic)
+                                    {
+                                        case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_POSITION:
+                                            if (vxar.Data.VertexAttributes[a].Count != 3)
+                                            {
+                                                Console.WriteLine($"Unexpected vertex attribute count for position semantic: {vxar.Data.VertexAttributes[a].Count}");
+                                            }
+                                            mesh.Vertices.Add(BytesToVector3D(((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).BufferData.Skip(i * ((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).Data.VertexStride + vxar.Data.VertexAttributes[a].Offset).Take(GetSizeFromDataType(vxar.Data.VertexAttributes[a].DataType) * vxar.Data.VertexAttributes[a].Count).ToArray(), vxar.Data.VertexAttributes[a].DataType));
+                                            break;
+                                        case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BINORMAL:
+                                            if (vxar.Data.VertexAttributes[a].Count != 3)
+                                            {
+                                                Console.WriteLine($"Unexpected vertex attribute count for binormal semantic: {vxar.Data.VertexAttributes[a].Count}");
+                                            }
+                                            mesh.BiTangents.Add(BytesToVector3D(((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).BufferData.Skip(i * ((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).Data.VertexStride + vxar.Data.VertexAttributes[a].Offset).Take(GetSizeFromDataType(vxar.Data.VertexAttributes[a].DataType) * vxar.Data.VertexAttributes[a].Count).ToArray(), vxar.Data.VertexAttributes[a].DataType));
+                                            break;
+                                        case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BLENDINDICES:
+                                            if (vxar.Data.VertexAttributes[a].Count != 4)
+                                            {
+                                                Console.WriteLine($"Unexpected vertex attribute count for blendindices semantic: {vxar.Data.VertexAttributes[a].Count}");
+                                            }
+                                            Color4D indexVec = BytesToColor4D(((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).BufferData.Skip(i * ((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).Data.VertexStride + vxar.Data.VertexAttributes[a].Offset).Take(GetSizeFromDataType(vxar.Data.VertexAttributes[a].DataType) * vxar.Data.VertexAttributes[a].Count).ToArray(), vxar.Data.VertexAttributes[a].DataType);
+                                            int[] boneIndices = new int[4];
+                                            for (int b = 0; b < 4; b++)
+                                            {
+                                                boneIndices[b] = (int)indexVec[b];
+                                            }
+                                            tWeightIndices.Add(boneIndices);
+                                            break;
+                                        case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BLENDWEIGHT:
+                                            if (vxar.Data.VertexAttributes[a].Count != 4)
+                                            {
+                                                Console.WriteLine($"Unexpected vertex attribute count for blendweight semantic: {vxar.Data.VertexAttributes[a].Count}");
+                                            }
+                                            Color4D weightVec = BytesToColor4D(((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).BufferData.Skip(i * ((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).Data.VertexStride + vxar.Data.VertexAttributes[a].Offset).Take(GetSizeFromDataType(vxar.Data.VertexAttributes[a].DataType) * vxar.Data.VertexAttributes[a].Count).ToArray(), vxar.Data.VertexAttributes[a].DataType);
+                                            float[] boneWeights = new float[4];
+                                            for (int b = 0; b < 4; b++)
+                                            {
+                                                boneWeights[b] = weightVec[b];
+                                            }
+                                            tWeights.Add(boneWeights);
+                                            break;
+                                        case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_COLOR:
+                                            if (vxar.Data.VertexAttributes[a].Count != 4)
+                                            {
+                                                Console.WriteLine($"Unexpected vertex attribute count for color semantic: {vxar.Data.VertexAttributes[a].Count}");
+                                            }
+                                            mesh.VertexColorChannels[inputParam.SemanticIndex].Add(BytesToColor4D(((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).BufferData.Skip(i * ((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).Data.VertexStride + vxar.Data.VertexAttributes[a].Offset).Take(GetSizeFromDataType(vxar.Data.VertexAttributes[a].DataType) * vxar.Data.VertexAttributes[a].Count).ToArray(), vxar.Data.VertexAttributes[a].DataType));
+                                            break;
+                                        case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_NORMAL:
+                                            if (vxar.Data.VertexAttributes[a].Count != 3)
+                                            {
+                                                Console.WriteLine($"Unexpected vertex attribute count for normal semantic: {vxar.Data.VertexAttributes[a].Count}");
+                                            }
+                                            mesh.Normals.Add(BytesToVector3D(((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).BufferData.Skip(i * ((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).Data.VertexStride + vxar.Data.VertexAttributes[a].Offset).Take(GetSizeFromDataType(vxar.Data.VertexAttributes[a].DataType) * vxar.Data.VertexAttributes[a].Count).ToArray(), vxar.Data.VertexAttributes[a].DataType));
+                                            break;
+                                        case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TANGENT:
+                                            if (vxar.Data.VertexAttributes[a].Count != 3)
+                                            {
+                                                Console.WriteLine($"Unexpected vertex attribute count for tangent semantic: {vxar.Data.VertexAttributes[a].Count}");
+                                            }
+                                            mesh.Tangents.Add(BytesToVector3D(((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).BufferData.Skip(i * ((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).Data.VertexStride + vxar.Data.VertexAttributes[a].Offset).Take(GetSizeFromDataType(vxar.Data.VertexAttributes[a].DataType) * vxar.Data.VertexAttributes[a].Count).ToArray(), vxar.Data.VertexAttributes[a].DataType));
+                                            break;
+                                        case SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_TEXCOORD:
+                                            if (vxar.Data.VertexAttributes[a].Count != 2)
+                                            {
+                                                Console.WriteLine($"Unexpected vertex attribute count for position semantic: {vxar.Data.VertexAttributes[a].Count}");
+                                            }
+                                            Vector2D uv = BytesToVector2D(((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).BufferData.Skip(i * ((VXBF)vxbfs[vxar.Data.VertexAttributes[a].VertexBufferIndex]).Data.VertexStride + vxar.Data.VertexAttributes[a].Offset).Take(GetSizeFromDataType(vxar.Data.VertexAttributes[a].DataType) * vxar.Data.VertexAttributes[a].Count).ToArray(), vxar.Data.VertexAttributes[a].DataType);
+                                            mesh.TextureCoordinateChannels[inputParam.SemanticIndex].Add(new Vector3D(uv, 0));
+                                            break;
+                                    }
                                 }
                             }
                         }
                     }
                 }
-                Console.WriteLine(mesh.HasTextureCoords(0));
-                Console.WriteLine(mesh.Name);
                 for (int i = 0; i < vxst.Data.FaceIndexCount; i += 3)
                 {
                     mesh.Faces.Add(new Face(new int[3] { BitConverter.ToInt16(ixbf.BufferData, (i * 2)), BitConverter.ToInt16(ixbf.BufferData, (i * 2) + 2), BitConverter.ToInt16(ixbf.BufferData, (i * 2) + 4) }));
                 }
                 if (tWeightIndices.Count != 0 && tWeights.Count != 0)
                 {
-                    for (int v = 0; v < vxbf.Data.VertexCount; v++)
+                    for (int v = 0; v < ((VXBF)vxbfs[0]).Data.VertexCount; v++)
                     {
                         for (int w = 0; w < 4; w++)
                         {

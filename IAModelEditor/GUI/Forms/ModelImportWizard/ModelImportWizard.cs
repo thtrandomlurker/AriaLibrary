@@ -44,14 +44,14 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
             WorkingMeshData = new List<MeshData>();
             OutputBoneData = new BONE();
         }
-        private static Matrix4x4 GetWorldTransform(Node aiNode)
+        private static Assimp.Matrix4x4 GetWorldTransform(Node aiNode)
         {
             var transform = aiNode.Transform;
 
             while ((aiNode = aiNode.Parent) != null)
                 transform *= aiNode.Transform;
 
-            return transform.ToNumerics();
+            return transform;
         }
         private void MIWInitButtonNext_Click(object sender, EventArgs e)
         {
@@ -202,8 +202,11 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                 {
                     WorkingObject.BRNT = new BRNT();
 
+                    Dictionary<string, Assimp.Matrix4x4> boneList = new Dictionary<string, Assimp.Matrix4x4>();
+
                     void AddBones(Node aiNode)
                     {
+                        boneList.Add(aiNode.Name, GetWorldTransform(aiNode));
                         AriaLibrary.Objects.Bone bone = new AriaLibrary.Objects.Bone();
                         bone.BoneName = aiNode.Name;
                         Assimp.Matrix4x4 boneMat = aiNode.Transform;
@@ -217,16 +220,17 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         bone.SkinID = (short)skinBoneList.FindIndex(x => x == aiNode.Name);
                         bone.PossibleFlags = -256;
                         bone.U18 = -1;
-                        bone.U1E = -1;
+                        bone.SiblingID = -1;
                         bone.BoneNameHash = StringHelper.GetBRNTStringHash(bone.BoneName);
-                        if (aiNode.ChildCount == 1)
+
+                        if (aiNode.ChildCount >= 1)
                         {
                             bone.ChildID = (short)(WorkingObject.BRNT.Bones.Count + 1);
                         }
-                        else
-                        {
+                        else {
                             bone.ChildID = -1;
                         }
+
                         if (WorkingObject.BRNT.Bones.Count != 0)
                         {
                             if (aiNode.Parent != null)
@@ -246,7 +250,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         boneInfo.BoneId = bone.BoneID;
 
                         IMTX inverseMatrix = new IMTX();
-                        Matrix4x4 mat = GetWorldTransform(aiNode);
+                        Matrix4x4 mat = GetWorldTransform(aiNode).ToNumerics();
                         inverseMatrix.Matrix[0] = mat.M11;
                         inverseMatrix.Matrix[1] = mat.M12;
                         inverseMatrix.Matrix[2] = mat.M13;
@@ -268,7 +272,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         nodtNode.NodeChild = -1;
                         nodtNode.NodeName = WorkingObject.NODT.StringBuffer.StringList.Strings.Count;
                         WorkingObject.NODT.StringBuffer.StringList.Strings.Add(aiNode.Name);
-                        nodtNode.NodeMatrix = GetWorldTransform(aiNode);
+                        nodtNode.NodeMatrix = GetWorldTransform(aiNode).ToNumerics();
                         WorkingObject.NODT.ChildNodes.Add(nodtNode);
 
                         foreach (var child in aiNode.Children)
@@ -277,6 +281,21 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         }
                     }
                     AddBones(Scene.RootNode.Children.First(x => x.MeshCount == 0).Children[0]);  // start from skeleton root. maybe.
+
+                    List<short> usedSiblingIDs = new List<short>();
+
+                    foreach (var bone in WorkingObject.BRNT.Bones)
+                    {
+                        if (bone.BoneParent != -1)
+                        {
+                            List<AriaLibrary.Objects.Bone> bones = WorkingObject.BRNT.Bones.Where(x => x.BoneParent == bone.BoneParent && x.BoneID != bone.BoneID && !usedSiblingIDs.Contains(x.BoneID)).ToList();
+                            if (bones.Count != 0)
+                            {
+                                bone.SiblingID = bones[0].BoneID;
+                                usedSiblingIDs.Add(bones[0].BoneID);
+                            }
+                        }
+                    }
 
                     WorkingObject.BindPose = BindPose.FromBRNT(WorkingObject.BRNT);
                 }
@@ -490,7 +509,7 @@ namespace IAModelEditor.GUI.Forms.ModelImportWizard
                         mesh.VertexState.Data.VXBFCount = 1;
                         mesh.VertexState.Data.FaceIndexCount = mesh.SourceMesh.FaceCount * 3;
                         mesh.VertexState.Data.VertexBindingObjectReference = mesh.VertexBindingObject.Data;
-                        mesh.VertexState.Data.VertexArrayReference = mesh.VertexAttributes.Data;
+                        mesh.VertexState.Data.VertexAttributeReferences.Add(mesh.VertexAttributes.Data);
                         mesh.VertexState.Data.VertexBufferReferences.Add(mesh.VertexBuffer.Data);
                         mesh.VertexState.Data.IndexBufferReference = mesh.IndexBuffer.Data;
                     }

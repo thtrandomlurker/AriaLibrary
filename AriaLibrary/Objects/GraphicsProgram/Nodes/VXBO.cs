@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -39,7 +40,8 @@ namespace AriaLibrary.Objects.GraphicsProgram.Nodes
     public class VXBO: GPRSection
     {
         public override string Type => "VXBO";
-        public VXBOData Data;
+        [TypeConverter(typeof(ExpandableObjectConverter))]
+        public VXBOData Data { get; set; }
 
         public override void Read(BinaryReader reader, int heapStringOffset, int heapDataOffset, int heapVSBufferOffset, int heapMeshBufferOffset, int heapPSBufferOffset, string platform)
         {

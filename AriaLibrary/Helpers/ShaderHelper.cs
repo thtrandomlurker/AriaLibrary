@@ -69,7 +69,7 @@ namespace AriaLibrary.Helpers
 
         public static Dictionary<SceGxmParameterSemantic, string> SemanticStringLookup = new Dictionary<SceGxmParameterSemantic, string>()
         {
-            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_NONE, "INVALID"},
+            { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_NONE, "AUTO"},
             { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_ATTR, "ATTR"},
             { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BCOL, "BCOL"},
             { SceGxmParameterSemantic.SCE_GXM_PARAMETER_SEMANTIC_BINORMAL, "BINORMAL"},
